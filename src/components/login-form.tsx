@@ -37,7 +37,8 @@ export function LoginForm() {
 
       // Redirecionar para o dashboard após login bem-sucedido
       router.push("/dashboard")
-    } catch (err) {
+    } catch (_err) {
+      console.error(_err); // Log the error
       setError("Falha na autenticação. Verifique suas credenciais.")
     } finally {
       setLoading(false)
@@ -57,7 +58,7 @@ export function LoginForm() {
       // Simulando um reenvio para demonstração
       await new Promise((resolve) => setTimeout(resolve, 1000))
       setResendMessage("Senha reenviada com sucesso! Verifique seu email cadastrado.")
-    } catch (err) {
+    } catch (_err) {
       setError("Falha ao reenviar a senha. Tente novamente.")
     } finally {
       setResendingPassword(false)
