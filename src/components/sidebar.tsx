@@ -112,6 +112,11 @@ export function Sidebar() {
         href: "/dashboard/cadastros/agenciadores",
         icon: UserCog,
       },
+      {
+        title: "Gerenciamento de Usuários",
+        href: "/dashboard/cadastros/users",
+        icon: Users,
+      },
     ],
   }
 
