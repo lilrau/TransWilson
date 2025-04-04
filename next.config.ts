@@ -8,9 +8,6 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   reactStrictMode: true,
-  experimental: {
-    appDir: true, // Certifique-se de que o App Router está habilitado
-  },
 }
 
 module.exports = nextConfig;

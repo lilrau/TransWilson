@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import {
   ChevronDown,
   ClipboardList,
@@ -20,10 +20,12 @@ import {
   UserCog,
   ChevronLeft,
   ChevronRight,
+  LogOut
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { clearSessionCookie } from "@/lib/auth"
 
 type SidebarItemWithSubItems = {
   title: string
@@ -42,12 +44,18 @@ type SidebarItem = {
 }
 
 export function Sidebar() {
+  const router = useRouter()
   const pathname = usePathname()
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
     movimentos: true,
     cadastros: true,
   })
   const [collapsed, setCollapsed] = useState(false)
+
+  const handleLogout = async () => {
+    await clearSessionCookie()
+    router.push("/")
+  }
 
   const toggleMenu = (menu: string) => {
     if (collapsed) return
@@ -335,18 +343,17 @@ export function Sidebar() {
           </Button>
 
           {!collapsed && (
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/">Sair</Link>
+            <Button variant="outline" className="w-full" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Sair
             </Button>
           )}
 
           {collapsed && (
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" asChild className="w-10 h-10">
-                  <Link href="/">
-                    <DollarSign className="h-5 w-5" />
-                  </Link>
+                <Button variant="outline" size="icon" onClick={handleLogout} className="w-10 h-10">
+                  <LogOut className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">Sair</TooltipContent>
