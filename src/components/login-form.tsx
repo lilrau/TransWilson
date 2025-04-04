@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import bcrypt from "bcryptjs"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -10,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { supabase } from "@/lib/supabase"
 
 export function LoginForm() {
   const router = useRouter()
@@ -31,15 +33,37 @@ export function LoginForm() {
 
     try {
       setLoading(true)
-      // Aqui você adicionaria a lógica de autenticação real
-      // Simulando um login para demonstração
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      // Consultar o Supabase para verificar as credenciais
+      const { data, error } = await supabase
+        .from("users")
+        .select("id, user_user, user_senha, user_ativo")
+        .eq("user_user", username)
+        .single()
+
+      if (error || !data) {
+        setError("Credenciais inválidas. Tente novamente.")
+        return
+      }
+
+      // Verificar se o usuário está ativo
+      if (!data.user_ativo) {
+        setError("Usuário inativo. Entre em contato com o administrador.")
+        return
+      }
+
+      // Comparar a senha (assumindo que você está armazenando senhas como hash)
+      const isPasswordValid = await verifyPassword(password, data.user_senha)
+      if (!isPasswordValid) {
+        setError("Credenciais inválidas. Tente novamente.")
+        return
+      }
 
       // Redirecionar para o dashboard após login bem-sucedido
       router.push("/dashboard")
-    } catch (_err) {
-      console.error(_err); // Log the error
-      setError("Falha na autenticação. Verifique suas credenciais.")
+    } catch (err) {
+      console.error(err)
+      setError("Falha na autenticação. Tente novamente.")
     } finally {
       setLoading(false)
     }
@@ -59,7 +83,7 @@ export function LoginForm() {
       await new Promise((resolve) => setTimeout(resolve, 1000))
       setResendMessage("Senha reenviada com sucesso! Verifique seu email cadastrado.")
     } catch (_err) {
-      console.error(_err);
+      console.error(_err)
       setError("Falha ao reenviar a senha. Tente novamente.")
     } finally {
       setResendingPassword(false)
@@ -129,5 +153,10 @@ export function LoginForm() {
       </CardFooter>
     </Card>
   )
+}
+
+// Função para verificar a senha (exemplo com bcrypt)
+async function verifyPassword(inputPassword: string, storedHash: Uint8Array): Promise<boolean> {
+  return bcrypt.compare(inputPassword, storedHash.toString())
 }
 
