@@ -62,6 +62,7 @@ export function LoginForm() {
         return
       }
 
+      // TODO
       // Criar sessão com Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: data?.user_email, // Fallback se não tiver email
@@ -83,13 +84,7 @@ export function LoginForm() {
       }
 
       // Armazenar sessão nos cookies
-      setSessionCookie(JSON.stringify(session))
-      
-      toast({
-        title: "Login realizado com sucesso",
-        description: "Redirecionando para o dashboard...",
-        variant: "default"
-      })
+      await setSessionCookie(JSON.stringify(session))
 
       // Redirecionar para o dashboard após login bem-sucedido
       router.push('/dashboard')
