@@ -1,6 +1,6 @@
 // In your [id]/page.tsx file
 import type { Metadata } from "next"
-import { MotoristasEditForm } from "@/components/motoristas/motoristas-edit-form"
+import { MotoristasForm } from "@/components/motoristas/motoristas-form"
 
 export const metadata: Metadata = {
   title: "Editar Motorista - Sistema de Fretagem",
@@ -22,7 +22,7 @@ export default async function EditarMotoristaPage({ params }: PageParams) {
         <p className="text-muted-foreground">Atualize os dados do motorista.</p>
       </div>
 
-      <MotoristasEditForm id={id} />
+      <MotoristasForm id={id} />
     </div>
   )
 }
