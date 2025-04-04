@@ -59,6 +59,7 @@ export function LoginForm() {
       await new Promise((resolve) => setTimeout(resolve, 1000))
       setResendMessage("Senha reenviada com sucesso! Verifique seu email cadastrado.")
     } catch (_err) {
+      console.error(_err);
       setError("Falha ao reenviar a senha. Tente novamente.")
     } finally {
       setResendingPassword(false)
