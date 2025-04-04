@@ -113,7 +113,7 @@ export function Sidebar() {
         icon: UserCog,
       },
       {
-        title: "Gerenciamento de Usuários",
+        title: "Usuários",
         href: "/dashboard/cadastros/users",
         icon: Users,
       },
