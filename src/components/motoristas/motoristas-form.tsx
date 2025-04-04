@@ -64,7 +64,7 @@ export function MotoristasForm() {
     setError(null)
 
     try {
-      const { data, error } = await supabase.from("motorista").insert([values]).select()
+      const { error } = await supabase.from("motorista").insert([values]).select()
 
       if (error) throw error
 
