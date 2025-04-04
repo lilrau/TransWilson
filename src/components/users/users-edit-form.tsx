@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import bcrypt from "bcryptjs";
 
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -45,7 +44,6 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [roles, setRoles] = useState<string[]>([]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -79,57 +77,12 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
     fetchUser();
   }, [id, form]);
 
-  useEffect(() => {
-    async function fetchRoles() {
-      try {
-        // Simulação: Buscar os papéis diretamente do banco
-        const { data, error } = await supabase.rpc("get_user_roles"); // Função RPC para retornar os papéis
-
-        if (error) throw error;
-
-        setRoles(data || []);
-      } catch (err) {
-        console.error("Erro ao buscar papéis:", err);
-      }
-    }
-
-    fetchRoles();
-  }, []);
-
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // Verificar se o nome de usuário já existe para outro usuário
-      const { data: existingUser, error: checkError } = await supabase
-        .from("users")
-        .select("id")
-        .eq("user_user", values.user_user)
-        .neq("id", id) // Ignorar o próprio usuário que está sendo editado
-        .single();
-
-      if (checkError && checkError.code !== "PGRST116") {
-        throw checkError;
-      }
-
-      if (existingUser) {
-        throw new Error("O nome de usuário já está em uso por outro usuário.");
-      }
-
-      let hashedPassword = null;
-
-      // Realizar o hash da senha, se ela for preenchida
-      if (values.user_senha) {
-        hashedPassword = await bcrypt.hash(values.user_senha, 10); // 10 é o custo do hash
-      }
-
-      const payload = {
-        ...values,
-        user_senha: hashedPassword || undefined, // Enviar o hash ou ignorar o campo se vazio
-      };
-
-      const { error } = await supabase.from("users").update(payload).eq("id", id);
+      const { error } = await supabase.from("users").update(values).eq("id", id);
 
       if (error) throw error;
 
@@ -141,13 +94,8 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
       router.push("/dashboard/cadastros/users");
       router.refresh();
     } catch (err) {
-      if (err instanceof Error) {
-        console.error("Erro ao atualizar usuário:", err);
-        setError(err.message || "Ocorreu um erro ao atualizar o usuário.");
-      } else {
-        console.error("Erro desconhecido:", err);
-        setError("Ocorreu um erro desconhecido ao atualizar o usuário.");
-      }
+      console.error("Erro ao atualizar usuário:", err);
+      setError("Ocorreu um erro ao atualizar o usuário.");
     } finally {
       setIsSubmitting(false);
     }
