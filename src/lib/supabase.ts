@@ -5,3 +5,4 @@ const supabase = createClient('https://uidftoujrwepfookqemp.supabase.co', 'eyJhb
 const { data, error } = await supabase
   .from('todos')
   .select()
+  console.log(data, error);
