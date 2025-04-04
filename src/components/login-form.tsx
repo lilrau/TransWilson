@@ -12,9 +12,12 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { supabase } from "@/lib/supabase"
+import { useToast } from "@/components/ui/use-toast"
+import { setSessionCookie } from "@/lib/auth"
 
 export function LoginForm() {
   const router = useRouter()
+  const { toast } = useToast()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -37,11 +40,11 @@ export function LoginForm() {
       // Consultar o Supabase para verificar as credenciais
       const { data, error } = await supabase
         .from("users")
-        .select("id, user_user, user_senha, user_ativo")
+        .select("id, user_user, user_senha, user_ativo, user_email")
         .eq("user_user", username)
         .single()
 
-      if (error || !data) {
+        if (error || !data) {
         setError("Credenciais inválidas. Tente novamente.")
         return
       }
@@ -59,8 +62,37 @@ export function LoginForm() {
         return
       }
 
+      // Criar sessão com Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: data?.user_email, // Fallback se não tiver email
+        password: password
+      })
+
+      if (authError) {
+        // console.error("Erro na autenticação com Supabase:", authError)
+        // Se falhar a autenticação com Supabase Auth, ainda podemos prosseguir com nossa própria sessão
+        // Isso é útil durante a migração para o sistema de auth do Supabase
+      }
+
+      // Armazenar informações da sessão
+      const session = {
+        userId: data.id,
+        username: data.user_user,
+        token: authData?.session?.access_token || `session-${Date.now()}`,
+        expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 dias
+      }
+
+      // Armazenar sessão nos cookies
+      setSessionCookie(JSON.stringify(session))
+      
+      toast({
+        title: "Login realizado com sucesso",
+        description: "Redirecionando para o dashboard...",
+        variant: "default"
+      })
+
       // Redirecionar para o dashboard após login bem-sucedido
-      router.push("/dashboard")
+      router.push('/dashboard')
     } catch (err) {
       console.error(err)
       setError("Falha na autenticação. Tente novamente.")
