@@ -75,9 +75,14 @@ export function MotoristasForm() {
 
       router.push("/dashboard/cadastros/motoristas")
       router.refresh()
-    } catch (err: any) {
-      console.error("Erro ao cadastrar motorista:", err)
-      setError(err.message || "Ocorreu um erro ao cadastrar o motorista.")
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error("Erro ao cadastrar motorista:", err)
+        setError(err.message || "Ocorreu um erro ao cadastrar o motorista.")
+      } else {
+        console.error("Erro desconhecido:", err)
+        setError("Ocorreu um erro desconhecido ao cadastrar o motorista.")
+      }
     } finally {
       setIsSubmitting(false)
     }

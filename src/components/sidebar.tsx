@@ -131,10 +131,16 @@ export function Sidebar() {
           collapsed ? "w-16" : "w-64",
         )}
       >
-        <div className={cn("p-4 border-b flex items-center gap-2", collapsed && "justify-center")}>
+        <Link
+          href="/dashboard"
+          className={cn(
+            "p-4 border-b flex items-center gap-2 hover:bg-slate-100 transition-colors",
+            collapsed && "justify-center",
+          )}
+        >
           <Truck className="h-6 w-6 text-primary flex-shrink-0" />
           {!collapsed && <h1 className="font-semibold text-lg">Sistema de Fretagem</h1>}
-        </div>
+        </Link>
 
         <div className="flex-1 overflow-auto py-4">
           <nav className="space-y-1 px-2">

@@ -90,9 +90,13 @@ export function MotoristasEditForm({ id }: MotoristasEditFormProps) {
         } else {
           setError("Motorista não encontrado.")
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Erro ao buscar motorista:", err)
-        setError(err.message || "Ocorreu um erro ao buscar os dados do motorista.")
+        if (err instanceof Error) {
+          setError(err.message || "Ocorreu um erro ao buscar os dados do motorista.")
+        } else {
+          setError("Ocorreu um erro desconhecido.")
+        }
       } finally {
         setIsLoading(false)
       }
@@ -106,7 +110,7 @@ export function MotoristasEditForm({ id }: MotoristasEditFormProps) {
     setError(null)
 
     try {
-      const { data, error } = await supabase.from("motorista").update(values).eq("id", id).select()
+      const { error } = await supabase.from("motorista").update(values).eq("id", id).select()
 
       if (error) throw error
 
@@ -117,10 +121,14 @@ export function MotoristasEditForm({ id }: MotoristasEditFormProps) {
 
       router.push("/dashboard/cadastros/motoristas")
       router.refresh()
-    } catch (err: any) {
-      console.error("Erro ao atualizar motorista:", err)
-      setError(err.message || "Ocorreu um erro ao atualizar o motorista.")
-    } finally {
+    } catch (err: unknown) {
+        console.error("Erro ao atualizar motorista:", err)
+        if (err instanceof Error) {
+          setError(err.message || "Ocorreu um erro ao atualizar o motorista.")
+        } else {
+          setError("Ocorreu um erro desconhecido.")
+        }
+      } finally {
       setIsSubmitting(false)
     }
   }

@@ -61,9 +61,13 @@ export function MotoristasTable() {
       if (error) throw error
 
       setMotoristas(data || [])
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Erro ao buscar motoristas:", err)
-      setError(err.message || "Ocorreu um erro ao buscar os motoristas.")
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError("Ocorreu um erro ao buscar os motoristas.")
+      }
     } finally {
       setLoading(false)
     }
@@ -77,16 +81,12 @@ export function MotoristasTable() {
       if (error) throw error
 
       setMotoristas(motoristas.filter((m) => m.id !== id))
-      toast({
-        title: "Motorista excluído com sucesso!",
-        description: "O motorista foi removido do sistema.",
-      })
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Erro ao excluir motorista:", err)
       toast({
         variant: "destructive",
         title: "Erro ao excluir motorista",
-        description: err.message || "Ocorreu um erro ao excluir o motorista.",
+        description: err instanceof Error ? err.message : "Ocorreu um erro ao excluir o motorista.",
       })
     } finally {
       setIsDeleting(false)
