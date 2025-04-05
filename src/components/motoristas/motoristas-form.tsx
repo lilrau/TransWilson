@@ -140,15 +140,13 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
     if (id) {
       fetchMotorista()
     }
-  }, [id])
+  }, [id, form])
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
     setError(null)
 
     try {
-      let result
-
       if (id) {
         // Modo de edição
         await updateMotorista(Number(id), values)
