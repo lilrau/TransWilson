@@ -1,20 +1,27 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
 
-import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Switch } from "@/components/ui/switch";
-import { toast } from "@/components/ui/use-toast";
-import { Loader2 } from "lucide-react";
+import { getUserById, updateUser } from "@/lib/services/users-service"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Card, CardContent } from "@/components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Switch } from "@/components/ui/switch"
+import { toast } from "@/components/ui/use-toast"
+import { Loader2 } from "lucide-react"
 
 const formSchema = z.object({
   user_nome: z.string().min(3, {
@@ -31,19 +38,19 @@ const formSchema = z.object({
   }),
   user_senha: z.string().optional(), // Senha é opcional na edição
   user_ativo: z.boolean(),
-});
+})
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof formSchema>
 
 interface UsersEditFormProps {
-  id: string;
+  id: string
 }
 
 export function UsersEditForm({ id }: UsersEditFormProps) {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -55,49 +62,44 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
       user_senha: "",
       user_ativo: true,
     },
-  });
+  })
 
   useEffect(() => {
     async function fetchUser() {
       try {
-        setIsLoading(true);
-        const { data, error } = await supabase.from("users").select("*").eq("id", id).single();
-
-        if (error) throw error;
-
-        form.reset(data);
+        setIsLoading(true)
+        const data = await getUserById(Number(id))
+        form.reset(data)
       } catch (err) {
-        console.error("Erro ao buscar usuário:", err);
-        setError("Não foi possível carregar os dados do usuário.");
+        console.error("Erro ao buscar usuário:", err)
+        setError("Não foi possível carregar os dados do usuário.")
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
     }
 
-    fetchUser();
-  }, [id, form]);
+    fetchUser()
+  }, [id, form])
 
   async function onSubmit(values: FormValues) {
-    setIsSubmitting(true);
-    setError(null);
+    setIsSubmitting(true)
+    setError(null)
 
     try {
-      const { error } = await supabase.from("users").update(values).eq("id", id);
-
-      if (error) throw error;
+      await updateUser(Number(id), values)
 
       toast({
         title: "Usuário atualizado com sucesso!",
         description: `Os dados do usuário ${values.user_nome} foram atualizados.`,
-      });
+      })
 
-      router.push("/dashboard/cadastros/users");
-      router.refresh();
+      router.push("/dashboard/cadastros/users")
+      router.refresh()
     } catch (err) {
-      console.error("Erro ao atualizar usuário:", err);
-      setError("Ocorreu um erro ao atualizar o usuário.");
+      console.error("Erro ao atualizar usuário:", err)
+      setError("Ocorreu um erro ao atualizar o usuário.")
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
@@ -106,7 +108,7 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
       <div className="flex justify-center items-center h-64">
         <p>Carregando...</p>
       </div>
-    );
+    )
   }
 
   if (error) {
@@ -115,7 +117,7 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
         <AlertTitle>Erro</AlertTitle>
         <AlertDescription>{error}</AlertDescription>
       </Alert>
-    );
+    )
   }
 
   return (
@@ -187,11 +189,7 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
                   <FormItem>
                     <FormLabel>Senha</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Digite uma nova senha (opcional)"
-                        {...field}
-                      />
+                      <Input type="password" placeholder="Digite uma nova senha (opcional)" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -218,7 +216,11 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => router.push("/dashboard/cadastros/users")}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push("/dashboard/cadastros/users")}
+              >
                 Cancelar
               </Button>
               <Button type="submit" disabled={isSubmitting}>
@@ -236,5 +238,5 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
         </Form>
       </CardContent>
     </Card>
-  );
+  )
 }

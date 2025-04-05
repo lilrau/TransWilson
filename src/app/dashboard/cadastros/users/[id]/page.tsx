@@ -1,15 +1,15 @@
-import type { Metadata } from "next";
-import { UsersEditForm } from "@/components/users/users-edit-form";
+import type { Metadata } from "next"
+import { UsersEditForm } from "@/components/users/users-edit-form"
 
 export const metadata: Metadata = {
   title: "Editar Usuário - Sistema de Fretagem",
   description: "Edição de usuário no sistema de fretagem",
-};
+}
 
 interface PageParams {
   params: {
-    id: string;
-  };
+    id: string
+  }
 }
 
 export default function EditarUsuarioPage({ params }: PageParams) {
@@ -22,5 +22,5 @@ export default function EditarUsuarioPage({ params }: PageParams) {
 
       <UsersEditForm id={params.id} />
     </div>
-  );
+  )
 }

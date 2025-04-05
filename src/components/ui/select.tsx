@@ -1,16 +1,16 @@
-"use client";
+"use client"
 
-import * as React from "react";
-import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
-import { ChevronDownIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import * as React from "react"
+import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
+import { ChevronDownIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface SelectProps {
-  options: string[];
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
+  options: string[]
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  disabled?: boolean
 }
 
 export function Select({
@@ -32,9 +32,7 @@ export function Select({
         {value || placeholder}
         <ChevronDownIcon className="ml-2 h-4 w-4" />
       </DropdownMenuPrimitive.Trigger>
-      <DropdownMenuPrimitive.Content
-        className="z-50 mt-2 w-full rounded-md border bg-white shadow-md"
-      >
+      <DropdownMenuPrimitive.Content className="z-50 mt-2 w-full rounded-md border bg-white shadow-md">
         {options.length > 0 ? (
           options.map((option) => (
             <DropdownMenuPrimitive.Item
@@ -55,5 +53,5 @@ export function Select({
         )}
       </DropdownMenuPrimitive.Content>
     </DropdownMenuPrimitive.Root>
-  );
+  )
 }

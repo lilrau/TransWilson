@@ -20,6 +20,7 @@ import {
   UserCog,
   ChevronLeft,
   ChevronRight,
+  LogOut,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -133,14 +134,14 @@ export function Sidebar() {
       <div
         className={cn(
           "h-screen border-r flex flex-col bg-slate-50 transition-all duration-300",
-          collapsed ? "w-16" : "w-64",
+          collapsed ? "w-16" : "w-64"
         )}
       >
         <Link
           href="/dashboard"
           className={cn(
             "p-4 border-b flex items-center gap-2 hover:bg-slate-100 transition-colors",
-            collapsed && "justify-center",
+            collapsed && "justify-center"
           )}
         >
           <Truck className="h-6 w-6 text-primary flex-shrink-0" />
@@ -160,7 +161,7 @@ export function Sidebar() {
                       collapsed && "justify-center",
                       pathname === item.href
                         ? "bg-primary text-primary-foreground"
-                        : "text-slate-700 hover:bg-slate-100",
+                        : "text-slate-700 hover:bg-slate-100"
                     )}
                   >
                     <item.icon className="h-5 w-5 flex-shrink-0" />
@@ -179,7 +180,7 @@ export function Sidebar() {
                     onClick={() => toggleMenu("movimentos")}
                     className={cn(
                       "w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100",
-                      collapsed && "justify-center",
+                      collapsed && "justify-center"
                     )}
                   >
                     <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
@@ -190,7 +191,7 @@ export function Sidebar() {
                       <ChevronDown
                         className={cn(
                           "h-4 w-4 ml-auto transition-transform",
-                          openMenus.movimentos ? "transform rotate-180" : "",
+                          openMenus.movimentos ? "transform rotate-180" : ""
                         )}
                       />
                     )}
@@ -209,7 +210,7 @@ export function Sidebar() {
                         "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
                         pathname === item.href
                           ? "bg-primary text-primary-foreground"
-                          : "text-slate-700 hover:bg-slate-100",
+                          : "text-slate-700 hover:bg-slate-100"
                       )}
                     >
                       <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -230,7 +231,7 @@ export function Sidebar() {
                             "flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium",
                             pathname === item.href
                               ? "bg-primary text-primary-foreground"
-                              : "text-slate-700 hover:bg-slate-100",
+                              : "text-slate-700 hover:bg-slate-100"
                           )}
                         >
                           <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -251,7 +252,7 @@ export function Sidebar() {
                     onClick={() => toggleMenu("cadastros")}
                     className={cn(
                       "w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100",
-                      collapsed && "justify-center",
+                      collapsed && "justify-center"
                     )}
                   >
                     <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
@@ -262,7 +263,7 @@ export function Sidebar() {
                       <ChevronDown
                         className={cn(
                           "h-4 w-4 ml-auto transition-transform",
-                          openMenus.cadastros ? "transform rotate-180" : "",
+                          openMenus.cadastros ? "transform rotate-180" : ""
                         )}
                       />
                     )}
@@ -281,7 +282,7 @@ export function Sidebar() {
                         "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
                         pathname === item.href
                           ? "bg-primary text-primary-foreground"
-                          : "text-slate-700 hover:bg-slate-100",
+                          : "text-slate-700 hover:bg-slate-100"
                       )}
                     >
                       <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -302,7 +303,7 @@ export function Sidebar() {
                             "flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium",
                             pathname === item.href
                               ? "bg-primary text-primary-foreground"
-                              : "text-slate-700 hover:bg-slate-100",
+                              : "text-slate-700 hover:bg-slate-100"
                           )}
                         >
                           <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -357,4 +358,3 @@ export function Sidebar() {
     </TooltipProvider>
   )
 }
-

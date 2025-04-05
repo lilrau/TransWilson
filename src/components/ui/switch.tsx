@@ -1,9 +1,9 @@
-import * as React from "react";
-import { cn } from "@/lib/utils"; // Helper para classes condicionais, se você tiver
+import * as React from "react"
+import { cn } from "@/lib/utils" // Helper para classes condicionais, se você tiver
 
 export interface SwitchProps extends React.ComponentPropsWithoutRef<"button"> {
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
+  checked: boolean
+  onCheckedChange: (checked: boolean) => void
 }
 
 export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
@@ -28,8 +28,8 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
           )}
         />
       </button>
-    );
+    )
   }
-);
+)
 
-Switch.displayName = "Switch";
+Switch.displayName = "Switch"

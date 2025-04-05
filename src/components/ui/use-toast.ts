@@ -83,7 +83,7 @@ const reducer = (state: State, action: Action): State => {
               type: actionTypes.REMOVE_TOAST,
               toastId,
             })
-          }, TOAST_REMOVE_DELAY),
+          }, TOAST_REMOVE_DELAY)
         )
       }
 
@@ -95,7 +95,7 @@ const reducer = (state: State, action: Action): State => {
                 ...t,
                 open: false,
               }
-            : t,
+            : t
         ),
       }
     }
@@ -176,4 +176,3 @@ function useToast() {
 }
 
 export { useToast, toast }
-

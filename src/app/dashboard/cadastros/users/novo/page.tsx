@@ -1,4 +1,4 @@
-import { UsersForm } from "@/components/users/users-form";
+import { UsersForm } from "@/components/users/users-form"
 
 export default function NovoUsuarioPage() {
   return (
@@ -6,5 +6,5 @@ export default function NovoUsuarioPage() {
       <h1 className="text-2xl font-bold mb-4">Cadastrar Novo Usuário</h1>
       <UsersForm />
     </div>
-  );
+  )
 }

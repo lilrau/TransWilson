@@ -8,11 +8,7 @@ export const metadata: Metadata = {
   description: "Dashboard do sistema de gerenciamento de fretagem de caminhões",
 }
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-slate-100">
       {/* Sidebar - escondida em dispositivos móveis */}
@@ -34,4 +30,3 @@ export default function DashboardLayout({
     </div>
   )
 }
-
