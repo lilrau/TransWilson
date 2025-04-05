@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Edit, Loader2, MoreHorizontal, Trash } from "lucide-react"
 
-import { supabase } from "@/lib/supabase"
+import { deleteVeiculo, getAllVeiculos } from "@/lib/services/veiculo-service"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -14,7 +14,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { toast } from "@/components/ui/use-toast"
 import {
   AlertDialog,
@@ -54,9 +61,7 @@ export function VeiculosTable() {
   async function fetchVeiculos() {
     try {
       setLoading(true)
-      const { data, error } = await supabase.from("veiculo").select("*").order("veiculo_nome", { ascending: true })
-
-      if (error) throw error
+      const data = await getAllVeiculos()
 
       setVeiculos(data || [])
     } catch (err: unknown) {
@@ -74,9 +79,7 @@ export function VeiculosTable() {
   async function handleDelete(id: number) {
     try {
       setIsDeleting(true)
-      const { error } = await supabase.from("veiculo").delete().eq("id", id)
-
-      if (error) throw error
+      await deleteVeiculo(id)
 
       setVeiculos(veiculos.filter((v) => v.id !== id))
     } catch (err: unknown) {
@@ -142,8 +145,12 @@ export function VeiculosTable() {
               <TableCell>{veiculo.veiculo_placa}</TableCell>
               <TableCell className="hidden md:table-cell">{veiculo.veiculo_reboque}</TableCell>
               <TableCell className="hidden md:table-cell">{veiculo.veiculo_ano || "-"}</TableCell>
-              <TableCell className="hidden md:table-cell">{veiculo.veiculo_km_inicial?.toFixed(1) || "-"}</TableCell>
-              <TableCell className="hidden md:table-cell">{veiculo.veiculo_litro_inicial?.toFixed(2) || "-"}</TableCell>
+              <TableCell className="hidden md:table-cell">
+                {veiculo.veiculo_km_inicial?.toFixed(1) || "-"}
+              </TableCell>
+              <TableCell className="hidden md:table-cell">
+                {veiculo.veiculo_litro_inicial?.toFixed(2) || "-"}
+              </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -178,8 +185,9 @@ export function VeiculosTable() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Tem certeza que deseja excluir o veículo <strong>{veiculo.veiculo_nome}</strong>? Esta ação
-                            não pode ser desfeita.
+                            Tem certeza que deseja excluir o veículo{" "}
+                            <strong>{veiculo.veiculo_nome}</strong>? Esta ação não pode ser
+                            desfeita.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

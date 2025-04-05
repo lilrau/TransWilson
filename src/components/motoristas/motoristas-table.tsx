@@ -5,8 +5,7 @@ import Link from "next/link"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Edit, Loader2, MoreHorizontal, Trash } from "lucide-react"
-
-import { supabase } from "@/lib/supabase"
+import { deleteMotorista, getAllMotorista } from "@/lib/services/motorista-service"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -16,7 +15,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { toast } from "@/components/ui/use-toast"
 import {
   AlertDialog,
@@ -56,7 +62,7 @@ export function MotoristasTable() {
   async function fetchMotoristas() {
     try {
       setLoading(true)
-      const { data, error } = await supabase.from("motorista").select("*").order("motorista_nome", { ascending: true })
+      const data = await getAllMotorista()
 
       if (error) throw error
 
@@ -76,9 +82,7 @@ export function MotoristasTable() {
   async function handleDelete(id: number) {
     try {
       setIsDeleting(true)
-      const { error } = await supabase.from("motorista").delete().eq("id", id)
-
-      if (error) throw error
+      await deleteMotorista(id)
 
       setMotoristas(motoristas.filter((m) => m.id !== id))
     } catch (err: unknown) {
@@ -148,8 +152,12 @@ export function MotoristasTable() {
                   currency: "BRL",
                 }).format(motorista.motorista_salario)}
               </TableCell>
-              <TableCell className="hidden md:table-cell">{motorista.motorista_frete.toFixed(2)}%</TableCell>
-              <TableCell className="hidden md:table-cell">{motorista.motorista_estadia.toFixed(2)}%</TableCell>
+              <TableCell className="hidden md:table-cell">
+                {motorista.motorista_frete.toFixed(2)}%
+              </TableCell>
+              <TableCell className="hidden md:table-cell">
+                {motorista.motorista_estadia.toFixed(2)}%
+              </TableCell>
               <TableCell className="hidden md:table-cell">
                 {motorista.motorista_admissao
                   ? format(new Date(motorista.motorista_admissao), "dd/MM/yyyy", {
@@ -191,8 +199,9 @@ export function MotoristasTable() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Tem certeza que deseja excluir o motorista <strong>{motorista.motorista_nome}</strong>? Esta
-                            ação não pode ser desfeita.
+                            Tem certeza que deseja excluir o motorista{" "}
+                            <strong>{motorista.motorista_nome}</strong>? Esta ação não pode ser
+                            desfeita.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -224,4 +233,3 @@ export function MotoristasTable() {
     </div>
   )
 }
-

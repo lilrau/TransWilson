@@ -1,11 +1,11 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Loader2, MoreHorizontal, Plus, Trash } from "lucide-react";
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import { Loader2, MoreHorizontal, Plus, Trash } from "lucide-react"
 
-import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
+import { deleteUser, getAllUsers } from "@/lib/services/users-service"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,9 +13,16 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { toast } from "@/components/ui/use-toast";
+} from "@/components/ui/dropdown-menu"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { toast } from "@/components/ui/use-toast"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,66 +33,60 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog"
 
 type User = {
-  id: number;
-  user_nome: string;
-  user_user: string;
-  user_email: string;
-  user_role: string;
-  user_ativo: boolean;
-};
+  id: number
+  user_nome: string
+  user_user: string
+  user_email: string
+  user_role: string
+  user_ativo: boolean
+}
 
 export function UsersManagement() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    fetchUsers()
+  }, [])
 
   async function fetchUsers() {
     try {
-      setLoading(true);
-      const { data, error } = await supabase.from("users").select("*").order("user_nome", { ascending: true });
-
-      if (error) throw error;
-
-      setUsers(data || []);
+      setLoading(true)
+      const data = await getAllUsers()
+      setUsers(data || [])
     } catch (err: unknown) {
-      console.error("Erro ao buscar usuários:", err);
+      console.error("Erro ao buscar usuários:", err)
       if (err instanceof Error) {
-        setError(err.message);
+        setError(err.message)
       } else {
-        setError("Ocorreu um erro ao buscar os usuários.");
+        setError("Ocorreu um erro ao buscar os usuários.")
       }
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   async function handleDelete(id: number) {
     try {
-      setIsDeleting(true);
-      const { error } = await supabase.from("users").delete().eq("id", id);
-
-      if (error) throw error;
-
-      setUsers(users.filter((user) => user.id !== id));
+      setIsDeleting(true)
+      await deleteUser(id)
+      setUsers(users.filter((user) => user.id !== id))
     } catch (err: unknown) {
-      console.error("Erro ao excluir usuário:", err);
+      console.error("Erro ao excluir usuário:", err)
       toast({
         variant: "destructive",
         title: "Erro ao excluir usuário",
         description: err instanceof Error ? err.message : "Ocorreu um erro ao excluir o usuário.",
-      });
+      })
     } finally {
-      setIsDeleting(false);
-      setDeletingId(null);
+      setIsDeleting(false)
+      setDeletingId(null)
     }
   }
 
@@ -94,7 +95,7 @@ export function UsersManagement() {
       <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
-    );
+    )
   }
 
   if (error) {
@@ -103,7 +104,7 @@ export function UsersManagement() {
         <p className="font-medium">Erro ao carregar usuários</p>
         <p>{error}</p>
       </div>
-    );
+    )
   }
 
   if (users.length === 0) {
@@ -115,7 +116,7 @@ export function UsersManagement() {
           <Link href="/dashboard/cadastros/users/novo">Cadastrar Usuário</Link>
         </Button>
       </div>
-    );
+    )
   }
 
   return (
@@ -165,16 +166,14 @@ export function UsersManagement() {
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/cadastros/users/${user.id}`}>
-                          Editar
-                        </Link>
+                        <Link href={`/dashboard/cadastros/users/${user.id}`}>Editar</Link>
                       </DropdownMenuItem>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem
                             onSelect={(e) => {
-                              e.preventDefault();
-                              setDeletingId(user.id);
+                              e.preventDefault()
+                              setDeletingId(user.id)
                             }}
                             className="text-destructive focus:text-destructive"
                           >
@@ -186,7 +185,8 @@ export function UsersManagement() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Tem certeza que deseja excluir o usuário <strong>{user.user_nome}</strong>? Esta ação não pode ser desfeita.
+                              Tem certeza que deseja excluir o usuário{" "}
+                              <strong>{user.user_nome}</strong>? Esta ação não pode ser desfeita.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -217,5 +217,5 @@ export function UsersManagement() {
         </Table>
       </div>
     </div>
-  );
+  )
 }

@@ -6,11 +6,24 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { supabase } from "@/lib/supabase"
+import { createVeiculo } from "@/lib/services/veiculo-service"
+import { getAllMotorista } from "@/lib/services/motorista-service"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { toast } from "@/components/ui/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -37,10 +50,15 @@ export function VeiculosForm() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [reboqueOptions, setreboqueOptions] = useState<string[]>([])
+  const [reboqueOptions, setreboqueOptions] = useState<string[]>([
+    "Carreta",
+    "Bi-trem",
+    "Rodotrem",
+    "Simples",
+  ])
   const [selectedReboque, setSelectedReboque] = useState<string>("")
-  const [motoristas, setMotoristas] = useState<{ id: number; nome: string }[]>([]);
-  const [selectedMotorista, setSelectedMotorista] = useState<string>("");
+  const [motoristas, setMotoristas] = useState<{ id: number; nome: string }[]>([])
+  const [selectedMotorista, setSelectedMotorista] = useState<string>("")
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -56,92 +74,64 @@ export function VeiculosForm() {
   })
 
   useEffect(() => {
-    async function fetchreboqueOptions() {
-      try {
-        const { data, error } = await supabase.rpc("enum_values", { enum_name: "tipo_reboque" });
-
-        if (error) throw error;
-
-        // Certifique-se de que `data` é um array de strings
-        const options = data?.map((item: { value: string }) => item.value) || [];
-        setreboqueOptions(options);
-      } catch (err) {
-        console.error("Erro ao buscar opções de reboque:", err);
-        toast({
-          variant: "destructive",
-          title: "Erro ao carregar opções de reboque",
-          description: "Não foi possível carregar as opções de reboque.",
-        });
-      }
-    }
-
-    fetchreboqueOptions();
-  }, []);
-
-  useEffect(() => {
     async function fetchMotoristas() {
       try {
-        const { data, error } = await supabase
-          .from("motorista")
-          .select("id, motorista_nome") // Corrigido para usar "motorista_nome"
-          .order("motorista_nome", { ascending: true }); // Corrigido para ordenar por "motorista_nome"
+        const data = await getAllMotorista()
 
-        if (error) throw error;
-
-        // Ajusta o mapeamento para usar "motorista_nome"
-        setMotoristas(data?.map((motorista) => ({
-          id: motorista.id,
-          nome: motorista.motorista_nome,
-        })) || []);
+        // Mapeia os dados retornados pelo serviço
+        setMotoristas(
+          data?.map((motorista) => ({
+            id: motorista.id,
+            nome: motorista.motorista_nome,
+          })) || []
+        )
       } catch (err) {
-        console.error("Erro ao buscar motoristas:", err);
+        console.error("Erro ao buscar motoristas:", err)
         toast({
           variant: "destructive",
           title: "Erro ao carregar motoristas",
           description: "Não foi possível carregar a lista de motoristas.",
-        });
+        })
       }
     }
 
-    fetchMotoristas();
-  }, []);
+    fetchMotoristas()
+  }, [])
 
-    // Corrigindo o onSubmit para incluir o motorista
-    async function onSubmit(values: FormValues) {
-      setIsSubmitting(true);
-      setError(null);
+  async function onSubmit(values: FormValues) {
+    setIsSubmitting(true)
+    setError(null)
 
-      try {
-        const { error } = await supabase
-          .from("veiculo")
-          .insert([{
-            ...values,
-            veiculo_reboque: selectedReboque,
-            veiculo_motorista: values.veiculo_motorista || null
-          }])
-          .select();
-
-        if (error) throw error;
-
-        toast({
-          title: "Veículo cadastrado com sucesso!",
-          description: `O veículo ${values.veiculo_nome} foi cadastrado.`,
-        });
-
-        router.push("/dashboard/cadastros/veiculos");
-        router.refresh();
-      } catch (err) {
-        if (err instanceof Error) {
-          console.error("Erro ao cadastrar veículo:", err);
-          setError(err.message || "Ocorreu um erro ao cadastrar o veículo.");
-        } else {
-          console.error("Erro desconhecido:", err);
-          setError("Ocorreu um erro desconhecido ao cadastrar o veículo.");
-        }
-      } finally {
-        setIsSubmitting(false);
+    try {
+      // Preparar os dados para envio
+      const veiculoData = {
+        ...values,
+        veiculo_reboque: selectedReboque,
+        veiculo_motorista: values.veiculo_motorista || null,
       }
+
+      // Usar o serviço para criar o veículo
+      await createVeiculo(veiculoData)
+
+      toast({
+        title: "Veículo cadastrado com sucesso!",
+        description: `O veículo ${values.veiculo_nome} foi cadastrado.`,
+      })
+
+      router.push("/dashboard/cadastros/veiculos")
+      router.refresh()
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error("Erro ao cadastrar veículo:", err)
+        setError(err.message || "Ocorreu um erro ao cadastrar o veículo.")
+      } else {
+        console.error("Erro desconhecido:", err)
+        setError("Ocorreu um erro desconhecido ao cadastrar o veículo.")
+      }
+    } finally {
+      setIsSubmitting(false)
     }
+  }
 
   return (
     <Card>
@@ -193,11 +183,7 @@ export function VeiculosForm() {
                         {selectedReboque || "Selecione o tipo de reboque"}
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      reboqueOptions={reboqueOptions}
-                      setSelectedReboque={setSelectedReboque}
-                      form={form}
-                    >
+                    <DropdownMenuContent>
                       {reboqueOptions.map((option) => (
                         <DropdownMenuItem
                           key={option}
@@ -222,7 +208,12 @@ export function VeiculosForm() {
                   <FormItem>
                     <FormLabel>Ano</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Ano do veículo" {...field} value={field.value ?? ""} />
+                      <Input
+                        type="number"
+                        placeholder="Ano do veículo"
+                        {...field}
+                        value={field.value ?? ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -243,8 +234,8 @@ export function VeiculosForm() {
                         <DropdownMenuItem
                           key={motorista.id}
                           onClick={() => {
-                            setSelectedMotorista(motorista.nome);
-                            form.setValue("veiculo_motorista", motorista.id); // Salva o ID do motorista no formulário
+                            setSelectedMotorista(motorista.nome)
+                            form.setValue("veiculo_motorista", motorista.id) // Salva o ID do motorista no formulário
                           }}
                         >
                           {motorista.nome}

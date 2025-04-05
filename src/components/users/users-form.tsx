@@ -1,20 +1,27 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
-import { Loader2 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import bcrypt from "bcryptjs";
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Card, CardContent } from "@/components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { toast } from "@/components/ui/use-toast"
+import { Loader2 } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import bcrypt from "bcryptjs"
+import { createUser, getUserRoles } from "@/lib/services/users-service"
 
 const formSchema = z.object({
   user_nome: z.string().min(3, {
@@ -33,32 +40,28 @@ const formSchema = z.object({
     message: "A senha deve ter pelo menos 6 caracteres.",
   }),
   user_ativo: z.boolean(),
-});
+})
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof formSchema>
 
 export function UsersForm() {
-  const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [roles, setRoles] = useState<string[]>([]);
+  const router = useRouter()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [roles, setRoles] = useState<string[]>([])
 
   useEffect(() => {
     async function fetchRoles() {
       try {
-        // Simulação: Buscar os papéis diretamente do banco
-        const { data, error } = await supabase.rpc("get_user_roles"); // Função RPC para retornar os papéis
-
-        if (error) throw error;
-
-        setRoles(data || []);
+        const data = await getUserRoles()
+        setRoles(data || [])
       } catch (err) {
-        console.error("Erro ao buscar papéis:", err);
+        console.error("Erro ao buscar papéis:", err)
       }
     }
 
-    fetchRoles();
-  }, []);
+    fetchRoles()
+  }, [])
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -70,46 +73,32 @@ export function UsersForm() {
       user_senha: "",
       user_ativo: true,
     },
-  });
+  })
 
   async function onSubmit(values: FormValues) {
-    setIsSubmitting(true);
-    setError(null);
+    setIsSubmitting(true)
+    setError(null)
 
     try {
-      let hashedPassword = null;
-
-      // Realizar o hash da senha, se ela for preenchida
-      if (values.user_senha) {
-        hashedPassword = await bcrypt.hash(values.user_senha, 10); // 10 é o custo do hash
-      }
-
-      const payload = {
-        ...values,
-        user_senha: hashedPassword || undefined, // Enviar o hash ou ignorar o campo se vazio
-      };
-
-      const { error } = await supabase.from("users").insert([payload]).select();
-
-      if (error) throw error;
+      await createUser(values)
 
       toast({
         title: "Usuário cadastrado com sucesso!",
         description: `O usuário ${values.user_nome} foi cadastrado.`,
-      });
+      })
 
-      router.push("/dashboard/cadastros/users");
-      router.refresh();
+      router.push("/dashboard/cadastros/users")
+      router.refresh()
     } catch (err) {
       if (err instanceof Error) {
-        console.error("Erro ao cadastrar usuário:", err);
-        setError(err.message || "Ocorreu um erro ao cadastrar o usuário.");
+        console.error("Erro ao cadastrar usuário:", err)
+        setError(err.message || "Ocorreu um erro ao cadastrar o usuário.")
       } else {
-        console.error("Erro desconhecido:", err);
-        setError("Ocorreu um erro desconhecido ao cadastrar o usuário.");
+        console.error("Erro desconhecido:", err)
+        setError("Ocorreu um erro desconhecido ao cadastrar o usuário.")
       }
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
@@ -226,7 +215,11 @@ export function UsersForm() {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => router.push("/dashboard/cadastros/users")}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push("/dashboard/cadastros/users")}
+              >
                 Cancelar
               </Button>
               <Button type="submit" disabled={isSubmitting}>
@@ -244,5 +237,5 @@ export function UsersForm() {
         </Form>
       </CardContent>
     </Card>
-  );
+  )
 }

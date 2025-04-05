@@ -9,11 +9,19 @@ import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { CalendarIcon, Loader2 } from "lucide-react"
 
-import { supabase } from "@/lib/supabase"
+import { createMotorista, getMotorista, updateMotorista } from "@/lib/services/motorista-service"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { toast } from "@/components/ui/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
@@ -43,7 +51,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>
 
 interface MotoristasFormProps {
-  id?: string;
+  id?: string
 }
 
 export function MotoristasForm({ id }: MotoristasFormProps) {
@@ -51,27 +59,31 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
   const [isLoading, setIsLoading] = useState(id ? true : false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Função para permitir apenas entrada numérica
-  const handleNumericInput = (e: ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
+  const handleNumericInput = (
+    e: ChangeEvent<HTMLInputElement>,
+    onChange: (value: string) => void
+  ) => {
     // Remove qualquer caractere que não seja número ou ponto decimal
-    const value = e.target.value.replace(/[^0-9.]/g, '')
-    
+    const value = e.target.value.replace(/[^0-9.]/g, "")
+
     // Garante que não haja mais de um ponto decimal
-    const parts = value.split('.')
-    const sanitizedValue = parts.length > 2 
-      ? `${parts[0]}.${parts.slice(1).join('')}` 
-      : value
-      
+    const parts = value.split(".")
+    const sanitizedValue = parts.length > 2 ? `${parts[0]}.${parts.slice(1).join("")}` : value
+
     // Atualiza o valor do campo
     onChange(sanitizedValue)
   }
 
   // Função para permitir apenas entrada de dígitos (sem pontos decimais)
-  const handleDigitsOnly = (e: ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
+  const handleDigitsOnly = (
+    e: ChangeEvent<HTMLInputElement>,
+    onChange: (value: string) => void
+  ) => {
     // Remove qualquer caractere que não seja número
-    const value = e.target.value.replace(/[^0-9]/g, '')
-    
+    const value = e.target.value.replace(/[^0-9]/g, "")
+
     // Atualiza o valor do campo
     onChange(value)
   }
@@ -94,13 +106,7 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
         setIsLoading(true)
         setError(null)
 
-        const { data, error } = await supabase
-          .from("motorista")
-          .select("*")
-          .eq("id", id)
-          .single()
-
-        if (error) throw error
+        const data = await getMotorista(Number(id))
 
         if (data) {
           // Converter a string de data para objeto Date
@@ -122,9 +128,7 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
       } catch (err: unknown) {
         console.error("Erro ao buscar motorista:", err)
         if (err instanceof Error) {
-          setError(
-            err.message || "Ocorreu um erro ao buscar os dados do motorista."
-          )
+          setError(err.message || "Ocorreu um erro ao buscar os dados do motorista.")
         } else {
           setError("Ocorreu um erro desconhecido.")
         }
@@ -136,7 +140,7 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
     if (id) {
       fetchMotorista()
     }
-  }, [id, form])
+  }, [id])
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
@@ -147,22 +151,14 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
 
       if (id) {
         // Modo de edição
-        result = await supabase
-          .from("motorista")
-          .update(values)
-          .eq("id", id)
-          .select()
+        await updateMotorista(Number(id), values)
       } else {
         // Modo de criação
-        result = await supabase.from("motorista").insert([values]).select()
+        await createMotorista(values)
       }
 
-      if (result.error) throw result.error
-
       toast({
-        title: id 
-          ? "Motorista atualizado com sucesso!" 
-          : "Motorista cadastrado com sucesso!",
+        title: id ? "Motorista atualizado com sucesso!" : "Motorista cadastrado com sucesso!",
         description: id
           ? `Os dados de ${values.motorista_nome} foram atualizados.`
           : `O motorista ${values.motorista_nome} foi cadastrado.`,
@@ -224,26 +220,28 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
                 control={form.control}
                 name="motorista_cnh"
                 render={({ field }) => {
-                  const { error } = form.getFieldState("motorista_cnh", form.formState);
+                  const { error } = form.getFieldState("motorista_cnh", form.formState)
                   return (
                     <FormItem>
                       <FormLabel>CNH</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="Número da CNH" 
-                          maxLength={9} 
+                        <Input
+                          placeholder="Número da CNH"
+                          maxLength={9}
                           inputMode="numeric"
-                          {...field} 
+                          {...field}
                           onChange={(e) => handleDigitsOnly(e, field.onChange)}
                         />
                       </FormControl>
                       {error ? (
                         <FormMessage />
                       ) : (
-                        <FormDescription>Número da Carteira Nacional de Habilitação (9 dígitos)</FormDescription>
+                        <FormDescription>
+                          Número da Carteira Nacional de Habilitação (9 dígitos)
+                        </FormDescription>
                       )}
                     </FormItem>
-                  );
+                  )
                 }}
               />
 
@@ -254,11 +252,11 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
                   <FormItem>
                     <FormLabel>Salário</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="text" 
-                        inputMode="numeric" 
-                        placeholder="0.00" 
-                        {...field} 
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="0.00"
+                        {...field}
                         onChange={(e) => handleNumericInput(e, field.onChange)}
                       />
                     </FormControl>
@@ -271,26 +269,28 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
                 control={form.control}
                 name="motorista_frete"
                 render={({ field }) => {
-                  const { error } = form.getFieldState("motorista_frete", form.formState);
+                  const { error } = form.getFieldState("motorista_frete", form.formState)
                   return (
                     <FormItem>
                       <FormLabel>Porcentagem do Frete (%)</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="text" 
-                          inputMode="numeric" 
-                          placeholder="0.00" 
-                          {...field} 
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="0.00"
+                          {...field}
                           onChange={(e) => handleNumericInput(e, field.onChange)}
                         />
                       </FormControl>
                       {error ? (
                         <FormMessage />
                       ) : (
-                        <FormDescription>Percentual que o motorista recebe sobre o valor do frete</FormDescription>
+                        <FormDescription>
+                          Percentual que o motorista recebe sobre o valor do frete
+                        </FormDescription>
                       )}
                     </FormItem>
-                  );
+                  )
                 }}
               />
 
@@ -298,26 +298,28 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
                 control={form.control}
                 name="motorista_estadia"
                 render={({ field }) => {
-                  const { error } = form.getFieldState("motorista_estadia", form.formState);
+                  const { error } = form.getFieldState("motorista_estadia", form.formState)
                   return (
                     <FormItem>
                       <FormLabel>Porcentagem da Estadia (%)</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="text" 
-                          inputMode="numeric" 
-                          placeholder="0.00" 
-                          {...field} 
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="0.00"
+                          {...field}
                           onChange={(e) => handleNumericInput(e, field.onChange)}
                         />
                       </FormControl>
                       {error ? (
                         <FormMessage />
                       ) : (
-                        <FormDescription>Percentual que o motorista recebe sobre o valor da estadia</FormDescription>
+                        <FormDescription>
+                          Percentual que o motorista recebe sobre o valor da estadia
+                        </FormDescription>
                       )}
                     </FormItem>
-                  );
+                  )
                 }}
               />
 
@@ -362,7 +364,11 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => router.push("/dashboard/cadastros/motoristas")}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push("/dashboard/cadastros/motoristas")}
+              >
                 Cancelar
               </Button>
               <Button type="submit" disabled={isSubmitting}>
@@ -382,4 +388,3 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
     </Card>
   )
 }
-

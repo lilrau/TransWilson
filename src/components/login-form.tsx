@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-import bcrypt from "bcryptjs"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -9,9 +8,18 @@ import { Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { supabase } from "@/lib/supabase"
+import { getUserByUsername } from "@/lib/services/users-service"
+import { verifyPassword } from "@/lib/password-utils"
+import { setSessionCookie } from "@/lib/auth"
 
 export function LoginForm() {
   const router = useRouter()
@@ -34,30 +42,23 @@ export function LoginForm() {
     try {
       setLoading(true)
 
-      // Consultar o Supabase para verificar as credenciais
-      const { data, error } = await supabase
-        .from("users")
-        .select("id, user_user, user_senha, user_ativo")
-        .eq("user_user", username)
-        .single()
+      const user = await getUserByUsername(username)
 
-      if (error || !data) {
-        setError("Credenciais inválidas. Tente novamente.")
-        return
-      }
-
-      // Verificar se o usuário está ativo
-      if (!data.user_ativo) {
-        setError("Usuário inativo. Entre em contato com o administrador.")
-        return
-      }
-
-      // Comparar a senha (assumindo que você está armazenando senhas como hash)
-      const isPasswordValid = await verifyPassword(password, data.user_senha)
+      // Comparar a senha com o hash armazenado
+      const isPasswordValid = await verifyPassword(password, user.user_senha)
       if (!isPasswordValid) {
         setError("Credenciais inválidas. Tente novamente.")
         return
       }
+      // Armazenar informações da sessão
+      const session = {
+        userId: user.id,
+        username: user.user_user,
+        expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 dias
+      }
+
+      // Armazenar sessão nos cookies
+      await setSessionCookie(JSON.stringify(session))
 
       // Redirecionar para o dashboard após login bem-sucedido
       router.push("/dashboard")
@@ -99,7 +100,9 @@ export function LoginForm() {
           </div>
         </div>
         <CardTitle className="text-2xl text-center">TransWilson</CardTitle>
-        <CardDescription className="text-center">Entre com suas credenciais para acessar o sistema</CardDescription>
+        <CardDescription className="text-center">
+          Entre com suas credenciais para acessar o sistema
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {error && (
@@ -154,9 +157,3 @@ export function LoginForm() {
     </Card>
   )
 }
-
-// Função para verificar a senha (exemplo com bcrypt)
-async function verifyPassword(inputPassword: string, storedHash: Uint8Array): Promise<boolean> {
-  return bcrypt.compare(inputPassword, storedHash.toString())
-}
-
