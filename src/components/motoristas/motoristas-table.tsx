@@ -77,7 +77,7 @@ export function MotoristasTable() {
     }
 
     fetchMotoristas()
-  }, [])
+  }, [error])
 
   async function handleDelete(id: number) {
     try {

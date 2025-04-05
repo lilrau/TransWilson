@@ -2,6 +2,17 @@
 
 import { supabase } from "../supabase"
 
+export interface MotoristaData {
+  motorista_nome: string
+  motorista_cnh: string
+  motorista_salario: number
+  motorista_frete: number
+  motorista_estadia: number
+  motorista_admissao: Date | string
+  motorista_ult_acesso?: string | null
+  motorista_created_at?: string
+}
+
 export const getAllMotorista = async () => {
   const { data, error } = await supabase()
     .from("motorista")
@@ -20,14 +31,14 @@ export const getMotorista = async (id: number) => {
   return data
 }
 
-export const createMotorista = async (data: any) => {
+export const createMotorista = async (data: MotoristaData) => {
   const result = await supabase().from("motorista").insert(data).select()
 
   if (result.error) throw result.error
   return result.data
 }
 
-export const updateMotorista = async (id: number, data: any) => {
+export const updateMotorista = async (id: number, data: Partial<MotoristaData>) => {
   const result = await supabase().from("motorista").update(data).eq("id", id).select()
 
   if (result.error) throw result.error
