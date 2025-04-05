@@ -20,7 +20,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { toast } from "@/components/ui/use-toast"
 import { Loader2 } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
-import bcrypt from "bcryptjs"
 import { createUser, getUserRoles } from "@/lib/services/users-service"
 
 const formSchema = z.object({

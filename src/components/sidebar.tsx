@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import {
   ChevronDown,
   ClipboardList,
@@ -20,11 +20,12 @@ import {
   UserCog,
   ChevronLeft,
   ChevronRight,
-  LogOut,
+  LogOut
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { clearSessionCookie } from "@/lib/auth"
 
 type SidebarItemWithSubItems = {
   title: string
@@ -43,12 +44,18 @@ type SidebarItem = {
 }
 
 export function Sidebar() {
+  const router = useRouter()
   const pathname = usePathname()
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
     movimentos: true,
     cadastros: true,
   })
   const [collapsed, setCollapsed] = useState(false)
+
+  const handleLogout = async () => {
+    await clearSessionCookie()
+    router.push("/")
+  }
 
   const toggleMenu = (menu: string) => {
     if (collapsed) return
@@ -134,14 +141,14 @@ export function Sidebar() {
       <div
         className={cn(
           "h-screen border-r flex flex-col bg-slate-50 transition-all duration-300",
-          collapsed ? "w-16" : "w-64"
+          collapsed ? "w-16" : "w-64",
         )}
       >
         <Link
           href="/dashboard"
           className={cn(
             "p-4 border-b flex items-center gap-2 hover:bg-slate-100 transition-colors",
-            collapsed && "justify-center"
+            collapsed && "justify-center",
           )}
         >
           <Truck className="h-6 w-6 text-primary flex-shrink-0" />
@@ -161,7 +168,7 @@ export function Sidebar() {
                       collapsed && "justify-center",
                       pathname === item.href
                         ? "bg-primary text-primary-foreground"
-                        : "text-slate-700 hover:bg-slate-100"
+                        : "text-slate-700 hover:bg-slate-100",
                     )}
                   >
                     <item.icon className="h-5 w-5 flex-shrink-0" />
@@ -180,7 +187,7 @@ export function Sidebar() {
                     onClick={() => toggleMenu("movimentos")}
                     className={cn(
                       "w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100",
-                      collapsed && "justify-center"
+                      collapsed && "justify-center",
                     )}
                   >
                     <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
@@ -191,7 +198,7 @@ export function Sidebar() {
                       <ChevronDown
                         className={cn(
                           "h-4 w-4 ml-auto transition-transform",
-                          openMenus.movimentos ? "transform rotate-180" : ""
+                          openMenus.movimentos ? "transform rotate-180" : "",
                         )}
                       />
                     )}
@@ -210,7 +217,7 @@ export function Sidebar() {
                         "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
                         pathname === item.href
                           ? "bg-primary text-primary-foreground"
-                          : "text-slate-700 hover:bg-slate-100"
+                          : "text-slate-700 hover:bg-slate-100",
                       )}
                     >
                       <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -231,7 +238,7 @@ export function Sidebar() {
                             "flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium",
                             pathname === item.href
                               ? "bg-primary text-primary-foreground"
-                              : "text-slate-700 hover:bg-slate-100"
+                              : "text-slate-700 hover:bg-slate-100",
                           )}
                         >
                           <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -252,7 +259,7 @@ export function Sidebar() {
                     onClick={() => toggleMenu("cadastros")}
                     className={cn(
                       "w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100",
-                      collapsed && "justify-center"
+                      collapsed && "justify-center",
                     )}
                   >
                     <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
@@ -263,7 +270,7 @@ export function Sidebar() {
                       <ChevronDown
                         className={cn(
                           "h-4 w-4 ml-auto transition-transform",
-                          openMenus.cadastros ? "transform rotate-180" : ""
+                          openMenus.cadastros ? "transform rotate-180" : "",
                         )}
                       />
                     )}
@@ -282,7 +289,7 @@ export function Sidebar() {
                         "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
                         pathname === item.href
                           ? "bg-primary text-primary-foreground"
-                          : "text-slate-700 hover:bg-slate-100"
+                          : "text-slate-700 hover:bg-slate-100",
                       )}
                     >
                       <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -303,7 +310,7 @@ export function Sidebar() {
                             "flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium",
                             pathname === item.href
                               ? "bg-primary text-primary-foreground"
-                              : "text-slate-700 hover:bg-slate-100"
+                              : "text-slate-700 hover:bg-slate-100",
                           )}
                         >
                           <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -336,18 +343,17 @@ export function Sidebar() {
           </Button>
 
           {!collapsed && (
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/">Sair</Link>
+            <Button variant="outline" className="w-full" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Sair
             </Button>
           )}
 
           {collapsed && (
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" asChild className="w-10 h-10">
-                  <Link href="/">
-                    <DollarSign className="h-5 w-5" />
-                  </Link>
+                <Button variant="outline" size="icon" onClick={handleLogout} className="w-10 h-10">
+                  <LogOut className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">Sair</TooltipContent>
