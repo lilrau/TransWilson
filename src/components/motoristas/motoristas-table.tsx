@@ -56,28 +56,28 @@ export function MotoristasTable() {
   const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
+    async function fetchMotoristas() {
+      try {
+        setLoading(true)
+        const data = await getAllMotorista()
+  
+        if (error) throw error
+  
+        setMotoristas(data || [])
+      } catch (err: unknown) {
+        console.error("Erro ao buscar motoristas:", err)
+        if (err instanceof Error) {
+          setError(err.message)
+        } else {
+          setError("Ocorreu um erro ao buscar os motoristas.")
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
     fetchMotoristas()
   }, [])
-
-  async function fetchMotoristas() {
-    try {
-      setLoading(true)
-      const data = await getAllMotorista()
-
-      if (error) throw error
-
-      setMotoristas(data || [])
-    } catch (err: unknown) {
-      console.error("Erro ao buscar motoristas:", err)
-      if (err instanceof Error) {
-        setError(err.message)
-      } else {
-        setError("Ocorreu um erro ao buscar os motoristas.")
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
 
   async function handleDelete(id: number) {
     try {

@@ -185,7 +185,7 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
               <FormField
                 control={form.control}
                 name="user_senha"
-                render={({ field }) => (
+                render={() => (
                   <FormItem>
                     <FormLabel>Senha</FormLabel>
                     <FormControl>
