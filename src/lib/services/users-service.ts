@@ -2,6 +2,16 @@
 
 import { supabase } from "../supabase"
 
+export interface UserData {
+  user_nome: string
+  user_user: string
+  user_email: string
+  user_role: string
+  user_senha?: string
+  user_ativo: boolean
+  user_created_at?: string
+}
+
 export const getAllUsers = async () => {
   const { data, error } = await supabase()
     .from("users")
@@ -32,7 +42,7 @@ export const getUserByUsername = async (username: string) => {
   return data
 }
 
-export const createUser = async (data: any) => {
+export const createUser = async (data: UserData) => {
   // Se houver uma senha, aplica o hash antes de salvar
   if (data.user_senha) {
     const { hashPassword } = await import("../password-utils")
@@ -45,7 +55,7 @@ export const createUser = async (data: any) => {
   return result.data
 }
 
-export const updateUser = async (id: number, data: any) => {
+export const updateUser = async (id: number, data: Partial<UserData>) => {
   // Se houver uma senha, aplica o hash antes de atualizar
   if (data.user_senha) {
     const { hashPassword } = await import("../password-utils")

@@ -50,12 +50,7 @@ export function VeiculosForm() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [reboqueOptions, setreboqueOptions] = useState<string[]>([
-    "Carreta",
-    "Bi-trem",
-    "Rodotrem",
-    "Simples",
-  ])
+  const reboqueOptions = ["Carreta", "Bi-trem", "Rodotrem", "Simples"]
   const [selectedReboque, setSelectedReboque] = useState<string>("")
   const [motoristas, setMotoristas] = useState<{ id: number; nome: string }[]>([])
   const [selectedMotorista, setSelectedMotorista] = useState<string>("")
