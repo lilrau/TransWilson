@@ -35,8 +35,7 @@ export const updateVeiculo = async (id: number, data: any) => {
 }
 
 export const deleteVeiculo = async (id: number) => {
-  const error = await supabase().from("veiculo").delete().eq("id", id)
-  console.log(error)
-
-  if (error) throw error
+  const result = await supabase().from("veiculo").delete().eq("id", id)
+  if (result.error) throw result.error
+  return result
 }

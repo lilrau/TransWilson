@@ -1,4 +1,4 @@
-import { UsersManagement } from "@/components/users/users-management"
+import { UsersManagement } from "@/components/users/users-table"
 
 export default function UsersPage() {
   return (
