@@ -52,7 +52,8 @@ export function FretesTable() {
   const [fretes, setFretes] = useState<Frete[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [deletingId, setDeletingId] = useState<number | null>(null)
+  // Remove this line since it's not being used
+  // const [deletingId, setDeletingId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
@@ -81,6 +82,10 @@ export function FretesTable() {
       setIsDeleting(true)
       await deleteFrete(id)
       setFretes(fretes.filter((f) => f.id !== id))
+      toast({
+        title: "Frete excluído",
+        description: "O frete foi excluído com sucesso.",
+      })
     } catch (err: unknown) {
       console.error("Erro ao excluir frete:", err)
       toast({
@@ -90,7 +95,6 @@ export function FretesTable() {
       })
     } finally {
       setIsDeleting(false)
-      setDeletingId(null)
     }
   }
 
@@ -181,7 +185,6 @@ export function FretesTable() {
                         <DropdownMenuItem
                           onSelect={(e) => {
                             e.preventDefault()
-                            setDeletingId(frete.id)
                           }}
                           className="text-destructive focus:text-destructive"
                         >
@@ -198,7 +201,7 @@ export function FretesTable() {
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel onClick={() => setDeletingId(null)}>
+                          <AlertDialogCancel>
                             Cancelar
                           </AlertDialogCancel>
                           <AlertDialogAction
