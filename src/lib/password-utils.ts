@@ -9,7 +9,7 @@ import bcrypt from "bcryptjs"
  * @returns Uma Promise que resolve para o hash da senha
  */
 export async function hashPassword(password: string): Promise<string> {
-  const saltRounds = 10
+  const saltRounds = 10 // Número de rounds para o salt (recomendado para segurança)
   return bcrypt.hash(password, saltRounds)
 }
 

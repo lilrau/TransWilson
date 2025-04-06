@@ -1,5 +1,6 @@
 "use server"
 
+import { unstable_cache, revalidateTag } from "next/cache"
 import { supabase } from "../supabase"
 
 export interface MotoristaData {
@@ -13,28 +14,46 @@ export interface MotoristaData {
   motorista_created_at?: string
 }
 
-export const getAllMotorista = async () => {
-  const { data, error } = await supabase()
-    .from("motorista")
-    .select("*")
-    .order("motorista_nome", { ascending: true })
+export const getAllMotorista = unstable_cache(
+  async () => {
+    const { data, error } = await supabase()
+      .from("motorista")
+      .select("*")
+      .order("motorista_nome", { ascending: true })
 
-  if (error) throw error
+    if (error) throw error
 
-  return data
-}
+    return data
+  },
+  ["motoristas-list"],
+  {
+    revalidate: 60, // Revalidar a cada 60 segundos
+    tags: ["motoristas"]
+  }
+)
 
-export const getMotorista = async (id: number) => {
-  const { data, error } = await supabase().from("motorista").select("*").eq("id", id).single()
+export const getMotorista = unstable_cache(
+  async (id: number) => {
+    const { data, error } = await supabase().from("motorista").select("*").eq("id", id).single()
 
-  if (error) throw error
-  return data
-}
+    if (error) throw error
+    return data
+  },
+  ["motorista-detail"],
+  {
+    revalidate: 60, // Revalidar a cada 60 segundos
+    tags: ["motoristas", "motorista"]
+  }
+)
 
 export const createMotorista = async (data: MotoristaData) => {
   const result = await supabase().from("motorista").insert(data).select()
 
   if (result.error) throw result.error
+  
+  // Invalidar o cache quando um novo motorista é criado
+  revalidateTag("motoristas")
+  
   return result.data
 }
 
@@ -42,11 +61,22 @@ export const updateMotorista = async (id: number, data: Partial<MotoristaData>) 
   const result = await supabase().from("motorista").update(data).eq("id", id).select()
 
   if (result.error) throw result.error
+  
+  // Invalidar o cache quando um motorista é atualizado
+  revalidateTag("motoristas")
+  revalidateTag("motorista")
+  
   return result.data
 }
 
 export const deleteMotorista = async (id: number) => {
   const result = await supabase().from("motorista").delete().eq("id", id)
+  
   if (result.error) throw result.error
+  
+  // Invalidar o cache quando um motorista é excluído
+  revalidateTag("motoristas")
+  revalidateTag("motorista")
+  
   return result
 }

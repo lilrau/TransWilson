@@ -12,7 +12,8 @@ interface PageParams {
   }
 }
 
-export default function EditarUsuarioPage({ params }: PageParams) {
+export default async function EditarUsuarioPage({ params }: PageParams) {
+  const { id } = await params
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
@@ -20,7 +21,7 @@ export default function EditarUsuarioPage({ params }: PageParams) {
         <p className="text-muted-foreground">Atualize os dados do usuário.</p>
       </div>
 
-      <UsersEditForm id={params.id} />
+      <UsersEditForm id={id} />
     </div>
   )
 }

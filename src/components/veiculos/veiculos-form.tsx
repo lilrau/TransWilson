@@ -207,7 +207,7 @@ export function VeiculosForm() {
                         type="number"
                         placeholder="Ano do veículo"
                         {...field}
-                        value={field.value ?? ""}
+                        value={field.value || ""}
                       />
                     </FormControl>
                     <FormMessage />
@@ -253,7 +253,7 @@ export function VeiculosForm() {
                         type="number"
                         placeholder="KM inicial do veículo"
                         {...field}
-                        value={field.value ?? ""}
+                        value={field.value || ""}
                       />
                     </FormControl>
                     <FormMessage />
@@ -273,7 +273,7 @@ export function VeiculosForm() {
                         step="0.01"
                         placeholder="Litros iniciais no tanque"
                         {...field}
-                        value={field.value ?? ""}
+                        value={field.value || ""}
                       />
                     </FormControl>
                     <FormMessage />
