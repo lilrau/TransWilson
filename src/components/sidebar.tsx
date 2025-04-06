@@ -74,6 +74,11 @@ export function Sidebar() {
     icon: ClipboardList,
     items: [
       {
+        title: "Fretes",
+        href: "/dashboard/movimentos/fretes",
+        icon: Truck,
+      },
+      {
         title: "Criar Frete",
         href: "/dashboard/movimentos/criar-frete",
         icon: PlusCircle,
