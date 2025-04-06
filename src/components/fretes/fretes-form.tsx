@@ -33,22 +33,31 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 const formSchema = z.object({
-  frete_nome: z.string().min(3, {
-    message: "O nome do frete deve ter pelo menos 3 caracteres.",
-  }),
-  frete_veiculo: z.coerce.number().nullable(),
-  frete_agenciador: z.coerce.number().nullable(),
-  frete_motorista: z.coerce.number().nullable(),
-  frete_origem: z.string().min(3, {
-    message: "A origem deve ter pelo menos 3 caracteres.",
-  }),
-  frete_destino: z.string().min(3, {
-    message: "O destino deve ter pelo menos 3 caracteres.",
-  }),
-  frete_distancia: z.coerce.number().min(0).nullable(),
-  frete_peso: z.array(z.coerce.number().min(0)),
-  frete_valor_tonelada: z.coerce.number().min(0),
-})
+    frete_nome: z.string().min(3, {
+      message: "O nome do frete deve ter pelo menos 3 caracteres.",
+    }),
+    frete_veiculo: z.coerce.number({
+      required_error: "Por favor, selecione um veículo",
+      invalid_type_error: "Selecione um veículo válido",
+    }).min(1, "Por favor, selecione um veículo"),
+    frete_agenciador: z.coerce.number({
+      required_error: "Por favor, selecione um agenciador",
+      invalid_type_error: "Selecione um agenciador válido",
+    }).min(1, "Por favor, selecione um agenciador"),
+    frete_motorista: z.coerce.number({
+      required_error: "Por favor, selecione um motorista",
+      invalid_type_error: "Selecione um motorista válido",
+    }).min(1, "Por favor, selecione um motorista"),
+    frete_origem: z.string().min(3, {
+      message: "A origem deve ter pelo menos 3 caracteres.",
+    }),
+    frete_destino: z.string().min(3, {
+      message: "O destino deve ter pelo menos 3 caracteres.",
+    }),
+    frete_distancia: z.coerce.number().min(0).nullable(),
+    frete_peso: z.array(z.coerce.number().min(0)),
+    frete_valor_tonelada: z.coerce.number().min(0),
+  })  
 
 type FormValues = z.infer<typeof formSchema>
 
@@ -70,9 +79,9 @@ export function FretesForm({ id }: FretesFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       frete_nome: "",
-      frete_veiculo: null,
-      frete_agenciador: null,
-      frete_motorista: null,
+      frete_veiculo: undefined,
+      frete_agenciador: undefined,
+      frete_motorista: undefined,
       frete_origem: "",
       frete_destino: "",
       frete_distancia: null,
@@ -228,8 +237,8 @@ export function FretesForm({ id }: FretesFormProps) {
                   <FormItem>
                     <FormLabel>Veículo</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value?.toString()}
+                      onValueChange={(value) => field.onChange(Number(value))}
+                      value={field.value?.toString()}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -244,7 +253,9 @@ export function FretesForm({ id }: FretesFormProps) {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.frete_veiculo?.message}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -256,8 +267,8 @@ export function FretesForm({ id }: FretesFormProps) {
                   <FormItem>
                     <FormLabel>Agenciador</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value?.toString()}
+                      onValueChange={(value) => field.onChange(Number(value))}
+                      value={field.value?.toString()}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -272,7 +283,9 @@ export function FretesForm({ id }: FretesFormProps) {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.frete_agenciador?.message}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -284,8 +297,8 @@ export function FretesForm({ id }: FretesFormProps) {
                   <FormItem>
                     <FormLabel>Motorista</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value?.toString()}
+                      onValueChange={(value) => field.onChange(Number(value))}
+                      value={field.value?.toString()}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -300,7 +313,9 @@ export function FretesForm({ id }: FretesFormProps) {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.frete_motorista?.message}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
