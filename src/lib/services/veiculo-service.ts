@@ -80,3 +80,4 @@ export const deleteVeiculo = async (id: number) => {
   
   return result
 }
+

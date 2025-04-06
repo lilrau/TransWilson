@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { createVeiculo } from "@/lib/services/veiculo-service"
+import { createVeiculo, getVeiculo, updateVeiculo } from "@/lib/services/veiculo-service"
 import { getAllMotorista } from "@/lib/services/motorista-service"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,6 +27,7 @@ import {
 import { toast } from "@/components/ui/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Loader2 } from "lucide-react"
 
 const formSchema = z.object({
   veiculo_nome: z.string().min(3, {
@@ -46,8 +47,13 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>
 
-export function VeiculosForm() {
+interface VeiculosFormProps {
+  id?: string
+}
+
+export function VeiculosForm({ id }: VeiculosFormProps) {
   const router = useRouter()
+  const [isLoading, setIsLoading] = useState(id ? true : false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const reboqueOptions = ["Carreta", "Bi-trem", "Rodotrem", "Simples"]
@@ -93,24 +99,73 @@ export function VeiculosForm() {
     fetchMotoristas()
   }, [])
 
+  // Add useEffect for fetching vehicle data when in edit mode
+  useEffect(() => {
+    async function fetchVeiculo() {
+      try {
+        setIsLoading(true)
+        setError(null)
+
+        const data = await getVeiculo(Number(id))
+
+        if (data) {
+          form.reset({
+            veiculo_nome: data.veiculo_nome || "",
+            veiculo_placa: data.veiculo_placa || "",
+            veiculo_reboque: data.veiculo_reboque || "",
+            veiculo_ano: data.veiculo_ano || null,
+            veiculo_km_inicial: data.veiculo_km_inicial || null,
+            veiculo_litro_inicial: data.veiculo_litro_inicial || null,
+            veiculo_motorista: data.veiculo_motorista || null,
+          })
+          setSelectedReboque(data.veiculo_reboque || "")
+          if (data.motorista_nome) {
+            setSelectedMotorista(data.motorista_nome)
+          }
+        } else {
+          setError("Veículo não encontrado.")
+        }
+      } catch (err) {
+        console.error("Erro ao buscar veículo:", err)
+        if (err instanceof Error) {
+          setError(err.message || "Ocorreu um erro ao buscar os dados do veículo.")
+        } else {
+          setError("Ocorreu um erro desconhecido.")
+        }
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (id) {
+      fetchVeiculo()
+    }
+  }, [id, form])
+
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
     setError(null)
 
     try {
-      // Preparar os dados para envio
       const veiculoData = {
         ...values,
         veiculo_reboque: selectedReboque,
         veiculo_motorista: values.veiculo_motorista || null,
       }
 
-      // Usar o serviço para criar o veículo
-      await createVeiculo(veiculoData)
+      if (id) {
+        // Update mode
+        await updateVeiculo(Number(id), veiculoData)
+      } else {
+        // Create mode
+        await createVeiculo(veiculoData)
+      }
 
       toast({
-        title: "Veículo cadastrado com sucesso!",
-        description: `O veículo ${values.veiculo_nome} foi cadastrado.`,
+        title: id ? "Veículo atualizado com sucesso!" : "Veículo cadastrado com sucesso!",
+        description: id
+          ? `Os dados de ${values.veiculo_nome} foram atualizados.`
+          : `O veículo ${values.veiculo_nome} foi cadastrado.`,
       })
 
       router.push("/dashboard/cadastros/veiculos")
@@ -126,6 +181,16 @@ export function VeiculosForm() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="pt-6 flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -283,7 +348,14 @@ export function VeiculosForm() {
             </div>
 
             <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? "Cadastrando..." : "Cadastrar Veículo"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {id ? "Atualizando..." : "Cadastrando..."}
+                </>
+              ) : (
+                id ? "Atualizar Veículo" : "Cadastrar Veículo"
+              )}
             </Button>
           </form>
         </Form>
