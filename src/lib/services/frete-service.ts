@@ -83,7 +83,7 @@ export const createFrete = async (data: FreteData) => {
 
 export const updateFrete = async (id: number, data: Partial<FreteData>) => {
   // If updating weights or price per ton, recalculate total value
-  let updateData = { ...data }
+  const updateData = { ...data }
   if (data.frete_peso || data.frete_valor_tonelada) {
     const currentFrete = await getFrete(id)
     const weights = data.frete_peso || currentFrete.frete_peso
