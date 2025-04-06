@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Loader2, MoreHorizontal, Plus, Trash } from "lucide-react"
+import { Edit, Loader2, MoreHorizontal, Trash } from "lucide-react"
 
 import { deleteUser, getAllUsers } from "@/lib/services/users-service"
 import { Button } from "@/components/ui/button"
@@ -44,7 +44,7 @@ type User = {
   user_ativo: boolean
 }
 
-export function UsersManagement() {
+export function UsersTable() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -120,21 +120,7 @@ export function UsersManagement() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Usuários</h1>
-          <p className="text-muted-foreground text-sm">
-            Gerencie os usuários cadastrados no sistema.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/dashboard/cadastros/users/novo">
-            <Plus className="mr-2 h-4 w-4" /> Novo Usuário
-          </Link>
-        </Button>
-      </div>
-      <div className="rounded-md border bg-white mt-6 p-4">
+    <div className="rounded-md border bg-white">
         <Table>
           <TableHeader>
             <TableRow>
@@ -216,6 +202,5 @@ export function UsersManagement() {
           </TableBody>
         </Table>
       </div>
-    </div>
   )
 }

@@ -69,7 +69,12 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
       try {
         setIsLoading(true)
         const data = await getUserById(Number(id))
-        form.reset(data)
+        // Em vez de excluir o campo, definimos como string vazia para manter o campo controlado
+        const userData = {
+          ...data,
+          user_senha: ""
+        }
+        form.reset(userData)
       } catch (err) {
         console.error("Erro ao buscar usuário:", err)
         setError("Não foi possível carregar os dados do usuário.")
@@ -185,11 +190,15 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
               <FormField
                 control={form.control}
                 name="user_senha"
-                render={() => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Senha</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Digite uma nova senha (opcional)" />
+                      <Input
+                        type="password"
+                        placeholder="Digite uma nova senha (opcional)"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
