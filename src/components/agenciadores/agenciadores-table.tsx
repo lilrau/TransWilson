@@ -179,11 +179,11 @@ export function AgenciadoresTable() {
                             Cancelar
                           </AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={() => agenciador.id && handleDelete(agenciador.id)}
+                            onClick={() => handleDelete(agenciador.id)}
                             className="bg-destructive hover:bg-destructive/90"
                             disabled={isDeleting}
                           >
-                            {isDeleting ? (
+                            {isDeleting && deletingId === agenciador.id ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 Excluindo...
