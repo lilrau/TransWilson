@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { AgenciadoresTable } from "@/components/agenciadores/agenciadores-table"
+import { Plus } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "Agenciadores - Sistema de Fretagem",
@@ -17,7 +18,9 @@ export default function AgenciadoresPage() {
           <p className="text-muted-foreground">Gerencie os agenciadores cadastrados no sistema.</p>
         </div>
         <Button asChild>
-          <Link href="/dashboard/cadastros/agenciadores/novo">Cadastrar Agenciador</Link>
+          <Link href="/dashboard/cadastros/agenciadores/novo">
+            <Plus className="mr-2 h-4 w-4" /> Novo Agenciador
+          </Link>
         </Button>
       </div>
 
