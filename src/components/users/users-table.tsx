@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Edit, Loader2, MoreHorizontal, Trash } from "lucide-react"
+import { Loader2, MoreHorizontal, Trash } from "lucide-react"
 
 import { deleteUser, getAllUsers } from "@/lib/services/users-service"
 import { Button } from "@/components/ui/button"
