@@ -4,6 +4,7 @@ import { unstable_cache, revalidateTag } from "next/cache"
 import { supabase } from "../supabase"
 
 export interface MotoristaData {
+  id: number
   motorista_nome: string
   motorista_cnh: string
   motorista_salario: number
@@ -15,7 +16,7 @@ export interface MotoristaData {
 }
 
 export const getAllMotorista = unstable_cache(
-  async () => {
+  async (): Promise<MotoristaData[]> => {
     const { data, error } = await supabase()
       .from("motorista")
       .select("*")
@@ -28,12 +29,12 @@ export const getAllMotorista = unstable_cache(
   ["motoristas-list"],
   {
     revalidate: 60, // Revalidar a cada 60 segundos
-    tags: ["motoristas"]
+    tags: ["motoristas"],
   }
 )
 
 export const getMotorista = unstable_cache(
-  async (id: number) => {
+  async (id: number): Promise<MotoristaData> => {
     const { data, error } = await supabase().from("motorista").select("*").eq("id", id).single()
 
     if (error) throw error
@@ -42,18 +43,18 @@ export const getMotorista = unstable_cache(
   ["motorista-detail"],
   {
     revalidate: 60, // Revalidar a cada 60 segundos
-    tags: ["motoristas", "motorista"]
+    tags: ["motoristas", "motorista"],
   }
 )
 
-export const createMotorista = async (data: MotoristaData) => {
+export const createMotorista = async (data: Partial<MotoristaData>) => {
   const result = await supabase().from("motorista").insert(data).select()
 
   if (result.error) throw result.error
-  
+
   // Invalidar o cache quando um novo motorista é criado
   revalidateTag("motoristas")
-  
+
   return result.data
 }
 
@@ -61,22 +62,21 @@ export const updateMotorista = async (id: number, data: Partial<MotoristaData>) 
   const result = await supabase().from("motorista").update(data).eq("id", id).select()
 
   if (result.error) throw result.error
-  
+
   // Invalidar o cache quando um motorista é atualizado
   revalidateTag("motoristas")
   revalidateTag("motorista")
-  
+
   return result.data
 }
 
 export const deleteMotorista = async (id: number) => {
   const result = await supabase().from("motorista").delete().eq("id", id)
-  
-  if (result.error) throw result.error
+
+  if (result.error?.code === "23503")
+    throw new Error("Não é possível excluir o motorista porque há pedidos associados a ele.")
   
   // Invalidar o cache quando um motorista é excluído
   revalidateTag("motoristas")
   revalidateTag("motorista")
-  
-  return result
 }

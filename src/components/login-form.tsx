@@ -12,7 +12,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -27,8 +26,8 @@ export function LoginForm() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [resendingPassword, setResendingPassword] = useState(false)
-  const [resendMessage, setResendMessage] = useState("")
+  // const [resendingPassword, setResendingPassword] = useState(false)
+  // const [resendMessage, setResendMessage] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,26 +69,26 @@ export function LoginForm() {
     }
   }
 
-  const handleResendPassword = async () => {
-    if (!username) {
-      setError("Por favor, informe seu nome de usuário para receber a senha")
-      return
-    }
+  // const handleResendPassword = async () => {
+  //   if (!username) {
+  //     setError("Por favor, informe seu nome de usuário para receber a senha")
+  //     return
+  //   }
 
-    try {
-      setResendingPassword(true)
-      setResendMessage("")
-      // Aqui você adicionaria a lógica real para reenviar a senha
-      // Simulando um reenvio para demonstração
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      setResendMessage("Senha reenviada com sucesso! Verifique seu email cadastrado.")
-    } catch (_err) {
-      console.error(_err)
-      setError("Falha ao reenviar a senha. Tente novamente.")
-    } finally {
-      setResendingPassword(false)
-    }
-  }
+  //   try {
+  //     setResendingPassword(true)
+  //     setResendMessage("")
+  //     // Aqui você adicionaria a lógica real para reenviar a senha
+  //     // Simulando um reenvio para demonstração
+  //     await new Promise((resolve) => setTimeout(resolve, 1000))
+  //     setResendMessage("Senha reenviada com sucesso! Verifique seu email cadastrado.")
+  //   } catch (_err) {
+  //     console.error(_err)
+  //     setError("Falha ao reenviar a senha. Tente novamente.")
+  //   } finally {
+  //     setResendingPassword(false)
+  //   }
+  // }
 
   return (
     <Card className="w-full">
@@ -138,7 +137,7 @@ export function LoginForm() {
           </div>
         </form>
       </CardContent>
-      <CardFooter className="flex flex-col space-y-4">
+      {/* <CardFooter className="flex flex-col space-y-4">
         {resendMessage && (
           <Alert className="bg-green-50 text-green-800 border-green-200">
             <AlertDescription>{resendMessage}</AlertDescription>
@@ -153,7 +152,7 @@ export function LoginForm() {
         >
           {resendingPassword ? "Reenviando..." : "Reenviar senha para o email"}
         </Button>
-      </CardFooter>
+      </CardFooter> */}
     </Card>
   )
 }
