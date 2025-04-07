@@ -28,7 +28,7 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   // const [resendingPassword, setResendingPassword] = useState(false)
-  const [resendMessage, setResendMessage] = useState("")
+  // const [resendMessage, setResendMessage] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -138,13 +138,13 @@ export function LoginForm() {
           </div>
         </form>
       </CardContent>
-      <CardFooter className="flex flex-col space-y-4">
+      {/* <CardFooter className="flex flex-col space-y-4">
         {resendMessage && (
           <Alert className="bg-green-50 text-green-800 border-green-200">
             <AlertDescription>{resendMessage}</AlertDescription>
           </Alert>
         )}
-        {/* <Button
+        <Button
           type="button"
           variant="outline"
           className="w-full"
@@ -152,8 +152,8 @@ export function LoginForm() {
           disabled={resendingPassword}
         >
           {resendingPassword ? "Reenviando..." : "Reenviar senha para o email"}
-        </Button> */}
-      </CardFooter>
+        </Button>
+      </CardFooter> */}
     </Card>
   )
 }

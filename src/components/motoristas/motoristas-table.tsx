@@ -5,7 +5,7 @@ import Link from "next/link"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Edit, Loader2, MoreHorizontal, Trash } from "lucide-react"
-import { deleteMotorista, getAllMotorista } from "@/lib/services/motorista-service"
+import { deleteMotorista, getAllMotorista, MotoristaData } from "@/lib/services/motorista-service"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -35,21 +35,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-
-type Motorista = {
-  id: number
-  motorista_nome: string
-  motorista_cnh: string
-  motorista_salario: number
-  motorista_frete: number
-  motorista_estadia: number
-  motorista_admissao: string
-  motorista_ult_acesso: string | null
-  motorista_created_at: string
-}
+import { tryCatch } from "@/lib/try-catch"
 
 export function MotoristasTable() {
-  const [motoristas, setMotoristas] = useState<Motorista[]>([])
+  const [motoristas, setMotoristas] = useState<MotoristaData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
@@ -59,17 +48,15 @@ export function MotoristasTable() {
     async function fetchMotoristas() {
       try {
         setLoading(true)
-        const data = await getAllMotorista()
-  
+        const { data, error } = await tryCatch(getAllMotorista())
+
         if (error) throw error
-  
-        setMotoristas(data || [])
+
+        setMotoristas(data)
       } catch (err: unknown) {
-        console.error("Erro ao buscar motoristas:", err)
         if (err instanceof Error) {
+          console.error("Erro ao buscar motoristas:", err)
           setError(err.message)
-        } else {
-          setError("Ocorreu um erro ao buscar os motoristas.")
         }
       } finally {
         setLoading(false)
@@ -82,16 +69,19 @@ export function MotoristasTable() {
   async function handleDelete(id: number) {
     try {
       setIsDeleting(true)
-      await deleteMotorista(id)
+      const { error } = await tryCatch(deleteMotorista(id))
+      if (error) throw error
 
       setMotoristas(motoristas.filter((m) => m.id !== id))
-    } catch (err: unknown) {
-      console.error("Erro ao excluir motorista:", err)
-      toast({
-        variant: "destructive",
-        title: "Erro ao excluir motorista",
-        description: err instanceof Error ? err.message : "Ocorreu um erro ao excluir o motorista.",
-      })
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error("Erro ao excluir motorista:", err.message)
+        toast({
+          variant: "destructive",
+          title: "Erro ao excluir motorista",
+          description: err.message,
+        })
+      }
     } finally {
       setIsDeleting(false)
       setDeletingId(null)

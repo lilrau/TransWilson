@@ -26,6 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { toast } from "@/components/ui/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { tryCatch } from "@/lib/try-catch"
 
 const formSchema = z.object({
   motorista_nome: z.string().min(3, {
@@ -106,7 +107,8 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
         setIsLoading(true)
         setError(null)
 
-        const data = await getMotorista(Number(id))
+        const { data, error } = await tryCatch(getMotorista(Number(id)))
+        if (error) throw error
 
         if (data) {
           // Converter a string de data para objeto Date
@@ -126,11 +128,9 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
           setError("Motorista não encontrado.")
         }
       } catch (err: unknown) {
-        console.error("Erro ao buscar motorista:", err)
         if (err instanceof Error) {
-          setError(err.message || "Ocorreu um erro ao buscar os dados do motorista.")
-        } else {
-          setError("Ocorreu um erro desconhecido.")
+          console.error("Erro ao buscar motorista:", err)
+          setError("Ocorreu um erro ao buscar os dados do motorista.")
         }
       } finally {
         setIsLoading(false)
@@ -149,7 +149,7 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
     try {
       if (id) {
         // Modo de edição
-        await updateMotorista(Number(id), values)
+        await tryCatch(updateMotorista(Number(id), values))
       } else {
         // Modo de criação
         await createMotorista(values)
@@ -167,10 +167,7 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
     } catch (err) {
       if (err instanceof Error) {
         console.error("Erro ao cadastrar motorista:", err)
-        setError(err.message || "Ocorreu um erro ao cadastrar o motorista.")
-      } else {
-        console.error("Erro desconhecido:", err)
-        setError("Ocorreu um erro desconhecido ao cadastrar o motorista.")
+        setError("Ocorreu um erro ao cadastrar o motorista.")
       }
     } finally {
       setIsSubmitting(false)
