@@ -27,7 +27,7 @@ export function LoginForm() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [resendingPassword, setResendingPassword] = useState(false)
+  // const [resendingPassword, setResendingPassword] = useState(false)
   const [resendMessage, setResendMessage] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,26 +70,26 @@ export function LoginForm() {
     }
   }
 
-  const handleResendPassword = async () => {
-    if (!username) {
-      setError("Por favor, informe seu nome de usuário para receber a senha")
-      return
-    }
+  // const handleResendPassword = async () => {
+  //   if (!username) {
+  //     setError("Por favor, informe seu nome de usuário para receber a senha")
+  //     return
+  //   }
 
-    try {
-      setResendingPassword(true)
-      setResendMessage("")
-      // Aqui você adicionaria a lógica real para reenviar a senha
-      // Simulando um reenvio para demonstração
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      setResendMessage("Senha reenviada com sucesso! Verifique seu email cadastrado.")
-    } catch (_err) {
-      console.error(_err)
-      setError("Falha ao reenviar a senha. Tente novamente.")
-    } finally {
-      setResendingPassword(false)
-    }
-  }
+  //   try {
+  //     setResendingPassword(true)
+  //     setResendMessage("")
+  //     // Aqui você adicionaria a lógica real para reenviar a senha
+  //     // Simulando um reenvio para demonstração
+  //     await new Promise((resolve) => setTimeout(resolve, 1000))
+  //     setResendMessage("Senha reenviada com sucesso! Verifique seu email cadastrado.")
+  //   } catch (_err) {
+  //     console.error(_err)
+  //     setError("Falha ao reenviar a senha. Tente novamente.")
+  //   } finally {
+  //     setResendingPassword(false)
+  //   }
+  // }
 
   return (
     <Card className="w-full">
@@ -144,7 +144,7 @@ export function LoginForm() {
             <AlertDescription>{resendMessage}</AlertDescription>
           </Alert>
         )}
-        <Button
+        {/* <Button
           type="button"
           variant="outline"
           className="w-full"
@@ -152,7 +152,7 @@ export function LoginForm() {
           disabled={resendingPassword}
         >
           {resendingPassword ? "Reenviando..." : "Reenviar senha para o email"}
-        </Button>
+        </Button> */}
       </CardFooter>
     </Card>
   )
