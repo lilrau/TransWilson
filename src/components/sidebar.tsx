@@ -145,7 +145,7 @@ export function Sidebar() {
     <TooltipProvider delayDuration={0}>
       <div
         className={cn(
-          "h-screen border-r flex flex-col bg-slate-50 transition-all duration-300",
+          "h-screen border-r flex flex-col bg-slate-50 transition-all duration-300 ease-in-out will-change-auto",
           collapsed ? "w-16" : "w-64",
         )}
       >
@@ -153,14 +153,16 @@ export function Sidebar() {
           href="/dashboard"
           className={cn(
             "p-4 border-b flex items-center gap-2 hover:bg-slate-100 transition-colors",
-            collapsed && "justify-center",
+            collapsed ? "w-full justify-center" : "w-full"
           )}
         >
-          <Truck className="h-6 w-6 text-primary flex-shrink-0" />
-          {!collapsed && <h1 className="font-semibold text-lg">Sistema de Fretagem</h1>}
+          <div className="flex items-center gap-2 min-w-0">
+            <Truck className="h-6 w-6 text-primary flex-shrink-0" />
+            {!collapsed && <h1 className="font-semibold text-lg truncate">Sistema de Fretagem</h1>}
+          </div>
         </Link>
 
-        <div className="flex-1 overflow-auto py-4">
+        <div className="flex-1 overflow-auto py-4 transition-all duration-300 ease-in-out">
           <nav className="space-y-1 px-2">
             {/* Single items */}
             {singleItems.map((item) => (
@@ -330,7 +332,7 @@ export function Sidebar() {
           </nav>
         </div>
 
-        <div className={cn("p-4 border-t flex flex-col gap-2", collapsed && "items-center")}>
+        <div className={cn("p-4 border-t flex flex-col gap-2 transition-all duration-300 ease-in-out", collapsed && "items-center")}>
           <Button
             variant="outline"
             size="sm"

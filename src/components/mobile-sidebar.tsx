@@ -1,13 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Menu } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Sidebar } from "@/components/sidebar"
+import { usePathname } from "next/navigation"
 
 export function MobileSidebar() {
   const [open, setOpen] = useState(false)
+  const pathname = usePathname()
+
+  useEffect(() => {
+    setOpen(false)
+  }, [pathname])
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
