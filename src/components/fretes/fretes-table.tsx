@@ -4,8 +4,10 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { Edit, Loader2, MoreHorizontal, Trash } from "lucide-react"
-import { deleteFrete, getAllFrete } from "@/lib/services/frete-service"
+import { DollarSign, Edit, Loader2, MoreHorizontal, Trash } from "lucide-react"
+import { deleteFrete, getAllFrete, getFrete } from "@/lib/services/frete-service"
+import { getMotorista } from "@/lib/services/motorista-service"
+import { createDespesa } from "@/lib/services/despesa-service"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -24,6 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { toast } from "@/components/ui/use-toast"
+import { Input } from "@/components/ui/input"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,13 +51,143 @@ type Frete = {
   agenciador: { id: number; nome: string }
 }
 
+type CommissionCalculatorProps = {
+  freteId: number
+  motoristaId: number
+  motoristaName: string
+  commissionValue: string
+  setCommissionValue: (value: string) => void
+  onPayment: (valor: number) => Promise<void>
+  isPaying: boolean
+}
+
+function CommissionCalculator({
+  freteId,
+  motoristaId,
+  motoristaName,
+  commissionValue,
+  setCommissionValue,
+  onPayment,
+  isPaying
+}: CommissionCalculatorProps) {
+  const [calculationData, setCalculationData] = useState<{
+    valorComissao: number;
+    percentual: number;
+    valorTotal: number;
+  } | null>(null)
+  const [isCalculating, setIsCalculating] = useState(true)
+  const [calculationError, setCalculationError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const calculateCommission = async () => {
+      try {
+        setIsCalculating(true)
+        const freteData = await getFrete(freteId)
+        const motoristaData = await getMotorista(motoristaId)
+        
+        if (!freteData || !motoristaData) {
+          throw new Error("Não foi possível obter os dados do frete ou do motorista")
+        }
+        
+        const valorComissao = (freteData.frete_valor_total * motoristaData.motorista_frete) / 100
+        setCommissionValue(valorComissao.toFixed(2))
+        
+        setCalculationData({
+          valorComissao,
+          percentual: motoristaData.motorista_frete,
+          valorTotal: freteData.frete_valor_total
+        })
+      } catch (err) {
+        console.error("Erro ao calcular comissão:", err)
+        setCalculationError("Não foi possível calcular a comissão.")
+      } finally {
+        setIsCalculating(false)
+      }
+    }
+
+    calculateCommission()
+  }, [freteId, motoristaId, setCommissionValue])
+
+  return (
+    <>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Registrar Comissão</AlertDialogTitle>
+        <AlertDialogDescription>
+          <div className="space-y-2">
+            {isCalculating ? (
+              <div className="flex items-center justify-center py-2">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <span>Calculando comissão...</span>
+              </div>
+            ) : calculationError ? (
+              <div className="text-destructive">
+                <p>{calculationError}</p>
+              </div>
+            ) : calculationData ? (
+              <>
+                <p>
+                  Valor total do frete: <strong>{new Intl.NumberFormat("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  }).format(calculationData.valorTotal)}</strong>
+                </p>
+                <p>
+                  Percentual de comissão: <strong>{calculationData.percentual.toFixed(2)}%</strong>
+                </p>
+                <p>
+                  Valor da comissão: <strong className="text-green-600">{new Intl.NumberFormat("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  }).format(calculationData.valorComissao)}</strong>
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Informe o valor da comissão a ser paga para o motorista{" "}
+                  <strong>{motoristaName}</strong>.
+                </p>
+              </>
+            ) : null}
+          </div>
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <div className="py-4">
+        <Input
+          type="number"
+          step="0.01"
+          min="0"
+          placeholder="Valor da comissão"
+          value={commissionValue}
+          onChange={(e) => setCommissionValue(e.target.value)}
+          className="mb-2"
+        />
+      </div>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+        <AlertDialogAction
+          onClick={() => onPayment(parseFloat(commissionValue))}
+          disabled={isPaying || !commissionValue}
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          {isPaying ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Processando...
+            </>
+          ) : (
+            "Confirmar Pagamento"
+          )}
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </>
+  )
+}
+
 export function FretesTable() {
   const [fretes, setFretes] = useState<Frete[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  // Remove this line since it's not being used
-  // const [deletingId, setDeletingId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isPayingCommission, setIsPayingCommission] = useState(false)
+  const [commissionValue, setCommissionValue] = useState<string>("")
 
   useEffect(() => {
     fetchFretes()
@@ -95,6 +228,36 @@ export function FretesTable() {
       })
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  async function handleCommissionPayment(freteId: number, motoristaId: number, motoristaName: string, valor: number) {
+    try {
+      setIsPayingCommission(true)
+      
+      await createDespesa({
+        despesa_nome: `Comissão - ${motoristaName}`,
+        despesa_descricao: `Pagamento de comissão para o motorista ${motoristaName} referente ao frete #${freteId}`,
+        despesa_tipo: "Comissão Motorista",
+        despesa_valor: valor,
+        despesa_veiculo: null,
+        despesa_motorista: motoristaId
+      })
+
+      toast({
+        title: "Comissão registrada",
+        description: `A comissão para ${motoristaName} foi registrada com sucesso.`,
+      })
+    } catch (err: unknown) {
+      console.error("Erro ao registrar comissão:", err)
+      toast({
+        variant: "destructive",
+        title: "Erro ao registrar comissão",
+        description: err instanceof Error ? err.message : "Ocorreu um erro ao registrar a comissão.",
+      })
+    } finally {
+      setIsPayingCommission(false)
+      setCommissionValue("")
     }
   }
 
@@ -174,6 +337,39 @@ export function FretesTable() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Ações</DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    {frete.motorista && (
+                      <>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem
+                              onSelect={(e) => {
+                                e.preventDefault()
+                              }}
+                            >
+                              <DollarSign className="mr-2 h-4 w-4" />
+                              Registrar Comissão
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <CommissionCalculator
+                              freteId={frete.id}
+                              motoristaId={frete.motorista.id}
+                              motoristaName={frete.motorista.motorista_nome}
+                              commissionValue={commissionValue}
+                              setCommissionValue={setCommissionValue}
+                              onPayment={(valor) => handleCommissionPayment(
+                                frete.id,
+                                frete.motorista.id,
+                                frete.motorista.motorista_nome,
+                                valor
+                              )}
+                              isPaying={isPayingCommission}
+                            />
+                          </AlertDialogContent>
+                        </AlertDialog>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
                     <DropdownMenuItem asChild>
                       <Link href={`/dashboard/cadastros/fretes/${frete.id}`}>
                         <Edit className="mr-2 h-4 w-4" />
