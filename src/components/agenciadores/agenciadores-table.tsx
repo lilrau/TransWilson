@@ -15,14 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "@/components/ui/use-toast"
 import {
   AlertDialog,
@@ -118,7 +111,7 @@ export function AgenciadoresTable() {
   }
 
   return (
-    <div className="rounded-md border bg-white">
+    <div className="rounded-md border bg-white dark:bg-zinc-900 dark:border-zinc-800">
       <Table>
         <TableHeader>
           <TableRow>
@@ -170,14 +163,11 @@ export function AgenciadoresTable() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Tem certeza que deseja excluir este agenciador? Esta ação não pode ser
-                            desfeita.
+                            Tem certeza que deseja excluir este agenciador? Esta ação não pode ser desfeita.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel onClick={() => setDeletingId(null)}>
-                            Cancelar
-                          </AlertDialogCancel>
+                          <AlertDialogCancel onClick={() => setDeletingId(null)}>Cancelar</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => handleDelete(agenciador.id)}
                             className="bg-destructive hover:bg-destructive/90"

@@ -8,13 +8,7 @@ import { Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { getUserByUsername } from "@/lib/services/users-service"
 import { verifyPassword } from "@/lib/password-utils"
@@ -91,15 +85,15 @@ export function LoginForm() {
   // }
 
   return (
-    <Card className="w-full">
+    <Card className="w-full dark:bg-zinc-900 dark:border-zinc-800">
       <CardHeader className="space-y-1">
         <div className="flex justify-center mb-2">
           <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
             <Truck className="h-6 w-6 text-primary" />
           </div>
         </div>
-        <CardTitle className="text-2xl text-center">TransWilson</CardTitle>
-        <CardDescription className="text-center">
+        <CardTitle className="text-2xl text-center dark:text-white">TransWilson</CardTitle>
+        <CardDescription className="text-center dark:text-zinc-400">
           Entre com suas credenciais para acessar o sistema
         </CardDescription>
       </CardHeader>
@@ -112,23 +106,29 @@ export function LoginForm() {
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Usuário</Label>
+              <Label htmlFor="username" className="dark:text-white">
+                Usuário
+              </Label>
               <Input
                 id="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
+                className="dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password" className="dark:text-white">
+                Senha
+              </Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
@@ -137,22 +137,6 @@ export function LoginForm() {
           </div>
         </form>
       </CardContent>
-      {/* <CardFooter className="flex flex-col space-y-4">
-        {resendMessage && (
-          <Alert className="bg-green-50 text-green-800 border-green-200">
-            <AlertDescription>{resendMessage}</AlertDescription>
-          </Alert>
-        )}
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={handleResendPassword}
-          disabled={resendingPassword}
-        >
-          {resendingPassword ? "Reenviando..." : "Reenviar senha para o email"}
-        </Button>
-      </CardFooter> */}
     </Card>
   )
 }

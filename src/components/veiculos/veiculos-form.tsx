@@ -10,20 +10,8 @@ import { createVeiculo, getVeiculo, updateVeiculo } from "@/lib/services/veiculo
 import { getAllMotorista } from "@/lib/services/motorista-service"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { toast } from "@/components/ui/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -84,7 +72,7 @@ export function VeiculosForm({ id }: VeiculosFormProps) {
           data?.map((motorista) => ({
             id: motorista.id,
             nome: motorista.motorista_nome,
-          })) || []
+          })) || [],
         )
       } catch (err) {
         console.error("Erro ao buscar motoristas:", err)
@@ -194,7 +182,7 @@ export function VeiculosForm({ id }: VeiculosFormProps) {
   }
 
   return (
-    <Card>
+    <Card className="dark:bg-zinc-900 dark:border-zinc-800">
       <CardContent className="pt-6">
         {error && (
           <Alert variant="destructive" className="mb-6">
@@ -268,12 +256,7 @@ export function VeiculosForm({ id }: VeiculosFormProps) {
                   <FormItem>
                     <FormLabel>Ano</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Ano do veículo"
-                        {...field}
-                        value={field.value || ""}
-                      />
+                      <Input type="number" placeholder="Ano do veículo" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -314,12 +297,7 @@ export function VeiculosForm({ id }: VeiculosFormProps) {
                   <FormItem>
                     <FormLabel>KM Inicial</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="KM inicial do veículo"
-                        {...field}
-                        value={field.value || ""}
-                      />
+                      <Input type="number" placeholder="KM inicial do veículo" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -353,8 +331,10 @@ export function VeiculosForm({ id }: VeiculosFormProps) {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {id ? "Atualizando..." : "Cadastrando..."}
                 </>
+              ) : id ? (
+                "Atualizar Veículo"
               ) : (
-                id ? "Atualizar Veículo" : "Cadastrar Veículo"
+                "Cadastrar Veículo"
               )}
             </Button>
           </form>

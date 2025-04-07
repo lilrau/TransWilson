@@ -6,7 +6,7 @@ import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { DollarSign, Edit, Loader2, MoreHorizontal, Trash } from "lucide-react"
 import { deleteMotorista, getAllMotorista } from "@/lib/services/motorista-service"
-import { createDespesa, getDespesasByMotorista, DespesaMotoristaResumo } from "@/lib/services/despesa-service"
+import { createDespesa, getDespesasByMotorista, type DespesaMotoristaResumo } from "@/lib/services/despesa-service"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -16,14 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "@/components/ui/use-toast"
 import { Input } from "@/components/ui/input"
 import {
@@ -38,6 +31,16 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { tryCatch } from "@/lib/try-catch"
+
+interface MotoristaData {
+  id: number
+  motorista_nome: string
+  motorista_cnh: string
+  motorista_salario: number
+  motorista_frete: number
+  motorista_estadia: number
+  motorista_admissao: string | Date | null
+}
 
 export function MotoristasTable() {
   const [motoristas, setMotoristas] = useState<MotoristaData[]>([])
@@ -59,7 +62,7 @@ export function MotoristasTable() {
 
         if (error) throw error
 
-        setMotoristas(data)
+        setMotoristas(data || [])
       } catch (err: unknown) {
         if (err instanceof Error) {
           console.error("Erro ao buscar motoristas:", err)
@@ -76,7 +79,7 @@ export function MotoristasTable() {
   async function handlePayment(id: number, nome: string, valor: number) {
     try {
       setIsPaying(true)
-      
+
       // Criar uma nova despesa para o pagamento do motorista
       await createDespesa({
         despesa_nome: `Pagamento - ${nome}`,
@@ -84,7 +87,7 @@ export function MotoristasTable() {
         despesa_tipo: "Salários",
         despesa_valor: valor,
         despesa_veiculo: null,
-        despesa_motorista: id
+        despesa_motorista: id,
       })
 
       toast({
@@ -156,7 +159,7 @@ export function MotoristasTable() {
   }
 
   return (
-    <div className="rounded-md border bg-white">
+    <div className="rounded-md border bg-white dark:bg-zinc-900 dark:border-zinc-800">
       <Table>
         <TableHeader>
           <TableRow>
@@ -180,12 +183,8 @@ export function MotoristasTable() {
                   currency: "BRL",
                 }).format(motorista.motorista_salario)}
               </TableCell>
-              <TableCell className="hidden md:table-cell">
-                {motorista.motorista_frete.toFixed(2)}%
-              </TableCell>
-              <TableCell className="hidden md:table-cell">
-                {motorista.motorista_estadia.toFixed(2)}%
-              </TableCell>
+              <TableCell className="hidden md:table-cell">{motorista.motorista_frete.toFixed(2)}%</TableCell>
+              <TableCell className="hidden md:table-cell">{motorista.motorista_estadia.toFixed(2)}%</TableCell>
               <TableCell className="hidden md:table-cell">
                 {motorista.motorista_admissao
                   ? format(new Date(motorista.motorista_admissao), "dd/MM/yyyy", {
@@ -210,7 +209,7 @@ export function MotoristasTable() {
                           // Define o valor padrão como o salário do motorista quando o modal é aberto
                           setPaymentValue(motorista.motorista_salario.toString())
                           setSelectedMotoristaId(motorista.id)
-                          
+
                           // Buscar despesas do motorista
                           const fetchDespesasMotorista = async () => {
                             try {
@@ -228,7 +227,7 @@ export function MotoristasTable() {
                               setLoadingDespesas(false)
                             }
                           }
-                          
+
                           fetchDespesasMotorista()
                         } else {
                           setDespesasMotorista(null)
@@ -258,16 +257,22 @@ export function MotoristasTable() {
                             ) : despesasMotorista ? (
                               <div className="space-y-2">
                                 <p>
-                                  Salário mensal: <strong>{new Intl.NumberFormat("pt-BR", {
-                                    style: "currency",
-                                    currency: "BRL",
-                                  }).format(motorista.motorista_salario)}</strong>
+                                  Salário mensal:{" "}
+                                  <strong>
+                                    {new Intl.NumberFormat("pt-BR", {
+                                      style: "currency",
+                                      currency: "BRL",
+                                    }).format(motorista.motorista_salario)}
+                                  </strong>
                                 </p>
                                 <p>
-                                  Total já pago: <strong>{new Intl.NumberFormat("pt-BR", {
-                                    style: "currency",
-                                    currency: "BRL",
-                                  }).format(despesasMotorista.totalPago)}</strong>
+                                  Total já pago:{" "}
+                                  <strong>
+                                    {new Intl.NumberFormat("pt-BR", {
+                                      style: "currency",
+                                      currency: "BRL",
+                                    }).format(despesasMotorista.totalPago)}
+                                  </strong>
                                 </p>
                                 <p>
                                   {despesasMotorista.totalPago >= motorista.motorista_salario ? (
@@ -276,10 +281,13 @@ export function MotoristasTable() {
                                     </span>
                                   ) : (
                                     <>
-                                      Falta pagar: <strong className="text-amber-600">{new Intl.NumberFormat("pt-BR", {
-                                        style: "currency",
-                                        currency: "BRL",
-                                      }).format(motorista.motorista_salario - despesasMotorista.totalPago)}</strong>
+                                      Falta pagar:{" "}
+                                      <strong className="text-amber-600">
+                                        {new Intl.NumberFormat("pt-BR", {
+                                          style: "currency",
+                                          currency: "BRL",
+                                        }).format(motorista.motorista_salario - despesasMotorista.totalPago)}
+                                      </strong>
                                     </>
                                   )}
                                 </p>
@@ -290,8 +298,7 @@ export function MotoristasTable() {
                               </div>
                             ) : (
                               <p>
-                                Informe o valor a ser pago para o motorista{" "}
-                                <strong>{motorista.motorista_nome}</strong>.
+                                Informe o valor a ser pago para o motorista <strong>{motorista.motorista_nome}</strong>.
                               </p>
                             )}
                           </AlertDialogDescription>
@@ -310,11 +317,9 @@ export function MotoristasTable() {
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={() => handlePayment(
-                              motorista.id, 
-                              motorista.motorista_nome, 
-                              parseFloat(paymentValue)
-                            )}
+                            onClick={() =>
+                              handlePayment(motorista.id, motorista.motorista_nome, Number.parseFloat(paymentValue))
+                            }
                             disabled={isPaying || !paymentValue}
                             className="bg-primary text-primary-foreground hover:bg-primary/90"
                           >
@@ -354,9 +359,8 @@ export function MotoristasTable() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Tem certeza que deseja excluir o motorista{" "}
-                            <strong>{motorista.motorista_nome}</strong>? Esta ação não pode ser
-                            desfeita.
+                            Tem certeza que deseja excluir o motorista <strong>{motorista.motorista_nome}</strong>? Esta
+                            ação não pode ser desfeita.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

@@ -12,21 +12,8 @@ import { getAllMotorista } from "@/lib/services/motorista-service"
 import { getTipoDespesaEnum } from "@/lib/services/enum-service"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -83,11 +70,13 @@ export function DespesasForm({ id }: DespesasFormProps) {
           data?.map((veiculo) => ({
             id: veiculo.id,
             nome: veiculo.veiculo_nome,
-            motorista: veiculo.motorista ? {
-              id: veiculo.motorista.id,
-              nome: veiculo.motorista.motorista_nome
-            } : undefined
-          })) || []
+            motorista: veiculo.motorista
+              ? {
+                  id: veiculo.motorista.id,
+                  nome: veiculo.motorista.motorista_nome,
+                }
+              : undefined,
+          })) || [],
         )
       } catch (err) {
         console.error("Erro ao buscar veículos:", err)
@@ -107,7 +96,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
           data?.map((motorista) => ({
             id: motorista.id,
             nome: motorista.motorista_nome,
-          })) || []
+          })) || [],
         )
       } catch (err) {
         console.error("Erro ao buscar motoristas:", err)
@@ -118,7 +107,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
         })
       }
     }
-    
+
     async function fetchTiposDespesa() {
       try {
         const data = await getTipoDespesaEnum()
@@ -241,7 +230,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
   }
 
   return (
-    <Card>
+    <Card className="dark:bg-zinc-900 dark:border-zinc-800">
       <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -266,10 +255,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Tipo de Despesa</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value || "none"}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value || "none"}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o tipo de despesa" />
@@ -332,49 +318,49 @@ export function DespesasForm({ id }: DespesasFormProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-            control={form.control}
-            name="despesa_veiculo"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Veículo</FormLabel>
-                <Select
-                    onValueChange={(value) => {
-                    const newValue = value === "none" ? null : parseInt(value);
-                    field.onChange(newValue);
-                    
-                    // Seleciona automaticamente o motorista associado ao veículo
-                    if (newValue !== null) {
-                        const selectedVehicle = veiculos.find(v => v.id === newValue);
-                        if (selectedVehicle?.motorista?.id) {
-                        form.setValue('despesa_motorista', selectedVehicle.motorista.id);
+              <FormField
+                control={form.control}
+                name="despesa_veiculo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Veículo</FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        const newValue = value === "none" ? null : Number.parseInt(value)
+                        field.onChange(newValue)
+
+                        // Seleciona automaticamente o motorista associado ao veículo
+                        if (newValue !== null) {
+                          const selectedVehicle = veiculos.find((v) => v.id === newValue)
+                          if (selectedVehicle?.motorista?.id) {
+                            form.setValue("despesa_motorista", selectedVehicle.motorista.id)
+                          } else {
+                            form.setValue("despesa_motorista", null)
+                          }
                         } else {
-                        form.setValue('despesa_motorista', null);
+                          form.setValue("despesa_motorista", null)
                         }
-                    } else {
-                        form.setValue('despesa_motorista', null);
-                    }
-                    }}
-                    value={field.value?.toString() || "none"}
-                >
-                    <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Selecione um veículo" />
-                    </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                    <SelectItem value="none">Nenhum</SelectItem>
-                    {veiculos.map((veiculo) => (
-                        <SelectItem key={veiculo.id} value={veiculo.id.toString()}>
-                        {veiculo.nome}
-                        </SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
+                      }}
+                      value={field.value?.toString() || "none"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um veículo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhum</SelectItem>
+                        {veiculos.map((veiculo) => (
+                          <SelectItem key={veiculo.id} value={veiculo.id.toString()}>
+                            {veiculo.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
@@ -383,7 +369,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
                   <FormItem>
                     <FormLabel>Motorista</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(value === "none" ? null : parseInt(value))}
+                      onValueChange={(value) => field.onChange(value === "none" ? null : Number.parseInt(value))}
                       value={field.value?.toString() || "none"}
                     >
                       <FormControl>

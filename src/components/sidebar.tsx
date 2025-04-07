@@ -20,7 +20,7 @@ import {
   UserCog,
   ChevronLeft,
   ChevronRight,
-  LogOut
+  LogOut,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -145,20 +145,20 @@ export function Sidebar() {
     <TooltipProvider delayDuration={0}>
       <div
         className={cn(
-          "h-screen border-r flex flex-col bg-slate-50 transition-all duration-300 ease-in-out will-change-auto",
+          "h-screen border-r flex flex-col bg-slate-50 dark:bg-black dark:border-zinc-800 transition-all duration-300 ease-in-out will-change-auto",
           collapsed ? "w-16" : "w-64",
         )}
       >
         <Link
           href="/dashboard"
           className={cn(
-            "p-4 border-b flex items-center gap-2 hover:bg-slate-100 transition-colors",
-            collapsed ? "w-full justify-center" : "w-full"
+            "p-4 border-b dark:border-zinc-800 flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors",
+            collapsed ? "w-full justify-center" : "w-full",
           )}
         >
           <div className="flex items-center gap-2 min-w-0">
             <Truck className="h-6 w-6 text-primary flex-shrink-0" />
-            {!collapsed && <h1 className="font-semibold text-lg truncate">Sistema de Fretagem</h1>}
+            {!collapsed && <h1 className="font-semibold text-lg truncate dark:text-white">Sistema de Fretagem</h1>}
           </div>
         </Link>
 
@@ -175,7 +175,7 @@ export function Sidebar() {
                       collapsed && "justify-center",
                       pathname === item.href
                         ? "bg-primary text-primary-foreground"
-                        : "text-slate-700 hover:bg-slate-100",
+                        : "text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-900",
                     )}
                   >
                     <item.icon className="h-5 w-5 flex-shrink-0" />
@@ -193,7 +193,7 @@ export function Sidebar() {
                   <button
                     onClick={() => toggleMenu("movimentos")}
                     className={cn(
-                      "w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100",
+                      "w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-900",
                       collapsed && "justify-center",
                     )}
                   >
@@ -224,7 +224,7 @@ export function Sidebar() {
                         "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
                         pathname === item.href
                           ? "bg-primary text-primary-foreground"
-                          : "text-slate-700 hover:bg-slate-100",
+                          : "text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-900",
                       )}
                     >
                       <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -245,7 +245,7 @@ export function Sidebar() {
                             "flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium",
                             pathname === item.href
                               ? "bg-primary text-primary-foreground"
-                              : "text-slate-700 hover:bg-slate-100",
+                              : "text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-900",
                           )}
                         >
                           <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -265,7 +265,7 @@ export function Sidebar() {
                   <button
                     onClick={() => toggleMenu("cadastros")}
                     className={cn(
-                      "w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100",
+                      "w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-900",
                       collapsed && "justify-center",
                     )}
                   >
@@ -296,7 +296,7 @@ export function Sidebar() {
                         "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
                         pathname === item.href
                           ? "bg-primary text-primary-foreground"
-                          : "text-slate-700 hover:bg-slate-100",
+                          : "text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-900",
                       )}
                     >
                       <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -317,7 +317,7 @@ export function Sidebar() {
                             "flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium",
                             pathname === item.href
                               ? "bg-primary text-primary-foreground"
-                              : "text-slate-700 hover:bg-slate-100",
+                              : "text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-900",
                           )}
                         >
                           <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -332,7 +332,12 @@ export function Sidebar() {
           </nav>
         </div>
 
-        <div className={cn("p-4 border-t flex flex-col gap-2 transition-all duration-300 ease-in-out", collapsed && "items-center")}>
+        <div
+          className={cn(
+            "p-4 border-t dark:border-zinc-800 flex flex-col gap-2 transition-all duration-300 ease-in-out",
+            collapsed && "items-center",
+          )}
+        >
           <Button
             variant="outline"
             size="sm"
