@@ -18,7 +18,10 @@ export const getAllVeiculos = unstable_cache(
   async () => {
     const { data, error } = await supabase()
       .from("veiculo")
-      .select("*")
+      .select(`
+        *,
+        motorista:veiculo_motorista(id, motorista_nome)
+      `)
       .order("veiculo_nome", { ascending: true })
 
     if (error) throw error
@@ -27,7 +30,7 @@ export const getAllVeiculos = unstable_cache(
   },
   ["veiculos-list"],
   {
-    revalidate: 60, // Revalidar a cada 60 segundos
+    revalidate: 60,
     tags: ["veiculos"]
   }
 )
