@@ -59,7 +59,6 @@ export function DespesasForm({ id }: DespesasFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [tipoOptions, setTipoOptions] = useState<string[]>([])
-  const [selectedTipo, setSelectedTipo] = useState<string>("") 
   const [veiculos, setVeiculos] = useState<{ id: number; nome: string; motorista?: { id: number; nome: string } }[]>([])
   const [motoristas, setMotoristas] = useState<{ id: number; nome: string }[]>([])
 
@@ -159,7 +158,6 @@ export function DespesasForm({ id }: DespesasFormProps) {
             despesa_veiculo: data.despesa_veiculo || null,
             despesa_motorista: data.despesa_motorista || null,
           })
-          setSelectedTipo(data.despesa_tipo || "")
         } else {
           setError("Despesa não encontrada.")
         }
@@ -269,10 +267,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
                   <FormItem>
                     <FormLabel>Tipo de Despesa</FormLabel>
                     <Select
-                      onValueChange={(value) => {
-                        field.onChange(value)
-                        setSelectedTipo(value)
-                      }}
+                      onValueChange={field.onChange}
                       value={field.value || "none"}
                     >
                       <FormControl>
@@ -438,4 +433,8 @@ export function DespesasForm({ id }: DespesasFormProps) {
       </CardContent>
     </Card>
   )
+}
+
+function setSelectedTipo(arg0: any) {
+    throw new Error("Function not implemented.")
 }
