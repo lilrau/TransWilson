@@ -9,14 +9,7 @@ import { z } from "zod"
 import { getUserById, updateUser } from "@/lib/services/users-service"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Switch } from "@/components/ui/switch"
@@ -72,7 +65,7 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
         // Em vez de excluir o campo, definimos como string vazia para manter o campo controlado
         const userData = {
           ...data,
-          user_senha: ""
+          user_senha: "",
         }
         form.reset(userData)
       } catch (err) {
@@ -126,7 +119,7 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
   }
 
   return (
-    <Card>
+    <Card className="dark:bg-zinc-900 dark:border-zinc-800">
       <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -194,11 +187,7 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
                   <FormItem>
                     <FormLabel>Senha</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Digite uma nova senha (opcional)"
-                        {...field}
-                      />
+                      <Input type="password" placeholder="Digite uma nova senha (opcional)" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -225,11 +214,7 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/dashboard/cadastros/users")}
-              >
+              <Button type="button" variant="outline" onClick={() => router.push("/dashboard/cadastros/users")}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={isSubmitting}>

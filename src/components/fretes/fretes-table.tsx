@@ -17,14 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "@/components/ui/use-toast"
 import { Input } from "@/components/ui/input"
 import {
@@ -68,12 +61,12 @@ function CommissionCalculator({
   commissionValue,
   setCommissionValue,
   onPayment,
-  isPaying
+  isPaying,
 }: CommissionCalculatorProps) {
   const [calculationData, setCalculationData] = useState<{
-    valorComissao: number;
-    percentual: number;
-    valorTotal: number;
+    valorComissao: number
+    percentual: number
+    valorTotal: number
   } | null>(null)
   const [isCalculating, setIsCalculating] = useState(true)
   const [calculationError, setCalculationError] = useState<string | null>(null)
@@ -84,18 +77,18 @@ function CommissionCalculator({
         setIsCalculating(true)
         const freteData = await getFrete(freteId)
         const motoristaData = await getMotorista(motoristaId)
-        
+
         if (!freteData || !motoristaData) {
           throw new Error("Não foi possível obter os dados do frete ou do motorista")
         }
-        
+
         const valorComissao = (freteData.frete_valor_total * motoristaData.motorista_frete) / 100
         setCommissionValue(valorComissao.toFixed(2))
-        
+
         setCalculationData({
           valorComissao,
           percentual: motoristaData.motorista_frete,
-          valorTotal: freteData.frete_valor_total
+          valorTotal: freteData.frete_valor_total,
         })
       } catch (err) {
         console.error("Erro ao calcular comissão:", err)
@@ -126,23 +119,28 @@ function CommissionCalculator({
             ) : calculationData ? (
               <>
                 <p>
-                  Valor total do frete: <strong>{new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  }).format(calculationData.valorTotal)}</strong>
+                  Valor total do frete:{" "}
+                  <strong>
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(calculationData.valorTotal)}
+                  </strong>
                 </p>
                 <p>
                   Percentual de comissão: <strong>{calculationData.percentual.toFixed(2)}%</strong>
                 </p>
                 <p>
-                  Valor da comissão: <strong className="text-green-600">{new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  }).format(calculationData.valorComissao)}</strong>
+                  Valor da comissão:{" "}
+                  <strong className="text-green-600">
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(calculationData.valorComissao)}
+                  </strong>
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Informe o valor da comissão a ser paga para o motorista{" "}
-                  <strong>{motoristaName}</strong>.
+                  Informe o valor da comissão a ser paga para o motorista <strong>{motoristaName}</strong>.
                 </p>
               </>
             ) : null}
@@ -163,7 +161,7 @@ function CommissionCalculator({
       <AlertDialogFooter>
         <AlertDialogCancel>Cancelar</AlertDialogCancel>
         <AlertDialogAction
-          onClick={() => onPayment(parseFloat(commissionValue))}
+          onClick={() => onPayment(Number.parseFloat(commissionValue))}
           disabled={isPaying || !commissionValue}
           className="bg-primary text-primary-foreground hover:bg-primary/90"
         >
@@ -234,14 +232,14 @@ export function FretesTable() {
   async function handleCommissionPayment(freteId: number, motoristaId: number, motoristaName: string, valor: number) {
     try {
       setIsPayingCommission(true)
-      
+
       await createDespesa({
         despesa_nome: `Comissão - ${motoristaName}`,
         despesa_descricao: `Pagamento de comissão para o motorista ${motoristaName} referente ao frete #${freteId}`,
         despesa_tipo: "Comissão Motorista",
         despesa_valor: valor,
         despesa_veiculo: null,
-        despesa_motorista: motoristaId
+        despesa_motorista: motoristaId,
       })
 
       toast({
@@ -291,7 +289,7 @@ export function FretesTable() {
   }
 
   return (
-    <div className="rounded-md border bg-white">
+    <div className="rounded-md border bg-white dark:bg-zinc-900 dark:border-zinc-800">
       <Table>
         <TableHeader>
           <TableRow>
@@ -312,13 +310,13 @@ export function FretesTable() {
               <TableCell className="font-medium">{frete.frete_nome}</TableCell>
               <TableCell>{frete.frete_origem}</TableCell>
               <TableCell>{frete.frete_destino}</TableCell>
-              <TableCell>{frete.veiculo?.veiculo_nome || '-'}</TableCell>
-              <TableCell>{frete.motorista?.motorista_nome || '-'}</TableCell>
-              <TableCell>{frete.agenciador?.nome || '-'}</TableCell>
+              <TableCell>{frete.veiculo?.veiculo_nome || "-"}</TableCell>
+              <TableCell>{frete.motorista?.motorista_nome || "-"}</TableCell>
+              <TableCell>{frete.agenciador?.nome || "-"}</TableCell>
               <TableCell>
-                {new Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL'
+                {new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
                 }).format(frete.frete_valor_total)}
               </TableCell>
               <TableCell>
@@ -357,12 +355,14 @@ export function FretesTable() {
                               motoristaName={frete.motorista.motorista_nome}
                               commissionValue={commissionValue}
                               setCommissionValue={setCommissionValue}
-                              onPayment={(valor) => handleCommissionPayment(
-                                frete.id,
-                                frete.motorista.id,
-                                frete.motorista.motorista_nome,
-                                valor
-                              )}
+                              onPayment={(valor) =>
+                                handleCommissionPayment(
+                                  frete.id,
+                                  frete.motorista.id,
+                                  frete.motorista.motorista_nome,
+                                  valor,
+                                )
+                              }
                               isPaying={isPayingCommission}
                             />
                           </AlertDialogContent>
@@ -392,14 +392,11 @@ export function FretesTable() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Tem certeza que deseja excluir este frete? Esta ação não pode ser
-                            desfeita.
+                            Tem certeza que deseja excluir este frete? Esta ação não pode ser desfeita.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>
-                            Cancelar
-                          </AlertDialogCancel>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => frete.id && handleDelete(frete.id)}
                             className="bg-destructive hover:bg-destructive/90"

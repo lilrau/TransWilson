@@ -7,14 +7,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { toast } from "@/components/ui/use-toast"
@@ -102,7 +95,7 @@ export function UsersForm() {
   }
 
   return (
-    <Card>
+    <Card className="dark:bg-zinc-900 dark:border-zinc-800">
       <CardContent className="pt-6">
         {error && (
           <Alert variant="destructive" className="mb-6">
@@ -214,11 +207,7 @@ export function UsersForm() {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/dashboard/cadastros/users")}
-              >
+              <Button type="button" variant="outline" onClick={() => router.push("/dashboard/cadastros/users")}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={isSubmitting}>

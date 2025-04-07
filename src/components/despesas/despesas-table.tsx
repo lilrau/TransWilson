@@ -14,14 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "@/components/ui/use-toast"
 import {
   AlertDialog,
@@ -123,7 +116,11 @@ export function DespesasTable() {
         <h3 className="text-lg font-medium mb-2">Nenhuma despesa cadastrada</h3>
         <p className="text-muted-foreground mb-4">Cadastre sua primeira despesa para começar.</p>
         <Button asChild>
-          <Link href={`${window.location.pathname.includes('/movimentos/') ? '/dashboard/movimentos/despesas/novo' : '/dashboard/cadastros/despesas/novo'}`}>Cadastrar Despesa</Link>
+          <Link
+            href={`${window.location.pathname.includes("/movimentos/") ? "/dashboard/movimentos/despesas/novo" : "/dashboard/cadastros/despesas/novo"}`}
+          >
+            Cadastrar Despesa
+          </Link>
         </Button>
       </div>
     )
@@ -132,11 +129,11 @@ export function DespesasTable() {
   // Formatar valor para exibição em reais
   const formatCurrency = (value: number | null) => {
     if (value === null) return "-"
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value)
   }
 
   return (
-    <div className="rounded-md border bg-white">
+    <div className="rounded-md border bg-white dark:bg-zinc-900 dark:border-zinc-800">
       <Table>
         <TableHeader>
           <TableRow>
@@ -155,14 +152,10 @@ export function DespesasTable() {
               <TableCell className="font-medium">{despesa.despesa_nome}</TableCell>
               <TableCell>{despesa.despesa_tipo || "-"}</TableCell>
               <TableCell>{formatCurrency(despesa.despesa_valor)}</TableCell>
+              <TableCell className="hidden md:table-cell">{despesa.veiculo?.veiculo_nome || "-"}</TableCell>
+              <TableCell className="hidden md:table-cell">{despesa.motorista?.motorista_nome || "-"}</TableCell>
               <TableCell className="hidden md:table-cell">
-                {despesa.veiculo?.veiculo_nome || "-"}
-              </TableCell>
-              <TableCell className="hidden md:table-cell">
-                {despesa.motorista?.motorista_nome || "-"}
-              </TableCell>
-              <TableCell className="hidden md:table-cell">
-                {new Date(despesa.created_at).toLocaleDateString('pt-BR')}
+                {new Date(despesa.created_at).toLocaleDateString("pt-BR")}
               </TableCell>
               <TableCell className="text-right">
                 <AlertDialog>
@@ -177,7 +170,9 @@ export function DespesasTable() {
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link href={`${window.location.pathname.includes('/movimentos/') ? '/dashboard/movimentos/despesas/' : '/dashboard/cadastros/despesas/'}${despesa.id}`}>
+                        <Link
+                          href={`${window.location.pathname.includes("/movimentos/") ? "/dashboard/movimentos/despesas/" : "/dashboard/cadastros/despesas/"}${despesa.id}`}
+                        >
                           <Edit className="mr-2 h-4 w-4" />
                           Editar
                         </Link>
@@ -206,10 +201,7 @@ export function DespesasTable() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        disabled={isDeleting}
-                        onClick={() => despesa.id && handleDelete(despesa.id)}
-                      >
+                      <AlertDialogAction disabled={isDeleting} onClick={() => despesa.id && handleDelete(despesa.id)}>
                         {isDeleting && deletingId === despesa.id ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
