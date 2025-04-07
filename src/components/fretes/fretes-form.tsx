@@ -70,7 +70,7 @@ export function FretesForm({ id }: FretesFormProps) {
   const [isLoading, setIsLoading] = useState(id ? true : false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [veiculos, setVeiculos] = useState<{ id: number; nome: string }[]>([])
+  const [veiculos, setVeiculos] = useState<{ id: number; nome: string; motorista?: { id: number } }[]>([])
   const [agenciadores, setAgenciadores] = useState<{ id: number; nome: string }[]>([])
   const [motoristas, setMotoristas] = useState<{ id: number; nome: string }[]>([])
   const [weights, setWeights] = useState<string[]>([''])
@@ -99,7 +99,7 @@ export function FretesForm({ id }: FretesFormProps) {
           getAllMotorista()
         ])
 
-        setVeiculos(veiculosData?.map(v => ({ id: v.id, nome: v.veiculo_nome })) || [])
+        setVeiculos(veiculosData?.map(v => ({ id: v.id, nome: v.veiculo_nome, motorista: v.motorista })) || [])
         setAgenciadores(agenciadoresData?.map(a => ({ id: a.id, nome: a.nome })) || [])
         setMotoristas(motoristasData?.map(m => ({ id: m.id, nome: m.motorista_nome })) || [])
 
@@ -237,7 +237,13 @@ export function FretesForm({ id }: FretesFormProps) {
                   <FormItem>
                     <FormLabel>Veículo</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(Number(value))}
+                      onValueChange={(value) => {
+                        field.onChange(Number(value))
+                        const selectedVehicle = veiculos.find(v => v.id === Number(value))
+                        if (selectedVehicle?.motorista?.id) {
+                          form.setValue('frete_motorista', selectedVehicle.motorista.id)
+                        }
+                      }}
                       value={field.value?.toString()}
                     >
                       <FormControl>
