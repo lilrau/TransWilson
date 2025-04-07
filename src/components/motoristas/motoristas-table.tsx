@@ -4,8 +4,9 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { Edit, Loader2, MoreHorizontal, Trash } from "lucide-react"
-import { deleteMotorista, getAllMotorista, MotoristaData } from "@/lib/services/motorista-service"
+import { DollarSign, Edit, Loader2, MoreHorizontal, Trash } from "lucide-react"
+import { deleteMotorista, getAllMotorista } from "@/lib/services/motorista-service"
+import { createDespesa, getDespesasByMotorista, DespesaMotoristaResumo } from "@/lib/services/despesa-service"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -24,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { toast } from "@/components/ui/use-toast"
+import { Input } from "@/components/ui/input"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,6 +45,11 @@ export function MotoristasTable() {
   const [error, setError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isPaying, setIsPaying] = useState(false)
+  const [paymentValue, setPaymentValue] = useState<string>("")
+  const [despesasMotorista, setDespesasMotorista] = useState<DespesaMotoristaResumo | null>(null)
+  const [loadingDespesas, setLoadingDespesas] = useState(false)
+  const [, setSelectedMotoristaId] = useState<number | null>(null)
 
   useEffect(() => {
     async function fetchMotoristas() {
@@ -65,6 +72,37 @@ export function MotoristasTable() {
 
     fetchMotoristas()
   }, [error])
+
+  async function handlePayment(id: number, nome: string, valor: number) {
+    try {
+      setIsPaying(true)
+      
+      // Criar uma nova despesa para o pagamento do motorista
+      await createDespesa({
+        despesa_nome: `Pagamento - ${nome}`,
+        despesa_descricao: `Pagamento de salário para o motorista ${nome}`,
+        despesa_tipo: "Salários",
+        despesa_valor: valor,
+        despesa_veiculo: null,
+        despesa_motorista: id
+      })
+
+      toast({
+        title: "Pagamento registrado",
+        description: `O pagamento para ${nome} foi registrado com sucesso.`,
+      })
+    } catch (err: unknown) {
+      console.error("Erro ao registrar pagamento:", err)
+      toast({
+        variant: "destructive",
+        title: "Erro ao registrar pagamento",
+        description: err instanceof Error ? err.message : "Ocorreu um erro ao registrar o pagamento.",
+      })
+    } finally {
+      setIsPaying(false)
+      setPaymentValue("")
+    }
+  }
 
   async function handleDelete(id: number) {
     try {
@@ -165,6 +203,133 @@ export function MotoristasTable() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <AlertDialog
+                      onOpenChange={(open) => {
+                        if (open) {
+                          // Define o valor padrão como o salário do motorista quando o modal é aberto
+                          setPaymentValue(motorista.motorista_salario.toString())
+                          setSelectedMotoristaId(motorista.id)
+                          
+                          // Buscar despesas do motorista
+                          const fetchDespesasMotorista = async () => {
+                            try {
+                              setLoadingDespesas(true)
+                              const data = await getDespesasByMotorista(motorista.id)
+                              setDespesasMotorista(data)
+                            } catch (err) {
+                              console.error("Erro ao buscar despesas do motorista:", err)
+                              toast({
+                                variant: "destructive",
+                                title: "Erro ao buscar despesas",
+                                description: "Não foi possível carregar o histórico de pagamentos.",
+                              })
+                            } finally {
+                              setLoadingDespesas(false)
+                            }
+                          }
+                          
+                          fetchDespesasMotorista()
+                        } else {
+                          setDespesasMotorista(null)
+                          setSelectedMotoristaId(null)
+                        }
+                      }}
+                    >
+                      <AlertDialogTrigger asChild>
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault()
+                          }}
+                        >
+                          <DollarSign className="mr-2 h-4 w-4" />
+                          Registrar Pagamento
+                        </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Registrar Pagamento</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {loadingDespesas ? (
+                              <div className="flex items-center justify-center py-2">
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                <span>Carregando histórico de pagamentos...</span>
+                              </div>
+                            ) : despesasMotorista ? (
+                              <div className="space-y-2">
+                                <p>
+                                  Salário mensal: <strong>{new Intl.NumberFormat("pt-BR", {
+                                    style: "currency",
+                                    currency: "BRL",
+                                  }).format(motorista.motorista_salario)}</strong>
+                                </p>
+                                <p>
+                                  Total já pago: <strong>{new Intl.NumberFormat("pt-BR", {
+                                    style: "currency",
+                                    currency: "BRL",
+                                  }).format(despesasMotorista.totalPago)}</strong>
+                                </p>
+                                <p>
+                                  {despesasMotorista.totalPago >= motorista.motorista_salario ? (
+                                    <span className="text-green-600 font-medium">
+                                      Salário já foi pago integralmente.
+                                    </span>
+                                  ) : (
+                                    <>
+                                      Falta pagar: <strong className="text-amber-600">{new Intl.NumberFormat("pt-BR", {
+                                        style: "currency",
+                                        currency: "BRL",
+                                      }).format(motorista.motorista_salario - despesasMotorista.totalPago)}</strong>
+                                    </>
+                                  )}
+                                </p>
+                                <p className="text-sm text-muted-foreground mt-2">
+                                  Informe o valor a ser pago para o motorista{" "}
+                                  <strong>{motorista.motorista_nome}</strong>.
+                                </p>
+                              </div>
+                            ) : (
+                              <p>
+                                Informe o valor a ser pago para o motorista{" "}
+                                <strong>{motorista.motorista_nome}</strong>.
+                              </p>
+                            )}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="py-4">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="Valor do pagamento"
+                            value={paymentValue}
+                            onChange={(e) => setPaymentValue(e.target.value)}
+                            className="mb-2"
+                          />
+                        </div>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handlePayment(
+                              motorista.id, 
+                              motorista.motorista_nome, 
+                              parseFloat(paymentValue)
+                            )}
+                            disabled={isPaying || !paymentValue}
+                            className="bg-primary text-primary-foreground hover:bg-primary/90"
+                          >
+                            {isPaying ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Processando...
+                              </>
+                            ) : (
+                              "Confirmar Pagamento"
+                            )}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link href={`/dashboard/cadastros/motoristas/${motorista.id}`}>

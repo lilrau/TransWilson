@@ -13,6 +13,11 @@ export interface DespesaData {
   created_at?: string
 }
 
+export interface DespesaMotoristaResumo {
+  totalPago: number
+  despesas: DespesaData[]
+}
+
 export const getAllDespesa = unstable_cache(
   async () => {
     const { data, error } = await supabase()
@@ -93,4 +98,24 @@ export const deleteDespesa = async (id: number) => {
   revalidateTag("despesa")
   
   return result
+}
+
+export const getDespesasByMotorista = async (motoristaId: number): Promise<DespesaMotoristaResumo> => {
+  const { data, error } = await supabase()
+    .from("despesa")
+    .select("*")
+    .eq("despesa_motorista", motoristaId)
+    .order("created_at", { ascending: false })
+
+  if (error) throw error
+
+  // Calcular o total pago em salários
+  const totalPago = data
+    .filter(despesa => despesa.despesa_tipo === "Salários")
+    .reduce((acc, despesa) => acc + despesa.despesa_valor, 0)
+
+  return {
+    totalPago,
+    despesas: data
+  }
 }

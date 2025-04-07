@@ -4620,6 +4620,7 @@ snapshots:
       '@radix-ui/react-toast': 1.2.6(@types/react-dom@18.3.6(@types/react@18.3.20))(@types/react@18.3.20)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-tooltip': 1.1.8(@types/react-dom@18.3.6(@types/react@18.3.20))(@types/react@18.3.20)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@supabase/supabase-js': 2.49.4
+      '@vercel/speed-insights': 1.2.0(next@15.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       bcryptjs: 3.0.2
       class-variance-authority: 0.7.1
       clsx: 2.1.1
@@ -4637,13 +4638,17 @@ snapshots:
       - '@babel/core'
       - '@opentelemetry/api'
       - '@playwright/test'
+      - '@sveltejs/kit'
       - '@types/react'
       - '@types/react-dom'
       - babel-plugin-macros
       - babel-plugin-react-compiler
       - bufferutil
       - sass
+      - svelte
       - utf-8-validate
+      - vue
+      - vue-router
 
   ts-api-utils@2.1.0(typescript@5.8.2):
     dependencies:
