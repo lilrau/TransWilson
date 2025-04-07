@@ -434,7 +434,3 @@ export function DespesasForm({ id }: DespesasFormProps) {
     </Card>
   )
 }
-
-function setSelectedTipo(arg0: any) {
-    throw new Error("Function not implemented.")
-}
