@@ -13,6 +13,7 @@ export interface MotoristaData {
   motorista_admissao: Date | string
   motorista_ult_acesso?: string | null
   motorista_created_at?: string
+  motorista_senha?: string
 }
 
 export const getAllMotorista = unstable_cache(
@@ -47,7 +48,14 @@ export const getMotorista = unstable_cache(
   }
 )
 
+import { hashPassword } from "../password-utils"
+
 export const createMotorista = async (data: Partial<MotoristaData>) => {
+  // Se houver uma senha, aplica o hash antes de salvar
+  if (data.motorista_senha) {
+    data.motorista_senha = await hashPassword(data.motorista_senha)
+  }
+
   const result = await supabase().from("motorista").insert(data).select()
 
   if (result.error) throw result.error
@@ -59,6 +67,14 @@ export const createMotorista = async (data: Partial<MotoristaData>) => {
 }
 
 export const updateMotorista = async (id: number, data: Partial<MotoristaData>) => {
+  // Se houver uma senha e ela não estiver vazia, aplica o hash antes de atualizar
+  if (data.motorista_senha && data.motorista_senha.length > 0) {
+    data.motorista_senha = await hashPassword(data.motorista_senha)
+  } else if (data.motorista_senha !== undefined) {
+    // Se a senha estiver definida mas vazia, remove o campo para não sobrescrever a senha existente
+    delete data.motorista_senha
+  }
+
   const result = await supabase().from("motorista").update(data).eq("id", id).select()
 
   if (result.error) throw result.error
@@ -79,4 +95,21 @@ export const deleteMotorista = async (id: number) => {
   // Invalidar o cache quando um motorista é excluído
   revalidateTag("motoristas")
   revalidateTag("motorista")
+}
+
+export const getMotoristaByCredentials = async (cnh: string): Promise<MotoristaData | null> => {
+  const { data, error } = await supabase()
+    .from("motorista")
+    .select("*")
+    .eq("motorista_cnh", cnh)
+    .single()
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      return null // Nenhum registro encontrado
+    }
+    throw error
+  }
+
+  return data
 }
