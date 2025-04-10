@@ -7,6 +7,17 @@ import { cookies } from "next/headers"
 const TOKEN_COOKIE_NAME = "trans_wilson_session"
 const SESSION_EXPIRY = 60 * 60 * 24 * 7 // 7 dias em segundos
 
+// Tipos de usuário para autenticação
+export type UserType = "admin" | "driver"
+
+// Interface para dados da sessão
+export interface SessionData {
+  id: number
+  username: string
+  userType: UserType
+  expiresAt: number
+}
+
 // Inicializa o cliente Supabase com cookies para autenticação persistente
 export const createServerSupabaseClient = async () => {
   const cookieStore = await cookies()
@@ -37,8 +48,12 @@ export async function isAuthenticated() {
     return false
   }
 
-  // TODO
-  return true
+  try {
+    const session: SessionData = JSON.parse(sessionCookie.value)
+    return Date.now() < session.expiresAt
+  } catch {
+    return false
+  }
 }
 
 // Obtém os dados do usuário atual
