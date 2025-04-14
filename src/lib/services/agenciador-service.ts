@@ -4,7 +4,9 @@ import { unstable_cache, revalidateTag } from "next/cache"
 import { supabase } from "../supabase"
 
 export interface AgenciadorData {
-  nome: string
+  agenciador_nome: string
+  agenciador_cnpj?: string
+  agenciador_telefone?: string
   created_at?: string
 }
 
@@ -13,7 +15,7 @@ export const getAllAgenciador = unstable_cache(
     const { data, error } = await supabase()
       .from("agenciador")
       .select("*")
-      .order("nome", { ascending: true })
+      .order("agenciador_nome", { ascending: true })
 
     if (error) throw error
 

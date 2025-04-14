@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { Loader2, Plus, Trash } from "lucide-react"
+import { Loader2, Plus, Trash, UserPlus } from "lucide-react"
 
 import { createFrete, getFrete, updateFrete } from "@/lib/services/frete-service"
 import { getAllVeiculos } from "@/lib/services/veiculo-service"
@@ -71,8 +71,8 @@ export function FretesForm({ id }: FretesFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [veiculos, setVeiculos] = useState<{ id: number; nome: string; motorista?: { id: number } }[]>([])
-  const [agenciadores, setAgenciadores] = useState<{ id: number; nome: string }[]>([])
-  const [motoristas, setMotoristas] = useState<{ id: number; nome: string }[]>([])
+  const [agenciadores, setAgenciadores] = useState<{ id: number; agenciador_nome: string }[]>([])
+  const [motoristas, setMotoristas] = useState<{ id: number; motorista_nome: string }[]>([])
   const [weights, setWeights] = useState<string[]>([''])
 
   const form = useForm<FormValues>({
@@ -100,8 +100,8 @@ export function FretesForm({ id }: FretesFormProps) {
         ])
 
         setVeiculos(veiculosData?.map(v => ({ id: v.id, nome: v.veiculo_nome, motorista: v.motorista })) || [])
-        setAgenciadores(agenciadoresData?.map(a => ({ id: a.id, nome: a.nome })) || [])
-        setMotoristas(motoristasData?.map(m => ({ id: m.id, nome: m.motorista_nome })) || [])
+        setAgenciadores(agenciadoresData?.map(a => ({ id: a.id, agenciador_nome: a.agenciador_nome })) || [])
+        setMotoristas(motoristasData?.map(m => ({ id: m.id, motorista_nome: m.motorista_nome })) || [])
 
         if (id) {
           const freteData = await getFrete(Number(id))
@@ -273,7 +273,13 @@ export function FretesForm({ id }: FretesFormProps) {
                   <FormItem>
                     <FormLabel>Agenciador</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(Number(value))}
+                      onValueChange={(value) => {
+                        if (value === "novo") {
+                          router.push("/dashboard/cadastros/agenciadores/novo")
+                          return
+                        }
+                        field.onChange(Number(value))
+                      }}
                       value={field.value?.toString()}
                     >
                       <FormControl>
@@ -282,9 +288,15 @@ export function FretesForm({ id }: FretesFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="novo" className="text-primary">
+                          <div className="flex items-center">
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            Novo Agenciador
+                          </div>
+                        </SelectItem>
                         {agenciadores.map((agenciador) => (
                           <SelectItem key={agenciador.id} value={agenciador.id.toString()}>
-                            {agenciador.nome}
+                            {agenciador.agenciador_nome}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -303,7 +315,13 @@ export function FretesForm({ id }: FretesFormProps) {
                   <FormItem>
                     <FormLabel>Motorista</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(Number(value))}
+                      onValueChange={(value) => {
+                        if (value === "novo") {
+                          router.push("/dashboard/cadastros/agenciadores/novo")
+                          return
+                        }
+                        field.onChange(Number(value))
+                      }}
                       value={field.value?.toString()}
                     >
                       <FormControl>
@@ -314,7 +332,7 @@ export function FretesForm({ id }: FretesFormProps) {
                       <SelectContent>
                         {motoristas.map((motorista) => (
                           <SelectItem key={motorista.id} value={motorista.id.toString()}>
-                            {motorista.nome}
+                            {motorista.motorista_nome}
                           </SelectItem>
                         ))}
                       </SelectContent>

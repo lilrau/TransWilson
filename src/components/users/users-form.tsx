@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { toast } from "@/components/ui/use-toast"
 import { Loader2 } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
-import { createUser, getUserRoles } from "@/lib/services/users-service"
+import { createUser } from "@/lib/services/users-service"
 
 const formSchema = z.object({
   user_nome: z.string().min(3, {
@@ -24,9 +24,6 @@ const formSchema = z.object({
   }),
   user_email: z.string().email({
     message: "Insira um email válido.",
-  }),
-  user_role: z.string().min(3, {
-    message: "O papel do usuário deve ser especificado.",
   }),
   user_senha: z.string().min(6, {
     message: "A senha deve ter pelo menos 6 caracteres.",
@@ -40,28 +37,12 @@ export function UsersForm() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [roles, setRoles] = useState<string[]>([])
-
-  useEffect(() => {
-    async function fetchRoles() {
-      try {
-        const data = await getUserRoles()
-        setRoles(data || [])
-      } catch (err) {
-        console.error("Erro ao buscar papéis:", err)
-      }
-    }
-
-    fetchRoles()
-  }, [])
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       user_nome: "",
       user_user: "",
       user_email: "",
-      user_role: "",
       user_senha: "",
       user_ativo: true,
     },
@@ -151,30 +132,6 @@ export function UsersForm() {
 
               <FormField
                 control={form.control}
-                name="user_role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Papel</FormLabel>
-                    <FormControl>
-                      <select
-                        {...field}
-                        className="block w-full rounded-md border border-gray-300 bg-white p-2 text-sm shadow-sm focus:border-primary focus:ring-primary"
-                      >
-                        <option value="">Selecione um papel</option>
-                        {roles.map((role) => (
-                          <option key={role} value={role}>
-                            {role.charAt(0).toUpperCase() + role.slice(1)}
-                          </option>
-                        ))}
-                      </select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
                 name="user_senha"
                 render={({ field }) => (
                   <FormItem>
@@ -196,7 +153,9 @@ export function UsersForm() {
                     <FormControl>
                       <Switch
                         checked={field.value}
-                        onCheckedChange={field.onChange}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked)
+                        }}
                         className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted"
                       />
                     </FormControl>

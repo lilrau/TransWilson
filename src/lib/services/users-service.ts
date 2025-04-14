@@ -8,7 +8,6 @@ export interface UserData {
   user_nome: string
   user_user: string
   user_email: string
-  user_role: string
   user_senha?: string
   user_ativo: boolean
   user_created_at?: string
@@ -121,17 +120,3 @@ export const deleteUser = async (id: number) => {
 
   return result
 }
-
-export const getUserRoles = unstable_cache(
-  async () => {
-    const { data, error } = await supabase().rpc("get_user_roles")
-
-    if (error) throw error
-    return data
-  },
-  ["user-roles"],
-  {
-    revalidate: 3600, // Revalidar a cada hora, já que papéis mudam com menos frequência
-    tags: ["users", "roles"],
-  }
-)
