@@ -16,9 +16,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 const formSchema = z.object({
-  nome: z.string().min(3, {
+  agenciador_nome: z.string().min(3, {
     message: "O nome deve ter pelo menos 3 caracteres.",
   }),
+  agenciador_cnpj: z.string().optional(),
+  agenciador_telefone: z.string().optional(),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -36,7 +38,9 @@ export function AgenciadoresForm({ id }: AgenciadoresFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nome: "",
+      agenciador_nome: "",
+      agenciador_cnpj: "",
+      agenciador_telefone: "",
     },
   })
 
@@ -50,7 +54,9 @@ export function AgenciadoresForm({ id }: AgenciadoresFormProps) {
 
         if (data) {
           form.reset({
-            nome: data.nome || "",
+            agenciador_nome: data.agenciador_nome || "",
+            agenciador_cnpj: data.agenciador_cnpj || "",
+            agenciador_telefone: data.agenciador_telefone || "",
           })
         } else {
           setError("Agenciador não encontrado.")
@@ -86,8 +92,8 @@ export function AgenciadoresForm({ id }: AgenciadoresFormProps) {
       toast({
         title: id ? "Agenciador atualizado com sucesso!" : "Agenciador cadastrado com sucesso!",
         description: id
-          ? `Os dados de ${values.nome} foram atualizados.`
-          : `O agenciador ${values.nome} foi cadastrado.`,
+          ? `Os dados de ${values.agenciador_nome} foram atualizados.`
+          : `O agenciador ${values.agenciador_nome} foi cadastrado.`,
       })
 
       router.push("/dashboard/cadastros/agenciadores")
@@ -129,12 +135,40 @@ export function AgenciadoresForm({ id }: AgenciadoresFormProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
-              name="nome"
+              name="agenciador_nome"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nome do Agenciador</FormLabel>
                   <FormControl>
                     <Input placeholder="Nome do agenciador" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="agenciador_cnpj"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CNPJ</FormLabel>
+                  <FormControl>
+                    <Input placeholder="CNPJ do agenciador" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="agenciador_telefone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Telefone</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Telefone do agenciador" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -31,7 +31,9 @@ import {
 
 type Agenciador = {
   id: number
-  nome: string
+  agenciador_nome: string
+  agenciador_cnpj: string | null
+  agenciador_telefone: string | null
   created_at: string
 }
 
@@ -116,6 +118,8 @@ export function AgenciadoresTable() {
         <TableHeader>
           <TableRow>
             <TableHead>Nome</TableHead>
+            <TableHead>CNPJ</TableHead>
+            <TableHead>Telefone</TableHead>
             <TableHead>Data de Cadastro</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
@@ -123,7 +127,9 @@ export function AgenciadoresTable() {
         <TableBody>
           {agenciadores.map((agenciador) => (
             <TableRow key={agenciador.id}>
-              <TableCell className="font-medium">{agenciador.nome}</TableCell>
+              <TableCell className="font-medium">{agenciador.agenciador_nome}</TableCell>
+              <TableCell>{agenciador.agenciador_cnpj || '-'}</TableCell>
+              <TableCell>{agenciador.agenciador_telefone || '-'}</TableCell>
               <TableCell>
                 {format(new Date(agenciador.created_at), "dd/MM/yyyy", {
                   locale: ptBR,

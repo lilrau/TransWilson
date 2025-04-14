@@ -41,7 +41,7 @@ type Frete = {
   created_at: string
   veiculo: { id: number; veiculo_nome: string }
   motorista: { id: number; motorista_nome: string }
-  agenciador: { id: number; nome: string }
+  agenciador: { id: number; agenciador_nome: string; agenciador_cnpj: string | null; agenciador_telefone: string | null }
 }
 
 type CommissionCalculatorProps = {
@@ -312,7 +312,7 @@ export function FretesTable() {
               <TableCell>{frete.frete_destino}</TableCell>
               <TableCell>{frete.veiculo?.veiculo_nome || "-"}</TableCell>
               <TableCell>{frete.motorista?.motorista_nome || "-"}</TableCell>
-              <TableCell>{frete.agenciador?.nome || "-"}</TableCell>
+              <TableCell>{frete.agenciador?.agenciador_nome || "-"}</TableCell>
               <TableCell>
                 {new Intl.NumberFormat("pt-BR", {
                   style: "currency",

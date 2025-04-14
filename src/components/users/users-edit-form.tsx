@@ -26,9 +26,6 @@ const formSchema = z.object({
   user_email: z.string().email({
     message: "Insira um email válido.",
   }),
-  user_role: z.string().min(3, {
-    message: "O papel do usuário deve ser especificado.",
-  }),
   user_senha: z.string().optional(), // Senha é opcional na edição
   user_ativo: z.boolean(),
 })
@@ -51,7 +48,6 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
       user_nome: "",
       user_user: "",
       user_email: "",
-      user_role: "",
       user_senha: "",
       user_ativo: true,
     },
@@ -168,20 +164,6 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
 
               <FormField
                 control={form.control}
-                name="user_role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Papel</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Papel do usuário" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
                 name="user_senha"
                 render={({ field }) => (
                   <FormItem>
@@ -203,7 +185,9 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
                     <FormControl>
                       <Switch
                         checked={field.value}
-                        onCheckedChange={field.onChange}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked)
+                        }}
                         className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted"
                       />
                     </FormControl>

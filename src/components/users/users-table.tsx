@@ -33,7 +33,6 @@ type User = {
   user_nome: string
   user_user: string
   user_email: string
-  user_role: string
   user_ativo: boolean
 }
 
@@ -120,7 +119,6 @@ export function UsersTable() {
             <TableHead>Nome</TableHead>
             <TableHead>Usuário</TableHead>
             <TableHead>Email</TableHead>
-            <TableHead>Role</TableHead>
             <TableHead>Ativo</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
@@ -131,7 +129,6 @@ export function UsersTable() {
               <TableCell className="font-medium">{user.user_nome}</TableCell>
               <TableCell>{user.user_user}</TableCell>
               <TableCell>{user.user_email}</TableCell>
-              <TableCell>{user.user_role}</TableCell>
               <TableCell>{user.user_ativo ? "Sim" : "Não"}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
