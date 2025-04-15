@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import { Edit, Loader2, MoreHorizontal, Trash } from "lucide-react"
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns"
@@ -51,11 +51,7 @@ export function DespesasTable() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [selectedMonth, setSelectedMonth] = useState(new Date())
 
-  useEffect(() => {
-    fetchDespesas()
-  }, [selectedMonth])
-
-  async function fetchDespesas() {
+  const fetchDespesas = useCallback(async () => {
     try {
       setLoading(true)
       const data = await getAllDespesa()
@@ -80,7 +76,11 @@ export function DespesasTable() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedMonth])
+
+  useEffect(() => {
+    fetchDespesas()
+  }, [fetchDespesas])
 
   async function handleDelete(id: number) {
     try {
