@@ -4,8 +4,6 @@ import { isAuthenticated } from "@/lib/auth"
 
 // Middleware para verificar autenticação
 export async function middleware(request: NextRequest) {
-  // TODO: remover isso depois
-  return NextResponse.next()
   // Verifica se o usuário está autenticado usando a função do auth.ts
   const authenticated = await isAuthenticated()
 
