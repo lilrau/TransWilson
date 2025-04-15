@@ -24,7 +24,7 @@ export const getAllFrete = unstable_cache(
       .select(`
         *,
         veiculo:frete_veiculo(id, veiculo_nome),
-        agenciador:frete_agenciador(id, nome),
+        agenciador:frete_agenciador(id, agenciador_nome),
         motorista:frete_motorista(id, motorista_nome)
       `)
       .order("created_at", { ascending: false })
@@ -46,7 +46,7 @@ export const getFrete = unstable_cache(
       .select(`
         *,
         veiculo:frete_veiculo(id, veiculo_nome),
-        agenciador:frete_agenciador(id, nome),
+        agenciador:frete_agenciador(id, agenciador_nome),
         motorista:frete_motorista(id, motorista_nome)
       `)
       .eq("id", id)
