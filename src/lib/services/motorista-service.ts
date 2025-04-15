@@ -2,6 +2,8 @@
 
 import { unstable_cache, revalidateTag } from "next/cache"
 import { supabase } from "../supabase"
+import { hashPassword } from "../password-utils"
+import { Logger } from "../logger"
 
 export interface MotoristaData {
   id: number
@@ -18,98 +20,165 @@ export interface MotoristaData {
 
 export const getAllMotorista = unstable_cache(
   async (): Promise<MotoristaData[]> => {
-    const { data, error } = await supabase()
-      .from("motorista")
-      .select("*")
-      .order("motorista_nome", { ascending: true })
+    try {
+      Logger.info('motorista-service', 'Fetching all motoristas')
+      const { data, error } = await supabase()
+        .from("motorista")
+        .select("*")
+        .order("motorista_nome", { ascending: true })
 
-    if (error) throw error
+      if (error) {
+        Logger.error('motorista-service', 'Failed to fetch all motoristas', { error })
+        throw error
+      }
 
-    return data
+      Logger.info('motorista-service', 'Successfully fetched all motoristas', { count: data.length })
+      return data
+    } catch (error) {
+      Logger.error('motorista-service', 'Unexpected error while fetching all motoristas', { error })
+      throw error
+    }
   },
   ["motoristas-list"],
   {
-    revalidate: 60, // Revalidar a cada 60 segundos
+    revalidate: 60,
     tags: ["motoristas"],
   }
 )
 
 export const getMotorista = unstable_cache(
   async (id: number): Promise<MotoristaData> => {
-    const { data, error } = await supabase().from("motorista").select("*").eq("id", id).single()
+    try {
+      Logger.info('motorista-service', 'Fetching motorista by id', { id })
+      const { data, error } = await supabase().from("motorista").select("*").eq("id", id).single()
 
-    if (error) throw error
-    return data
+      if (error) {
+        Logger.error('motorista-service', 'Failed to fetch motorista by id', { error, id })
+        throw error
+      }
+
+      Logger.info('motorista-service', 'Successfully fetched motorista by id', { id })
+      return data
+    } catch (error) {
+      Logger.error('motorista-service', 'Unexpected error while fetching motorista by id', { error, id })
+      throw error
+    }
   },
   ["motorista-detail"],
   {
-    revalidate: 60, // Revalidar a cada 60 segundos
+    revalidate: 60,
     tags: ["motoristas", "motorista"],
   }
 )
 
-import { hashPassword } from "../password-utils"
-
 export const createMotorista = async (data: Partial<MotoristaData>) => {
-  // Se houver uma senha, aplica o hash antes de salvar
-  if (data.motorista_senha) {
-    data.motorista_senha = await hashPassword(data.motorista_senha)
+  try {
+    Logger.info('motorista-service', 'Creating new motorista', { 
+      motoristaData: { 
+        ...data, 
+        motorista_senha: undefined 
+      } 
+    })
+
+    if (data.motorista_senha) {
+      data.motorista_senha = await hashPassword(data.motorista_senha)
+    }
+
+    const result = await supabase().from("motorista").insert(data).select()
+
+    if (result.error) {
+      Logger.error('motorista-service', 'Failed to create motorista', { error: result.error })
+      throw result.error
+    }
+
+    revalidateTag("motoristas")
+    Logger.info('motorista-service', 'Successfully created motorista', { motoristaId: result.data[0].id })
+    return result.data
+  } catch (error) {
+    Logger.error('motorista-service', 'Unexpected error while creating motorista', { error })
+    throw error
   }
-
-  const result = await supabase().from("motorista").insert(data).select()
-
-  if (result.error) throw result.error
-
-  // Invalidar o cache quando um novo motorista é criado
-  revalidateTag("motoristas")
-
-  return result.data
 }
 
 export const updateMotorista = async (id: number, data: Partial<MotoristaData>) => {
-  // Se houver uma senha e ela não estiver vazia, aplica o hash antes de atualizar
-  if (data.motorista_senha && data.motorista_senha.length > 0) {
-    data.motorista_senha = await hashPassword(data.motorista_senha)
-  } else if (data.motorista_senha !== undefined) {
-    // Se a senha estiver definida mas vazia, remove o campo para não sobrescrever a senha existente
-    delete data.motorista_senha
+  try {
+    Logger.info('motorista-service', 'Updating motorista', { 
+      id, 
+      motoristaData: { 
+        ...data, 
+        motorista_senha: undefined 
+      } 
+    })
+
+    if (data.motorista_senha && data.motorista_senha.length > 0) {
+      data.motorista_senha = await hashPassword(data.motorista_senha)
+    } else if (data.motorista_senha !== undefined) {
+      delete data.motorista_senha
+    }
+
+    const result = await supabase().from("motorista").update(data).eq("id", id).select()
+
+    if (result.error) {
+      Logger.error('motorista-service', 'Failed to update motorista', { error: result.error, id })
+      throw result.error
+    }
+
+    revalidateTag("motoristas")
+    revalidateTag("motorista")
+    Logger.info('motorista-service', 'Successfully updated motorista', { id })
+    return result.data
+  } catch (error) {
+    Logger.error('motorista-service', 'Unexpected error while updating motorista', { error, id })
+    throw error
   }
-
-  const result = await supabase().from("motorista").update(data).eq("id", id).select()
-
-  if (result.error) throw result.error
-
-  // Invalidar o cache quando um motorista é atualizado
-  revalidateTag("motoristas")
-  revalidateTag("motorista")
-
-  return result.data
 }
 
 export const deleteMotorista = async (id: number) => {
-  const result = await supabase().from("motorista").delete().eq("id", id)
+  try {
+    Logger.info('motorista-service', 'Deleting motorista', { id })
+    const result = await supabase().from("motorista").delete().eq("id", id)
 
-  if (result.error?.code === "23503")
-    throw new Error("Não é possível excluir o motorista porque há pedidos associados a ele.")
-  
-  // Invalidar o cache quando um motorista é excluído
-  revalidateTag("motoristas")
-  revalidateTag("motorista")
+    if (result.error?.code === "23503") {
+      const error = new Error("Não é possível excluir o motorista porque há pedidos associados a ele.")
+      Logger.error('motorista-service', 'Failed to delete motorista - associated orders exist', { error, id })
+      throw error
+    } else if (result.error) {
+      Logger.error('motorista-service', 'Failed to delete motorista', { error: result.error, id })
+      throw result.error
+    }
+
+    revalidateTag("motoristas")
+    revalidateTag("motorista")
+    Logger.info('motorista-service', 'Successfully deleted motorista', { id })
+    return result
+  } catch (error) {
+    Logger.error('motorista-service', 'Unexpected error while deleting motorista', { error, id })
+    throw error
+  }
 }
 
 export const getMotoristaByCredentials = async (cnh: string): Promise<MotoristaData | null> => {
-  const { data, error } = await supabase()
-    .from("motorista")
-    .select("*")
-    .eq("motorista_cnh", cnh)
-    .single()
+  try {
+    Logger.info('motorista-service', 'Fetching motorista by CNH', { cnh })
+    const { data, error } = await supabase()
+      .from("motorista")
+      .select("*")
+      .eq("motorista_cnh", cnh)
+      .single()
 
-  if (error) {
-    if (error.code === "PGRST116") {
-      return null // Nenhum registro encontrado
+    if (error) {
+      if (error.code === 'PGRST116') {
+        Logger.info('motorista-service', 'No motorista found with provided CNH', { cnh })
+        return null
+      }
+      Logger.error('motorista-service', 'Failed to fetch motorista by CNH', { error, cnh })
+      throw error
     }
+
+    Logger.info('motorista-service', 'Successfully fetched motorista by CNH', { cnh })
+    return data
+  } catch (error) {
+    Logger.error('motorista-service', 'Unexpected error while fetching motorista by CNH', { error, cnh })
     throw error
   }
-
-  return data
 }
