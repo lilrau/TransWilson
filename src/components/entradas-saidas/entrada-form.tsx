@@ -79,8 +79,8 @@ export function EntradaForm() {
   }, [])
 
   useEffect(() => {
+    const tipoEntrada = form.watch("entrada_tipo")?.toLowerCase()
     async function fetchFretes() {
-      const tipoEntrada = form.watch("entrada_tipo")?.toLowerCase()
       if (tipoEntrada === "frete") {
         try {
           setIsLoadingFretes(true)
@@ -102,7 +102,7 @@ export function EntradaForm() {
     }
 
     fetchFretes()
-  }, [form.watch("entrada_tipo")])
+  }, [form])
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
