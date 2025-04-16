@@ -9,11 +9,18 @@ import { z } from "zod"
 import { getUserById, updateUser } from "@/lib/services/users-service"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Switch } from "@/components/ui/switch"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
 
 const formSchema = z.object({
@@ -169,7 +176,11 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
                   <FormItem>
                     <FormLabel>Senha</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Digite uma nova senha (opcional)" {...field} />
+                      <Input
+                        type="password"
+                        placeholder="Digite uma nova senha (opcional)"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -198,7 +209,11 @@ export function UsersEditForm({ id }: UsersEditFormProps) {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => router.push("/dashboard/cadastros/users")}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push("/dashboard/cadastros/users")}
+              >
                 Cancelar
               </Button>
               <Button type="submit" disabled={isSubmitting}>

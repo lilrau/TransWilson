@@ -6,7 +6,11 @@ import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { DollarSign, Edit, Loader2, MoreHorizontal, Trash } from "lucide-react"
 import { deleteMotorista, getAllMotorista } from "@/lib/services/motorista-service"
-import { createDespesa, getDespesasByMotorista, type DespesaMotoristaResumo } from "@/lib/services/despesa-service"
+import {
+  createDespesa,
+  getDespesasByMotorista,
+  type DespesaMotoristaResumo,
+} from "@/lib/services/despesa-service"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -16,8 +20,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { toast } from "@/components/ui/use-toast"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { toast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import {
   AlertDialog,
@@ -99,7 +110,8 @@ export function MotoristasTable() {
       toast({
         variant: "destructive",
         title: "Erro ao registrar pagamento",
-        description: err instanceof Error ? err.message : "Ocorreu um erro ao registrar o pagamento.",
+        description:
+          err instanceof Error ? err.message : "Ocorreu um erro ao registrar o pagamento.",
       })
     } finally {
       setIsPaying(false)
@@ -183,8 +195,12 @@ export function MotoristasTable() {
                   currency: "BRL",
                 }).format(motorista.motorista_salario)}
               </TableCell>
-              <TableCell className="hidden md:table-cell">{motorista.motorista_frete.toFixed(2)}%</TableCell>
-              <TableCell className="hidden md:table-cell">{motorista.motorista_estadia.toFixed(2)}%</TableCell>
+              <TableCell className="hidden md:table-cell">
+                {motorista.motorista_frete.toFixed(2)}%
+              </TableCell>
+              <TableCell className="hidden md:table-cell">
+                {motorista.motorista_estadia.toFixed(2)}%
+              </TableCell>
               <TableCell className="hidden md:table-cell">
                 {motorista.motorista_admissao
                   ? format(new Date(motorista.motorista_admissao), "dd/MM/yyyy", {
@@ -286,7 +302,9 @@ export function MotoristasTable() {
                                         {new Intl.NumberFormat("pt-BR", {
                                           style: "currency",
                                           currency: "BRL",
-                                        }).format(motorista.motorista_salario - despesasMotorista.totalPago)}
+                                        }).format(
+                                          motorista.motorista_salario - despesasMotorista.totalPago
+                                        )}
                                       </strong>
                                     </>
                                   )}
@@ -298,7 +316,8 @@ export function MotoristasTable() {
                               </div>
                             ) : (
                               <p>
-                                Informe o valor a ser pago para o motorista <strong>{motorista.motorista_nome}</strong>.
+                                Informe o valor a ser pago para o motorista{" "}
+                                <strong>{motorista.motorista_nome}</strong>.
                               </p>
                             )}
                           </AlertDialogDescription>
@@ -318,7 +337,11 @@ export function MotoristasTable() {
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() =>
-                              handlePayment(motorista.id, motorista.motorista_nome, Number.parseFloat(paymentValue))
+                              handlePayment(
+                                motorista.id,
+                                motorista.motorista_nome,
+                                Number.parseFloat(paymentValue)
+                              )
                             }
                             disabled={isPaying || !paymentValue}
                             className="bg-primary text-primary-foreground hover:bg-primary/90"
@@ -359,8 +382,9 @@ export function MotoristasTable() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Tem certeza que deseja excluir o motorista <strong>{motorista.motorista_nome}</strong>? Esta
-                            ação não pode ser desfeita.
+                            Tem certeza que deseja excluir o motorista{" "}
+                            <strong>{motorista.motorista_nome}</strong>? Esta ação não pode ser
+                            desfeita.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

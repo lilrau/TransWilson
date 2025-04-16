@@ -5,15 +5,35 @@ import { useEffect, useState, useRef } from "react"
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import Link from "next/link"
-import { ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronRight, Edit, Loader2 } from "lucide-react"
+import {
+  ArrowDownCircle,
+  ArrowUpCircle,
+  ChevronDown,
+  ChevronRight,
+  Edit,
+  Loader2,
+} from "lucide-react"
 import { getAllDespesa, getTipoDespesaEnum } from "@/lib/services/despesa-service"
 import { getAllEntradas, getTipoEntradaEnum } from "@/lib/services/entrada-service"
 import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
 type Movimento = {
@@ -31,8 +51,8 @@ type Movimento = {
 }
 
 export function EntradasSaidasTable() {
-  const [entradaCategories, setEntradaCategories] = useState<string[]>([]);
-  const [despesaCategories, setDespesaCategories] = useState<string[]>([]);
+  const [entradaCategories, setEntradaCategories] = useState<string[]>([])
+  const [despesaCategories, setDespesaCategories] = useState<string[]>([])
   const [movimentos, setMovimentos] = useState<Movimento[]>([])
   const [filteredMovimentos, setFilteredMovimentos] = useState<Movimento[]>([])
   const [loading, setLoading] = useState(true)
@@ -55,22 +75,22 @@ export function EntradasSaidasTable() {
       try {
         const [tiposEntrada, tiposDespesa] = await Promise.all([
           getTipoEntradaEnum(),
-          getTipoDespesaEnum()
-        ]);
-        
+          getTipoDespesaEnum(),
+        ])
+
         if (tiposEntrada && tiposDespesa) {
-          setEntradaCategories(tiposEntrada);
-          setDespesaCategories(tiposDespesa);
-          setCategorias([...tiposEntrada, ...tiposDespesa]);
+          setEntradaCategories(tiposEntrada)
+          setDespesaCategories(tiposDespesa)
+          setCategorias([...tiposEntrada, ...tiposDespesa])
         }
       } catch (err) {
-        console.error("Erro ao buscar categorias:", err);
-        setError("Erro ao carregar as categorias.");
+        console.error("Erro ao buscar categorias:", err)
+        setError("Erro ao carregar as categorias.")
       }
     }
-  
-    fetchCategorias();
-  }, []);
+
+    fetchCategorias()
+  }, [])
 
   useEffect(() => {
     async function fetchData() {
@@ -86,7 +106,7 @@ export function EntradasSaidasTable() {
 
         // Mapear despesas para o formato unificado
         const despesas: Movimento[] = (despesasData || [])
-          .filter(despesa => {
+          .filter((despesa) => {
             const despesaDate = new Date(despesa.created_at)
             return despesaDate >= startDate && despesaDate <= endDate
           })
@@ -107,7 +127,7 @@ export function EntradasSaidasTable() {
 
         // Mapear entradas para o formato unificado
         const entradas: Movimento[] = (entradasData || [])
-          .filter(entrada => {
+          .filter((entrada) => {
             const entradaDate = new Date(entrada.created_at)
             return entradaDate >= startDate && entradaDate <= endDate
           })
@@ -124,7 +144,7 @@ export function EntradasSaidasTable() {
 
         // Combinar e ordenar por data (mais recente primeiro)
         const combinedData = [...despesas, ...entradas].sort(
-          (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime(),
+          (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()
         )
 
         setMovimentos(combinedData)
@@ -162,15 +182,14 @@ export function EntradasSaidasTable() {
       }
 
       if (filters.categoria && filters.categoria !== "todas") {
-        filtered = filtered.filter((movimento) =>
-          movimento.categoria === filters.categoria
-        )
+        filtered = filtered.filter((movimento) => movimento.categoria === filters.categoria)
       }
 
       if (filters.descricao) {
-        filtered = filtered.filter((movimento) =>
-          movimento.nome.toLowerCase().includes(filters.descricao.toLowerCase()) ||
-          (movimento.descricao?.toLowerCase() || "").includes(filters.descricao.toLowerCase())
+        filtered = filtered.filter(
+          (movimento) =>
+            movimento.nome.toLowerCase().includes(filters.descricao.toLowerCase()) ||
+            (movimento.descricao?.toLowerCase() || "").includes(filters.descricao.toLowerCase())
         )
       }
 
@@ -227,10 +246,7 @@ export function EntradasSaidasTable() {
     <div className="space-y-4">
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setSelectedMonth(subMonths(selectedMonth, 1))}
-          >
+          <Button variant="outline" onClick={() => setSelectedMonth(subMonths(selectedMonth, 1))}>
             Mês Anterior
           </Button>
           <div className="font-medium">
@@ -272,27 +288,27 @@ export function EntradasSaidasTable() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todas">Todas as categorias</SelectItem>
-                
+
                 {/* Categorias de Entrada */}
                 <div className="px-2 py-1 text-xs font-medium text-muted-foreground flex items-center gap-1">
                   <ArrowUpCircle className="h-3 w-3 text-green-500" />
                   Entradas
                 </div>
                 {categorias
-                  .filter(cat => entradaCategories.includes(cat))
+                  .filter((cat) => entradaCategories.includes(cat))
                   .map((categoria) => (
                     <SelectItem key={`entrada-${categoria}`} value={categoria} className="pl-6">
                       {categoria}
                     </SelectItem>
                   ))}
-                
+
                 {/* Categorias de Despesa */}
                 <div className="px-2 py-1 text-xs font-medium text-muted-foreground flex items-center gap-1 mt-2">
                   <ArrowDownCircle className="h-3 w-3 text-red-500" />
                   Despesas
                 </div>
                 {categorias
-                  .filter(cat => despesaCategories.includes(cat))
+                  .filter((cat) => despesaCategories.includes(cat))
                   .map((categoria) => (
                     <SelectItem key={`despesa-${categoria}`} value={categoria} className="pl-6">
                       {categoria}
@@ -330,7 +346,9 @@ export function EntradasSaidasTable() {
       {filteredMovimentos.length === 0 ? (
         <div className="bg-muted p-8 rounded-md text-center">
           <h3 className="text-lg font-medium mb-2">Nenhum movimento financeiro encontrado</h3>
-          <p className="text-muted-foreground mb-4">Não há registros de entradas ou saídas no sistema.</p>
+          <p className="text-muted-foreground mb-4">
+            Não há registros de entradas ou saídas no sistema.
+          </p>
         </div>
       ) : (
         <div className="rounded-md border bg-white dark:bg-zinc-900 dark:border-zinc-800">
@@ -347,7 +365,10 @@ export function EntradasSaidasTable() {
             <TableBody>
               {filteredMovimentos.map((movimento) => (
                 <React.Fragment key={movimento.id}>
-                  <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => toggleRowExpansion(movimento.id)}>
+                  <TableRow
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => toggleRowExpansion(movimento.id)}
+                  >
                     <TableCell className="p-2">
                       <Button variant="ghost" size="icon" className="h-8 w-8">
                         {expandedRows[movimento.id] ? (
@@ -377,7 +398,8 @@ export function EntradasSaidasTable() {
                             : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
                         }
                       >
-                        {movimento.categoria || (movimento.tipo === "entrada" ? "Entrada" : "Despesa")}
+                        {movimento.categoria ||
+                          (movimento.tipo === "entrada" ? "Entrada" : "Despesa")}
                       </Badge>
                     </TableCell>
                     <TableCell
@@ -397,13 +419,20 @@ export function EntradasSaidasTable() {
                       <div
                         className={cn(
                           "transition-all duration-300 ease-in-out",
-                          expandedRows[movimento.id] ? "opacity-100" : "opacity-0 max-h-0",
+                          expandedRows[movimento.id] ? "opacity-100" : "opacity-0 max-h-0"
                         )}
                         style={{
-                          maxHeight: expandedRows[movimento.id] ? `${rowHeights[movimento.id] || 1000}px` : "0px",
+                          maxHeight: expandedRows[movimento.id]
+                            ? `${rowHeights[movimento.id] || 1000}px`
+                            : "0px",
                         }}
                       >
-                        <div ref={(el: HTMLDivElement | null): void => { detailRefs.current[movimento.id] = el }} className="p-0">
+                        <div
+                          ref={(el: HTMLDivElement | null): void => {
+                            detailRefs.current[movimento.id] = el
+                          }}
+                          className="p-0"
+                        >
                           <Card className="border-0 shadow-none bg-transparent">
                             <CardContent className="p-4 space-y-2">
                               <div className="flex justify-between items-start mb-2">
@@ -424,23 +453,33 @@ export function EntradasSaidasTable() {
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Detalhes</h4>
-                                  <p className="text-sm">{movimento.descricao || "Sem descrição adicional"}</p>
+                                  <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                                    Detalhes
+                                  </h4>
+                                  <p className="text-sm">
+                                    {movimento.descricao || "Sem descrição adicional"}
+                                  </p>
                                 </div>
 
                                 {movimento.entidade && (
                                   <div>
                                     <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                                      {movimento.entidade.tipo === "motorista" ? "Motorista" : "Veículo"}
+                                      {movimento.entidade.tipo === "motorista"
+                                        ? "Motorista"
+                                        : "Veículo"}
                                     </h4>
                                     <p className="text-sm">{movimento.entidade.nome}</p>
                                   </div>
                                 )}
 
                                 <div>
-                                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Data e Hora</h4>
+                                  <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                                    Data e Hora
+                                  </h4>
                                   <p className="text-sm">
-                                    {format(new Date(movimento.data), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                                    {format(new Date(movimento.data), "dd/MM/yyyy 'às' HH:mm", {
+                                      locale: ptBR,
+                                    })}
                                   </p>
                                 </div>
                               </div>

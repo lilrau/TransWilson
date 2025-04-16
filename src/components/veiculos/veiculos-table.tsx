@@ -14,8 +14,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { toast } from "@/components/ui/use-toast"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { toast } from "@/hooks/use-toast"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -138,8 +145,12 @@ export function VeiculosTable() {
               <TableCell>{veiculo.veiculo_placa}</TableCell>
               <TableCell className="hidden md:table-cell">{veiculo.veiculo_reboque}</TableCell>
               <TableCell className="hidden md:table-cell">{veiculo.veiculo_ano || "-"}</TableCell>
-              <TableCell className="hidden md:table-cell">{veiculo.veiculo_km_inicial?.toFixed(1) || "-"}</TableCell>
-              <TableCell className="hidden md:table-cell">{veiculo.veiculo_litro_inicial?.toFixed(2) || "-"}</TableCell>
+              <TableCell className="hidden md:table-cell">
+                {veiculo.veiculo_km_inicial?.toFixed(1) || "-"}
+              </TableCell>
+              <TableCell className="hidden md:table-cell">
+                {veiculo.veiculo_litro_inicial?.toFixed(2) || "-"}
+              </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -174,8 +185,9 @@ export function VeiculosTable() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Tem certeza que deseja excluir o veículo <strong>{veiculo.veiculo_nome}</strong>? Esta ação
-                            não pode ser desfeita.
+                            Tem certeza que deseja excluir o veículo{" "}
+                            <strong>{veiculo.veiculo_nome}</strong>? Esta ação não pode ser
+                            desfeita.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

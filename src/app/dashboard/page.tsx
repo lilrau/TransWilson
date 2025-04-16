@@ -1,7 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { format, startOfMonth, endOfMonth, subMonths, addMonths, eachDayOfInterval, isSameDay } from "date-fns"
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  subMonths,
+  addMonths,
+  eachDayOfInterval,
+  isSameDay,
+} from "date-fns"
 import { ptBR } from "date-fns/locale"
 import Link from "next/link"
 import {
@@ -183,10 +191,18 @@ export default function DashboardPage() {
         })
 
         // Calcular estatísticas
-        const faturamentoMensal = entradasDoMes.reduce((total, entrada) => total + entrada.entrada_valor, 0)
-        const faturamentoAnterior = entradasMesAnterior.reduce((total, entrada) => total + entrada.entrada_valor, 0)
+        const faturamentoMensal = entradasDoMes.reduce(
+          (total, entrada) => total + entrada.entrada_valor,
+          0
+        )
+        const faturamentoAnterior = entradasMesAnterior.reduce(
+          (total, entrada) => total + entrada.entrada_valor,
+          0
+        )
         const percentualCrescimento =
-          faturamentoAnterior > 0 ? ((faturamentoMensal - faturamentoAnterior) / faturamentoAnterior) * 100 : 0
+          faturamentoAnterior > 0
+            ? ((faturamentoMensal - faturamentoAnterior) / faturamentoAnterior) * 100
+            : 0
 
         // Contar motoristas disponíveis (simulado)
         const motoristasDisponiveis = Math.floor(motoristasData.length * 0.6) // 60% dos motoristas
@@ -223,16 +239,28 @@ export default function DashboardPage() {
   }, [selectedMonth])
 
   // Preparar dados para gráfico de finanças diárias
-  const prepareDailyFinanceData = (entradas: Entrada[], despesas: Despesa[], startDate: Date, endDate: Date) => {
+  const prepareDailyFinanceData = (
+    entradas: Entrada[],
+    despesas: Despesa[],
+    startDate: Date,
+    endDate: Date
+  ) => {
     const days = eachDayOfInterval({ start: startDate, end: endDate })
 
     const dailyData = days.map((day) => {
-      const entradasDoDia = entradas.filter((entrada) => isSameDay(new Date(entrada.created_at), day))
+      const entradasDoDia = entradas.filter((entrada) =>
+        isSameDay(new Date(entrada.created_at), day)
+      )
 
-      const despesasDoDia = despesas.filter((despesa) => isSameDay(new Date(despesa.created_at), day))
+      const despesasDoDia = despesas.filter((despesa) =>
+        isSameDay(new Date(despesa.created_at), day)
+      )
 
       const totalEntradas = entradasDoDia.reduce((sum, entrada) => sum + entrada.entrada_valor, 0)
-      const totalDespesas = despesasDoDia.reduce((sum, despesa) => sum + (despesa.despesa_valor || 0), 0)
+      const totalDespesas = despesasDoDia.reduce(
+        (sum, despesa) => sum + (despesa.despesa_valor || 0),
+        0
+      )
 
       return {
         date: format(day, "dd/MM"),
@@ -288,7 +316,8 @@ export default function DashboardPage() {
 
     entradas.forEach((entrada) => {
       if (entrada.entrada_tipo) {
-        entradasPorTipo[entrada.entrada_tipo] = (entradasPorTipo[entrada.entrada_tipo] || 0) + entrada.entrada_valor
+        entradasPorTipo[entrada.entrada_tipo] =
+          (entradasPorTipo[entrada.entrada_tipo] || 0) + entrada.entrada_valor
       } else {
         entradasPorTipo["Outros"] = (entradasPorTipo["Outros"] || 0) + entrada.entrada_valor
       }
@@ -313,13 +342,27 @@ export default function DashboardPage() {
   }
 
   // Renderizador personalizado para rótulos do gráfico de pizza
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: PieChartLabelProps) => {
+  const renderCustomizedLabel = ({
+    cx,
+    cy,
+    midAngle,
+    innerRadius,
+    outerRadius,
+    percent,
+  }: PieChartLabelProps) => {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5
     const x = cx + radius * Math.cos(-midAngle * RADIAN)
     const y = cy + radius * Math.sin(-midAngle * RADIAN)
 
     return (
-      <text x={x} y={y} fill="white" textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize={12}>
+      <text
+        x={x}
+        y={y}
+        fill="white"
+        textAnchor={x > cx ? "start" : "end"}
+        dominantBaseline="central"
+        fontSize={12}
+      >
         {`${(percent * 100).toFixed(0)}%`}
       </text>
     )
@@ -366,7 +409,9 @@ export default function DashboardPage() {
 
             <div className="flex items-center gap-2 px-3 py-2 border rounded-md">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">{format(selectedMonth, "MMMM 'de' yyyy", { locale: ptBR })}</span>
+              <span className="font-medium">
+                {format(selectedMonth, "MMMM 'de' yyyy", { locale: ptBR })}
+              </span>
             </div>
 
             <Button
@@ -434,7 +479,9 @@ export default function DashboardPage() {
               <div className="flex flex-col">
                 <div className="text-3xl font-bold">{formatCurrency(stats.faturamentoMensal)}</div>
                 <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2 flex items-center">
-                  <span className={stats.percentualCrescimento >= 0 ? "text-green-500" : "text-red-500"}>
+                  <span
+                    className={stats.percentualCrescimento >= 0 ? "text-green-500" : "text-red-500"}
+                  >
                     {stats.percentualCrescimento >= 0 ? "+" : ""}
                     {stats.percentualCrescimento.toFixed(1)}%
                   </span>
@@ -465,7 +512,10 @@ export default function DashboardPage() {
           <CardContent>
             <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={dailyFinanceData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <LineChart
+                  data={dailyFinanceData}
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis />
@@ -474,9 +524,27 @@ export default function DashboardPage() {
                     labelFormatter={(label) => `Dia ${label}`}
                   />
                   <Legend />
-                  <Line type="monotone" dataKey="entradas" stroke="#4ade80" strokeWidth={2} name="Entradas" />
-                  <Line type="monotone" dataKey="despesas" stroke="#f87171" strokeWidth={2} name="Despesas" />
-                  <Line type="monotone" dataKey="saldo" stroke="#60a5fa" strokeWidth={2} name="Saldo" />
+                  <Line
+                    type="monotone"
+                    dataKey="entradas"
+                    stroke="#4ade80"
+                    strokeWidth={2}
+                    name="Entradas"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="despesas"
+                    stroke="#f87171"
+                    strokeWidth={2}
+                    name="Despesas"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="saldo"
+                    stroke="#60a5fa"
+                    strokeWidth={2}
+                    name="Saldo"
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -524,11 +592,15 @@ export default function DashboardPage() {
                           <tr key={frete.id} className="border-b dark:border-zinc-800">
                             <td className="py-3 px-4">#{frete.id}</td>
                             <td className="py-3 px-4">{frete.frete_origem || "São Paulo, SP"}</td>
-                            <td className="py-3 px-4">{frete.frete_destino || "Rio de Janeiro, RJ"}</td>
+                            <td className="py-3 px-4">
+                              {frete.frete_destino || "Rio de Janeiro, RJ"}
+                            </td>
                             <td className="py-3 px-4">
                               {frete.motorista?.motorista_nome || "Motorista não atribuído"}
                             </td>
-                            <td className="py-3 px-4">{formatCurrency(frete.frete_valor_total || 0)}</td>
+                            <td className="py-3 px-4">
+                              {formatCurrency(frete.frete_valor_total || 0)}
+                            </td>
                           </tr>
                         ))
                       ) : (
@@ -577,7 +649,10 @@ export default function DashboardPage() {
                     {entradas
                       .filter((entrada) => {
                         const entradaDate = new Date(entrada.created_at)
-                        return entradaDate >= startOfMonth(selectedMonth) && entradaDate <= endOfMonth(selectedMonth)
+                        return (
+                          entradaDate >= startOfMonth(selectedMonth) &&
+                          entradaDate <= endOfMonth(selectedMonth)
+                        )
                       })
                       .slice(0, 3)
                       .map((entrada) => (
@@ -606,9 +681,12 @@ export default function DashboardPage() {
                       despesas
                         .filter((despesa) => {
                           const despesaDate = new Date(despesa.created_at)
-                          return despesaDate >= startOfMonth(selectedMonth) && despesaDate <= endOfMonth(selectedMonth)
+                          return (
+                            despesaDate >= startOfMonth(selectedMonth) &&
+                            despesaDate <= endOfMonth(selectedMonth)
+                          )
                         })
-                        .reduce((total, despesa) => total + (despesa.despesa_valor || 0), 0),
+                        .reduce((total, despesa) => total + (despesa.despesa_valor || 0), 0)
                     )}
                   </div>
 
@@ -616,7 +694,10 @@ export default function DashboardPage() {
                     {despesas
                       .filter((despesa) => {
                         const despesaDate = new Date(despesa.created_at)
-                        return despesaDate >= startOfMonth(selectedMonth) && despesaDate <= endOfMonth(selectedMonth)
+                        return (
+                          despesaDate >= startOfMonth(selectedMonth) &&
+                          despesaDate <= endOfMonth(selectedMonth)
+                        )
                       })
                       .slice(0, 3)
                       .map((despesa) => (
@@ -758,7 +839,8 @@ export default function DashboardPage() {
                               .filter((despesa) => {
                                 const despesaDate = new Date(despesa.created_at)
                                 return (
-                                  despesaDate >= startOfMonth(selectedMonth) && despesaDate <= endOfMonth(selectedMonth)
+                                  despesaDate >= startOfMonth(selectedMonth) &&
+                                  despesaDate <= endOfMonth(selectedMonth)
                                 )
                               })
                               .reduce((total, despesa) => total + (despesa.despesa_valor || 0), 0),

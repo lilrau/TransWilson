@@ -28,36 +28,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 const formSchema = z.object({
-    frete_nome: z.string().min(3, {
-      message: "O nome do frete deve ter pelo menos 3 caracteres.",
-    }),
-    frete_veiculo: z.coerce.number({
+  frete_nome: z.string().min(3, {
+    message: "O nome do frete deve ter pelo menos 3 caracteres.",
+  }),
+  frete_veiculo: z.coerce
+    .number({
       required_error: "Por favor, selecione um veículo",
       invalid_type_error: "Selecione um veículo válido",
-    }).min(1, "Por favor, selecione um veículo"),
-    frete_agenciador: z.coerce.number({
+    })
+    .min(1, "Por favor, selecione um veículo"),
+  frete_agenciador: z.coerce
+    .number({
       required_error: "Por favor, selecione um agenciador",
       invalid_type_error: "Selecione um agenciador válido",
-    }).min(1, "Por favor, selecione um agenciador"),
-    frete_motorista: z.coerce.number({
+    })
+    .min(1, "Por favor, selecione um agenciador"),
+  frete_motorista: z.coerce
+    .number({
       required_error: "Por favor, selecione um motorista",
       invalid_type_error: "Selecione um motorista válido",
-    }).min(1, "Por favor, selecione um motorista"),
-    frete_origem: z.string().min(3, {
-      message: "A origem deve ter pelo menos 3 caracteres.",
-    }),
-    frete_destino: z.string().min(3, {
-      message: "O destino deve ter pelo menos 3 caracteres.",
-    }),
-    frete_distancia: z.coerce.number().min(0).nullable(),
-    frete_peso: z.array(z.coerce.number().min(0)),
-    frete_valor_tonelada: z.coerce.number().min(0),
-  })  
+    })
+    .min(1, "Por favor, selecione um motorista"),
+  frete_origem: z.string().min(3, {
+    message: "A origem deve ter pelo menos 3 caracteres.",
+  }),
+  frete_destino: z.string().min(3, {
+    message: "O destino deve ter pelo menos 3 caracteres.",
+  }),
+  frete_distancia: z.coerce.number().min(0).nullable(),
+  frete_peso: z.array(z.coerce.number().min(0)),
+  frete_valor_tonelada: z.coerce.number().min(0),
+})
 
 type FormValues = z.infer<typeof formSchema>
 
@@ -70,10 +76,12 @@ export function FretesForm({ id }: FretesFormProps) {
   const [isLoading, setIsLoading] = useState(id ? true : false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [veiculos, setVeiculos] = useState<{ id: number; nome: string; motorista?: { id: number } }[]>([])
+  const [veiculos, setVeiculos] = useState<
+    { id: number; nome: string; motorista?: { id: number } }[]
+  >([])
   const [agenciadores, setAgenciadores] = useState<{ id: number; agenciador_nome: string }[]>([])
   const [motoristas, setMotoristas] = useState<{ id: number; motorista_nome: string }[]>([])
-  const [weights, setWeights] = useState<string[]>([''])
+  const [weights, setWeights] = useState<string[]>([""])
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -96,12 +104,19 @@ export function FretesForm({ id }: FretesFormProps) {
         const [veiculosData, agenciadoresData, motoristasData] = await Promise.all([
           getAllVeiculos(),
           getAllAgenciador(),
-          getAllMotorista()
+          getAllMotorista(),
         ])
 
-        setVeiculos(veiculosData?.map(v => ({ id: v.id, nome: v.veiculo_nome, motorista: v.motorista })) || [])
-        setAgenciadores(agenciadoresData?.map(a => ({ id: a.id, agenciador_nome: a.agenciador_nome })) || [])
-        setMotoristas(motoristasData?.map(m => ({ id: m.id, motorista_nome: m.motorista_nome })) || [])
+        setVeiculos(
+          veiculosData?.map((v) => ({ id: v.id, nome: v.veiculo_nome, motorista: v.motorista })) ||
+            []
+        )
+        setAgenciadores(
+          agenciadoresData?.map((a) => ({ id: a.id, agenciador_nome: a.agenciador_nome })) || []
+        )
+        setMotoristas(
+          motoristasData?.map((m) => ({ id: m.id, motorista_nome: m.motorista_nome })) || []
+        )
 
         if (id) {
           const freteData = await getFrete(Number(id))
@@ -136,25 +151,28 @@ export function FretesForm({ id }: FretesFormProps) {
   }, [id, form])
 
   const addWeight = () => {
-    setWeights([...weights, ''])
-    form.setValue('frete_peso', [...form.getValues('frete_peso'), 0])
+    setWeights([...weights, ""])
+    form.setValue("frete_peso", [...form.getValues("frete_peso"), 0])
   }
 
   const removeWeight = (index: number) => {
     const newWeights = weights.filter((_, i) => i !== index)
     setWeights(newWeights)
-    form.setValue('frete_peso', form.getValues('frete_peso').filter((_, i) => i !== index))
+    form.setValue(
+      "frete_peso",
+      form.getValues("frete_peso").filter((_, i) => i !== index)
+    )
   }
 
   const handleWeightChange = (value: string, index: number) => {
     const newWeights = [...weights]
     newWeights[index] = value
     setWeights(newWeights)
-    
-    const numericValue = parseFloat(value) || 0
-    const currentWeights = form.getValues('frete_peso')
+
+    const numericValue = Number.parseFloat(value) || 0
+    const currentWeights = form.getValues("frete_peso")
     currentWeights[index] = numericValue
-    form.setValue('frete_peso', currentWeights)
+    form.setValue("frete_peso", currentWeights)
   }
 
   async function onSubmit(values: FormValues) {
@@ -166,8 +184,9 @@ export function FretesForm({ id }: FretesFormProps) {
         await updateFrete(Number(id), values)
       } else {
         await createFrete({
-        ...values,
-        frete_valor_total: values.frete_peso.reduce((acc, peso) => acc + peso, 0) * values.frete_valor_tonelada
+          ...values,
+          frete_valor_total:
+            values.frete_peso.reduce((acc, peso) => acc + peso, 0) * values.frete_valor_tonelada,
         })
       }
 
@@ -239,9 +258,9 @@ export function FretesForm({ id }: FretesFormProps) {
                     <Select
                       onValueChange={(value) => {
                         field.onChange(Number(value))
-                        const selectedVehicle = veiculos.find(v => v.id === Number(value))
+                        const selectedVehicle = veiculos.find((v) => v.id === Number(value))
                         if (selectedVehicle?.motorista?.id) {
-                          form.setValue('frete_motorista', selectedVehicle.motorista.id)
+                          form.setValue("frete_motorista", selectedVehicle.motorista.id)
                         }
                       }}
                       value={field.value?.toString()}
@@ -259,9 +278,7 @@ export function FretesForm({ id }: FretesFormProps) {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage>
-                      {form.formState.errors.frete_veiculo?.message}
-                    </FormMessage>
+                    <FormMessage>{form.formState.errors.frete_veiculo?.message}</FormMessage>
                   </FormItem>
                 )}
               />
@@ -301,9 +318,7 @@ export function FretesForm({ id }: FretesFormProps) {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage>
-                      {form.formState.errors.frete_agenciador?.message}
-                    </FormMessage>
+                    <FormMessage>{form.formState.errors.frete_agenciador?.message}</FormMessage>
                   </FormItem>
                 )}
               />
@@ -337,9 +352,7 @@ export function FretesForm({ id }: FretesFormProps) {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage>
-                      {form.formState.errors.frete_motorista?.message}
-                    </FormMessage>
+                    <FormMessage>{form.formState.errors.frete_motorista?.message}</FormMessage>
                   </FormItem>
                 )}
               />
@@ -419,7 +432,7 @@ export function FretesForm({ id }: FretesFormProps) {
                   Adicionar Peso
                 </Button>
               </div>
-              
+
               {weights.map((weight, index) => (
                 <div key={index} className="flex gap-2">
                   <Input
@@ -457,8 +470,10 @@ export function FretesForm({ id }: FretesFormProps) {
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     {id ? "Atualizando..." : "Cadastrando..."}
                   </>
+                ) : id ? (
+                  "Atualizar Frete"
                 ) : (
-                  id ? "Atualizar Frete" : "Cadastrar Frete"
+                  "Cadastrar Frete"
                 )}
               </Button>
             </div>

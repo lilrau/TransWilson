@@ -10,10 +10,23 @@ import { Loader2 } from "lucide-react"
 import { getEntrada, updateEntrada, getTipoEntradaEnum } from "@/lib/services/entrada-service"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
@@ -59,7 +72,10 @@ export function EntradaEditForm({ id }: EntradaEditFormProps) {
         setIsLoading(true)
 
         // Buscar tipos de entrada e dados da entrada em paralelo
-        const [tiposData, entradaData] = await Promise.all([getTipoEntradaEnum(), getEntrada(Number(id))])
+        const [tiposData, entradaData] = await Promise.all([
+          getTipoEntradaEnum(),
+          getEntrada(Number(id)),
+        ])
 
         if (tiposData && Array.isArray(tiposData)) {
           setTipoOptions(tiposData)
