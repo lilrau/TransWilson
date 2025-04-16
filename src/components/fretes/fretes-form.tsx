@@ -11,6 +11,7 @@ import { createFrete, getFrete, updateFrete } from "@/lib/services/frete-service
 import { getAllVeiculos } from "@/lib/services/veiculo-service"
 import { getAllAgenciador } from "@/lib/services/agenciador-service"
 import { getAllMotorista } from "@/lib/services/motorista-service"
+import { getSessionData } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -82,6 +83,8 @@ export function FretesForm({ id }: FretesFormProps) {
   const [agenciadores, setAgenciadores] = useState<{ id: number; agenciador_nome: string }[]>([])
   const [motoristas, setMotoristas] = useState<{ id: number; motorista_nome: string }[]>([])
   const [weights, setWeights] = useState<string[]>([""])
+  const [userType, setUserType] = useState<string>("") 
+  const [userId, setUserId] = useState<number | null>(null)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -97,6 +100,22 @@ export function FretesForm({ id }: FretesFormProps) {
       frete_valor_tonelada: 0,
     },
   })
+
+  useEffect(() => {
+    async function fetchSession() {
+      try {
+        const session = await getSessionData()
+        if (session) {
+          setUserType(session.userType)
+          setUserId(session.id)
+        }
+      } catch (err) {
+        console.error("Erro ao buscar dados da sessão:", err)
+      }
+    }
+    
+    fetchSession()
+  }, [])
 
   useEffect(() => {
     async function fetchData() {
@@ -180,11 +199,18 @@ export function FretesForm({ id }: FretesFormProps) {
     setError(null)
 
     try {
+      // Se não for admin, força o motorista atual
+      const motorista = userType !== "admin" && userId !== null ? userId : values.frete_motorista
+      
       if (id) {
-        await updateFrete(Number(id), values)
+        await updateFrete(Number(id), {
+          ...values,
+          frete_motorista: motorista
+        })
       } else {
         await createFrete({
           ...values,
+          frete_motorista: motorista,
           frete_valor_total:
             values.frete_peso.reduce((acc, peso) => acc + peso, 0) * values.frete_valor_tonelada,
         })
@@ -326,35 +352,45 @@ export function FretesForm({ id }: FretesFormProps) {
               <FormField
                 control={form.control}
                 name="frete_motorista"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Motorista</FormLabel>
-                    <Select
-                      onValueChange={(value) => {
-                        if (value === "novo") {
-                          router.push("/dashboard/cadastros/agenciadores/novo")
-                          return
-                        }
-                        field.onChange(Number(value))
-                      }}
-                      value={field.value?.toString()}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um motorista" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {motoristas.map((motorista) => (
-                          <SelectItem key={motorista.id} value={motorista.id.toString()}>
-                            {motorista.motorista_nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage>{form.formState.errors.frete_motorista?.message}</FormMessage>
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  // Se não for admin e tiver userId, força o motorista atual
+                  useEffect(() => {
+                    if (userType !== "admin" && userId !== null) {
+                      field.onChange(userId)
+                    }
+                  }, [userType, userId, field])
+                  
+                  return (
+                    <FormItem>
+                      <FormLabel>Motorista</FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          if (value === "novo") {
+                            router.push("/dashboard/cadastros/agenciadores/novo")
+                            return
+                          }
+                          field.onChange(Number(value))
+                        }}
+                        value={field.value?.toString()}
+                        disabled={userType !== "admin" && userId !== null}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um motorista" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {motoristas.map((motorista) => (
+                            <SelectItem key={motorista.id} value={motorista.id.toString()}>
+                              {motorista.motorista_nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage>{form.formState.errors.frete_motorista?.message}</FormMessage>
+                    </FormItem>
+                  )
+                }}
               />
 
               <FormField

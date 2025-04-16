@@ -10,6 +10,7 @@ import { createDespesa, getDespesa, updateDespesa } from "@/lib/services/despesa
 import { getAllVeiculos } from "@/lib/services/veiculo-service"
 import { getAllMotorista } from "@/lib/services/motorista-service"
 import { getTipoDespesaEnum } from "@/lib/services/enum-service"
+import { getSessionData } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -63,6 +64,8 @@ export function DespesasForm({ id }: DespesasFormProps) {
     { id: number; nome: string; motorista?: { id: number; nome: string } }[]
   >([])
   const [motoristas, setMotoristas] = useState<{ id: number; nome: string }[]>([])
+  const [userType, setUserType] = useState<string>("") 
+  const [userId, setUserId] = useState<number | null>(null)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -75,6 +78,18 @@ export function DespesasForm({ id }: DespesasFormProps) {
       despesa_motorista: null,
     },
   })
+
+  useEffect(() => {
+    async function fetchSession() {
+      const session = await getSessionData()
+      if (session) {
+        setUserType(session.userType)
+        setUserId(session.id)
+      }
+    }
+    
+    fetchSession()
+  }, [])
 
   useEffect(() => {
     async function fetchVeiculos() {
@@ -187,13 +202,16 @@ export function DespesasForm({ id }: DespesasFormProps) {
     setError(null)
 
     try {
+      // Se não for admin, força o motorista atual
+      const motorista = userType !== "admin" && userId !== null ? userId : values.despesa_motorista ?? null
+      
       const despesaData = {
         despesa_nome: values.despesa_nome,
         despesa_descricao: values.despesa_descricao ?? null,
         despesa_tipo: values.despesa_tipo,
         despesa_valor: values.despesa_valor,
         despesa_veiculo: values.despesa_veiculo ?? null,
-        despesa_motorista: values.despesa_motorista ?? null,
+        despesa_motorista: motorista,
       }
 
       if (id) {
@@ -384,32 +402,40 @@ export function DespesasForm({ id }: DespesasFormProps) {
               <FormField
                 control={form.control}
                 name="despesa_motorista"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Motorista</FormLabel>
-                    <Select
-                      onValueChange={(value) =>
-                        field.onChange(value === "none" ? null : Number.parseInt(value))
-                      }
-                      value={field.value?.toString() || "none"}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um motorista" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">Nenhum</SelectItem>
-                        {motoristas.map((motorista) => (
-                          <SelectItem key={motorista.id} value={motorista.id.toString()}>
-                            {motorista.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  // Se não for admin e tiver userId, força o motorista atual
+                  useEffect(() => {
+                    if (userType !== "admin" && userId !== null) {
+                      field.onChange(userId)
+                    }
+                  }, [userType, userId, field])
+                  
+                  return (
+                    <FormItem>
+                      <FormLabel>Motorista</FormLabel>
+                      <Select
+                        onValueChange={(value) => field.onChange(value === "none" ? null : Number.parseInt(value))}
+                        value={field.value?.toString() || "none"}
+                        disabled={userType !== "admin" && userId !== null}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um motorista" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          {motoristas.map((motorista) => (
+                            <SelectItem key={motorista.id} value={motorista.id.toString()}>
+                              {motorista.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
             </div>
 
