@@ -11,10 +11,23 @@ import { createEntrada, getTipoEntradaEnum } from "@/lib/services/entrada-servic
 import { getAllFrete } from "@/lib/services/frete-service"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useEffect } from "react"
@@ -119,7 +132,8 @@ export function EntradaForm() {
         entrada_valor: values.entrada_valor,
         entrada_descricao: values.entrada_descricao || null,
         entrada_tipo: values.entrada_tipo,
-        entrada_frete_id: values.entrada_tipo.toLowerCase() === "frete" ? values.entrada_frete_id : null,
+        entrada_frete_id:
+          values.entrada_tipo.toLowerCase() === "frete" ? values.entrada_frete_id : null,
       })
 
       toast({
@@ -220,48 +234,50 @@ export function EntradaForm() {
                 )}
               />
 
-                {form.watch("entrada_tipo")?.toLowerCase() === "frete" && (
+              {form.watch("entrada_tipo")?.toLowerCase() === "frete" && (
                 <FormField
-                    control={form.control}
-                    name="entrada_frete_id"
-                    render={({ field }) => (
+                  control={form.control}
+                  name="entrada_frete_id"
+                  render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Frete</FormLabel>
-                        <Select
+                      <FormLabel>Frete</FormLabel>
+                      <Select
                         onValueChange={(value) => field.onChange(value ? Number(value) : null)}
                         value={field.value?.toString() || undefined}
                         disabled={isLoadingFretes}
-                        >
+                      >
                         <FormControl>
-                            <SelectTrigger>
-                            <SelectValue placeholder={
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
                                 isLoadingFretes ? "Carregando fretes..." : "Selecione o frete"
-                            } />
-                            </SelectTrigger>
+                              }
+                            />
+                          </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            {isLoadingFretes ? (
+                          {isLoadingFretes ? (
                             <SelectItem value="loading" disabled>
-                                Carregando fretes...
+                              Carregando fretes...
                             </SelectItem>
-                            ) : fretes.length > 0 ? (
+                          ) : fretes.length > 0 ? (
                             fretes.map((frete) => (
-                                <SelectItem key={frete.id} value={frete.id.toString()}>
+                              <SelectItem key={frete.id} value={frete.id.toString()}>
                                 {frete.frete_nome}
-                                </SelectItem>
+                              </SelectItem>
                             ))
-                            ) : (
+                          ) : (
                             <SelectItem value="none" disabled>
-                                Nenhum frete disponível
+                              Nenhum frete disponível
                             </SelectItem>
-                            )}
+                          )}
                         </SelectContent>
-                        </Select>
-                        <FormMessage />
+                      </Select>
+                      <FormMessage />
                     </FormItem>
-                    )}
+                  )}
                 />
-                )}
+              )}
 
               <FormField
                 control={form.control}

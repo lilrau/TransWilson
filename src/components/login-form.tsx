@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { getUserByUsername } from "@/lib/services/users-service"
 import { getMotoristaByCredentials } from "@/lib/services/motorista-service"
 import { verifyPassword } from "@/lib/password-utils"
-import { setSessionCookie, UserType } from "@/lib/auth"
+import { setSessionCookie, type UserType } from "@/lib/auth"
 
 export function LoginForm() {
   const router = useRouter()
@@ -37,7 +37,7 @@ export function LoginForm() {
     try {
       setLoading(true)
 
-      let session;
+      let session
 
       if (userType === "admin") {
         const user = await getUserByUsername(username)

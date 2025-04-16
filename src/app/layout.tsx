@@ -11,6 +11,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Sistema de Fretagem",
   description: "Sistema de gerenciamento de fretagem de caminhões",
+  generator: "v0.dev",
 }
 
 export default function RootLayout({
@@ -22,11 +23,13 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider defaultTheme="system" storageKey="trans-wilson-theme">
-          <SpeedInsights />
           {children}
           <Toaster />
+          <SpeedInsights />
         </ThemeProvider>
       </body>
     </html>
   )
 }
+
+import "./globals.css"

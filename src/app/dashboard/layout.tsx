@@ -23,7 +23,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <header className="bg-white dark:bg-zinc-900 border-b dark:border-zinc-800 h-16 flex items-center justify-between px-4 md:px-6">
           <div className="flex items-center">
             <MobileSidebar />
-            <h1 className="text-xl font-semibold ml-4 md:ml-0 dark:text-white">Sistema de Fretagem</h1>
+            <h1 className="text-xl font-semibold ml-4 md:ml-0 dark:text-white">
+              Sistema de Fretagem
+            </h1>
           </div>
           <ThemeToggle />
         </header>

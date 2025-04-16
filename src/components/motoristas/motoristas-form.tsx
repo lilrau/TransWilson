@@ -13,9 +13,17 @@ import { createMotorista, getMotorista, updateMotorista } from "@/lib/services/m
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { tryCatch } from "@/lib/try-catch"
@@ -54,7 +62,10 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
   const [error, setError] = useState<string | null>(null)
 
   // Função para permitir apenas entrada numérica
-  const handleNumericInput = (e: ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
+  const handleNumericInput = (
+    e: ChangeEvent<HTMLInputElement>,
+    onChange: (value: string) => void
+  ) => {
     // Remove qualquer caractere que não seja número ou ponto decimal
     const value = e.target.value.replace(/[^0-9.]/g, "")
 
@@ -67,7 +78,10 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
   }
 
   // Função para permitir apenas entrada de dígitos (sem pontos decimais)
-  const handleDigitsOnly = (e: ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
+  const handleDigitsOnly = (
+    e: ChangeEvent<HTMLInputElement>,
+    onChange: (value: string) => void
+  ) => {
     // Remove qualquer caractere que não seja número
     const value = e.target.value.replace(/[^0-9]/g, "")
 
@@ -98,7 +112,9 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
 
         if (data) {
           // Converter a string de data para objeto Date
-          const admissaoDate = data.motorista_admissao ? new Date(data.motorista_admissao) : new Date()
+          const admissaoDate = data.motorista_admissao
+            ? new Date(data.motorista_admissao)
+            : new Date()
 
           form.reset({
             motorista_nome: data.motorista_nome || "",
@@ -215,7 +231,9 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
                       {error ? (
                         <FormMessage />
                       ) : (
-                        <FormDescription>Número da Carteira Nacional de Habilitação (9 dígitos)</FormDescription>
+                        <FormDescription>
+                          Número da Carteira Nacional de Habilitação (9 dígitos)
+                        </FormDescription>
                       )}
                     </FormItem>
                   )
@@ -262,7 +280,9 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
                       {error ? (
                         <FormMessage />
                       ) : (
-                        <FormDescription>Percentual que o motorista recebe sobre o valor do frete</FormDescription>
+                        <FormDescription>
+                          Percentual que o motorista recebe sobre o valor do frete
+                        </FormDescription>
                       )}
                     </FormItem>
                   )
@@ -289,7 +309,9 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
                       {error ? (
                         <FormMessage />
                       ) : (
-                        <FormDescription>Percentual que o motorista recebe sobre o valor da estadia</FormDescription>
+                        <FormDescription>
+                          Percentual que o motorista recebe sobre o valor da estadia
+                        </FormDescription>
                       )}
                     </FormItem>
                   )
@@ -337,7 +359,11 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => router.push("/dashboard/cadastros/motoristas")}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push("/dashboard/cadastros/motoristas")}
+              >
                 Cancelar
               </Button>
               <Button type="submit" disabled={isSubmitting}>

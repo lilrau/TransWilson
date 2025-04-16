@@ -16,8 +16,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { toast } from "@/components/ui/use-toast"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { toast } from "@/hooks/use-toast"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,7 +67,7 @@ export function DespesasTable() {
       const startDate = startOfMonth(selectedMonth)
       const endDate = endOfMonth(selectedMonth)
 
-      const filteredData = (data || []).filter(despesa => {
+      const filteredData = (data || []).filter((despesa) => {
         const despesaDate = new Date(despesa.created_at)
         return despesaDate >= startDate && despesaDate <= endDate
       })
@@ -131,10 +138,7 @@ export function DespesasTable() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          onClick={() => setSelectedMonth(subMonths(selectedMonth, 1))}
-        >
+        <Button variant="outline" onClick={() => setSelectedMonth(subMonths(selectedMonth, 1))}>
           Mês Anterior
         </Button>
         <div className="font-medium">
@@ -154,7 +158,9 @@ export function DespesasTable() {
           return (
             <div className="bg-muted p-8 rounded-md text-center">
               <h3 className="text-lg font-medium mb-2">Nenhuma despesa cadastrada</h3>
-              <p className="text-muted-foreground mb-4">Cadastre sua primeira despesa para começar.</p>
+              <p className="text-muted-foreground mb-4">
+                Cadastre sua primeira despesa para começar.
+              </p>
               <Button asChild>
                 <Link
                   href={`${window.location.pathname.includes("/movimentos/") ? "/dashboard/movimentos/despesas/novo" : "/dashboard/cadastros/despesas/novo"}`}
@@ -186,8 +192,12 @@ export function DespesasTable() {
                     <TableCell className="font-medium">{despesa.despesa_nome}</TableCell>
                     <TableCell>{despesa.despesa_tipo || "-"}</TableCell>
                     <TableCell>{formatCurrency(despesa.despesa_valor)}</TableCell>
-                    <TableCell className="hidden md:table-cell">{despesa.veiculo?.veiculo_nome || "-"}</TableCell>
-                    <TableCell className="hidden md:table-cell">{despesa.motorista?.motorista_nome || "-"}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {despesa.veiculo?.veiculo_nome || "-"}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {despesa.motorista?.motorista_nome || "-"}
+                    </TableCell>
                     <TableCell className="hidden md:table-cell">
                       {format(new Date(despesa.created_at), "dd/MM/yyyy", { locale: ptBR })}
                     </TableCell>
@@ -230,12 +240,16 @@ export function DespesasTable() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.
+                              Tem certeza que deseja excluir esta despesa? Esta ação não pode ser
+                              desfeita.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction disabled={isDeleting} onClick={() => despesa.id && handleDelete(despesa.id)}>
+                            <AlertDialogAction
+                              disabled={isDeleting}
+                              onClick={() => despesa.id && handleDelete(despesa.id)}
+                            >
                               {isDeleting && deletingId === despesa.id ? (
                                 <>
                                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

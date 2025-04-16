@@ -12,5 +12,5 @@ const nextConfig = {
 
 module.exports = {
   ...nextConfig,
-  logging: false
+  logging: false,
 }

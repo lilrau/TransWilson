@@ -10,9 +10,21 @@ import { createVeiculo, getVeiculo, updateVeiculo } from "@/lib/services/veiculo
 import { getAllMotorista } from "@/lib/services/motorista-service"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { toast } from "@/components/ui/use-toast"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
@@ -72,7 +84,7 @@ export function VeiculosForm({ id }: VeiculosFormProps) {
           data?.map((motorista) => ({
             id: motorista.id,
             nome: motorista.motorista_nome,
-          })) || [],
+          })) || []
         )
       } catch (err) {
         console.error("Erro ao buscar motoristas:", err)
@@ -256,7 +268,12 @@ export function VeiculosForm({ id }: VeiculosFormProps) {
                   <FormItem>
                     <FormLabel>Ano</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Ano do veículo" {...field} value={field.value || ""} />
+                      <Input
+                        type="number"
+                        placeholder="Ano do veículo"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -297,7 +314,12 @@ export function VeiculosForm({ id }: VeiculosFormProps) {
                   <FormItem>
                     <FormLabel>KM Inicial</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="KM inicial do veículo" {...field} value={field.value || ""} />
+                      <Input
+                        type="number"
+                        placeholder="KM inicial do veículo"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
