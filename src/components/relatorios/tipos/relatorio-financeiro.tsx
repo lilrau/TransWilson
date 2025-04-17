@@ -642,23 +642,7 @@ export function RelatorioFinanceiro({ filtroPeriodo }: RelatorioFinanceiroProps)
         <TabsContent value="tabela" className="space-y-6">
           {/* Filtros específicos - APENAS NA ABA DE TABELA */}
           <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <Select
-                value={filtros.tipo}
-                onValueChange={(value) =>
-                  setFiltros({ ...filtros, tipo: value as "todos" | "entrada" | "despesa" })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Filtrar por tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="entrada">Entradas</SelectItem>
-                  <SelectItem value="despesa">Despesas</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            
 
             <div className="flex-1">
               <Select
@@ -688,7 +672,7 @@ export function RelatorioFinanceiro({ filtroPeriodo }: RelatorioFinanceiroProps)
                 }
               >
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Tipo de Movimento" />
+                  <SelectValue placeholder="Filtrar por tipo" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todos</SelectItem>
