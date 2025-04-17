@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { cookies } from "next/headers"
+import { Logger } from "./lib/logger"
 
 // Constantes
 const TOKEN_COOKIE_NAME = "trans_wilson_session"
@@ -50,7 +51,8 @@ export async function middleware(request: NextRequest) {
     // Autenticação válida, continuar
     return NextResponse.next()
   } catch (error) {
-    // Erro ao processar o cookie, redirecionar para login
+    Logger.error("middleware", `Unexpected error while verifying authentication: ${error}	`)
+
     const url = new URL("/", request.url)
     return NextResponse.redirect(url)
   }

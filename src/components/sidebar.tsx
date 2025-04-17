@@ -10,7 +10,6 @@ import {
   ClipboardList,
   FileText,
   Truck,
-  DollarSign,
   Users,
   Package,
   BarChart4,
