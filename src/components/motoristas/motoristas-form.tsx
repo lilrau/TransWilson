@@ -47,6 +47,9 @@ const formSchema = z.object({
   motorista_admissao: z.date({
     required_error: "A data de admissão é obrigatória.",
   }),
+  motorista_senha: z.string().min(6, {
+    message: "A senha deve ter pelo menos 6 caracteres.",
+  }),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -97,6 +100,7 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
       motorista_frete: 0,
       motorista_estadia: 0,
       motorista_admissao: new Date(),
+      motorista_senha: "",
     },
   })
 
@@ -316,6 +320,20 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
                     </FormItem>
                   )
                 }}
+              />
+
+              <FormField
+                control={form.control}
+                name="motorista_senha"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Senha</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="Digite uma senha" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
 
               <FormField
