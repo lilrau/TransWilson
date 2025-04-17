@@ -37,16 +37,17 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    // Verificar rotas específicas de motoristas (se necessário)
-    // const isDriverSpecificRoute = request.nextUrl.pathname.match(/\/dashboard\/motoristas\/(\d+)/)
-    // if (isDriverSpecificRoute) {
-    //   const motoristaId = parseInt(isDriverSpecificRoute[1])
-    //   if (session.userType !== 'admin' && session.id !== motoristaId) {
-    //     // Redirecionar para dashboard se não for admin ou o próprio motorista
-    //     const url = new URL("/dashboard", request.url)
-    //     return NextResponse.redirect(url)
-    //   }
-    // }
+    // Redirecionar motoristas para sua dashboard específica
+    if (session.userType === "driver" && request.nextUrl.pathname === "/dashboard") {
+      const url = new URL("/dashboard/motorista", request.url)
+      return NextResponse.redirect(url)
+    }
+
+    // Impedir que motoristas acessem a dashboard principal
+    if (session.userType === "driver" && !request.nextUrl.pathname.startsWith("/dashboard/motorista")) {
+      const url = new URL("/dashboard/motorista", request.url)
+      return NextResponse.redirect(url)
+    }
 
     // Autenticação válida, continuar
     return NextResponse.next()
