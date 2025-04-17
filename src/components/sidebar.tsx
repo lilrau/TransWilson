@@ -98,12 +98,12 @@ export function Sidebar() {
         href: "/dashboard/movimentos/criar-frete",
         icon: PlusCircle,
       },
-      {
-        title: "Acerto Frete",
-        href: "/dashboard/movimentos/acerto-frete",
-        icon: FileText,
-        adminOnly: true,
-      },
+      // {
+      //   title: "Acerto Frete",
+      //   href: "/dashboard/movimentos/acerto-frete",
+      //   icon: FileText,
+      //   adminOnly: true,
+      // },
       {
         title: "Despesas",
         href: "/dashboard/movimentos/despesas",

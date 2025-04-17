@@ -43,12 +43,6 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    // Impedir que motoristas acessem a dashboard principal
-    if (session.userType === "driver" && !request.nextUrl.pathname.startsWith("/dashboard/motorista")) {
-      const url = new URL("/dashboard/motorista", request.url)
-      return NextResponse.redirect(url)
-    }
-
     // Autenticação válida, continuar
     return NextResponse.next()
   } catch (error) {
