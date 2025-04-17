@@ -3,23 +3,19 @@
 import { useEffect, useState } from "react"
 import { format, startOfMonth, endOfMonth, subMonths, addMonths } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import Link from "next/link"
 import {
   ArrowLeft,
   ArrowRight,
   Calendar,
   Loader2,
   Truck,
-  DollarSign,
   TrendingUp,
 } from "lucide-react"
 import { getAllFrete } from "@/lib/services/frete-service"
 import { getMotorista } from "@/lib/services/motorista-service"
-import { getDespesasByMotorista } from "@/lib/services/despesa-service"
 import { getSessionData } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   LineChart,
@@ -52,11 +48,22 @@ interface DadosGrafico {
   valor: number
 }
 
+// Interface para dados do motorista
+interface Motorista {
+  id: number
+  motorista_nome: string
+  motorista_cnh: string
+  motorista_salario: number
+  motorista_frete: number
+  motorista_estadia: number
+  motorista_admissao: string
+}
+
 export default function DashboardMotorista() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedMonth, setSelectedMonth] = useState(new Date())
-  const [motorista, setMotorista] = useState<any>(null)
+  const [motorista, setMotorista] = useState<Motorista | null>(null)
   const [fretes, setFretes] = useState<Frete[]>([])
   const [dadosGrafico, setDadosGrafico] = useState<DadosGrafico[]>([])
   const [estatisticas, setEstatisticas] = useState({
