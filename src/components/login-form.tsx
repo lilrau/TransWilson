@@ -2,16 +2,18 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Truck } from "lucide-react"
+import { Truck, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { authenticateUser, setSessionCookie, type UserType } from "@/lib/auth"
+// Adicionar a importação da função isAuthenticated
+import { authenticateUser, setSessionCookie, type UserType, isAuthenticated } from "@/lib/auth"
 
+// Modificar o componente LoginForm para verificar autenticação
 export function LoginForm() {
   const router = useRouter()
   const [username, setUsername] = useState("")
@@ -19,6 +21,26 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [userType, setUserType] = useState<UserType>("driver")
+  const [checkingAuth, setCheckingAuth] = useState(true)
+
+  // Verificar se o usuário já está autenticado ao carregar o componente
+  useEffect(() => {
+    async function checkAuthentication() {
+      try {
+        const authenticated = await isAuthenticated()
+        if (authenticated) {
+          // Se já estiver autenticado, redirecionar para o dashboard
+          router.push("/dashboard")
+        }
+      } catch (err) {
+        console.error("Erro ao verificar autenticação:", err)
+      } finally {
+        setCheckingAuth(false)
+      }
+    }
+
+    checkAuthentication()
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,6 +73,20 @@ export function LoginForm() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Se ainda estiver verificando a autenticação, mostrar um indicador de carregamento
+  if (checkingAuth) {
+    return (
+      <Card className="w-full dark:bg-zinc-900 dark:border-zinc-800">
+        <CardContent className="flex items-center justify-center p-8">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Verificando autenticação...</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
