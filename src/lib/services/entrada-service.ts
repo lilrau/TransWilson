@@ -15,6 +15,9 @@ export interface EntradaData {
   frete?: {
     id: number
     frete_nome: string
+    motorista?: {
+      id: number
+    } | null
   } | null
 }
 
@@ -27,7 +30,7 @@ export const getAllEntradas = unstable_cache(
         .select(
           `
           *,
-          frete:entrada_frete_id(id, frete_nome)
+          frete:entrada_frete_id(id, frete_nome, motorista:frete_motorista(id))
         `
         )
         .order("created_at", { ascending: false })
@@ -60,7 +63,7 @@ export const getEntrada = unstable_cache(
         .select(
           `
           *,
-          frete:entrada_frete_id(id, frete_nome)
+          frete:entrada_frete_id(id, frete_nome, motorista:frete_motorista(id))
         `
         )
         .eq("id", id)

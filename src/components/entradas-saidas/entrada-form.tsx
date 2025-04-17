@@ -97,7 +97,7 @@ export function EntradaForm() {
       if (tipoEntrada === "frete") {
         try {
           setIsLoadingFretes(true)
-          const data = await getAllFrete()
+          const data = await getAllFrete().then(fretes => fretes.filter(f => !f.frete_baixa))
           if (data) {
             setFretes(data)
           }
@@ -111,11 +111,13 @@ export function EntradaForm() {
         } finally {
           setIsLoadingFretes(false)
         }
+      } else {
+        setFretes([])
       }
     }
 
     fetchFretes()
-  }, [form])
+  }, [form.watch("entrada_tipo")])
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
