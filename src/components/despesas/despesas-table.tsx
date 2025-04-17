@@ -7,6 +7,7 @@ import { format, startOfMonth, endOfMonth, subMonths } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
 import { deleteDespesa, getAllDespesa } from "@/lib/services/despesa-service"
+import { getSessionData } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -57,6 +58,19 @@ export function DespesasTable() {
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [selectedMonth, setSelectedMonth] = useState(new Date())
+  const [userType, setUserType] = useState<string>("")
+  const [userId, setUserId] = useState<number | null>(null)
+
+  useEffect(() => {
+    async function fetchSession() {
+      const session = await getSessionData()
+      if (session) {
+        setUserType(session.userType)
+        setUserId(session.id)
+      }
+    }
+    fetchSession()
+  }, [])
 
   const fetchDespesas = useCallback(async () => {
     try {
@@ -67,10 +81,15 @@ export function DespesasTable() {
       const startDate = startOfMonth(selectedMonth)
       const endDate = endOfMonth(selectedMonth)
 
-      const filteredData = (data || []).filter((despesa) => {
+      let filteredData = (data || []).filter((despesa) => {
         const despesaDate = new Date(despesa.created_at)
         return despesaDate >= startDate && despesaDate <= endDate
       })
+
+      // Se não for admin, filtra pelo motorista vinculado ao usuário logado
+      if (userType !== "admin" && userId !== null) {
+        filteredData = filteredData.filter((despesa) => despesa.despesa_motorista === userId)
+      }
 
       setDespesas(filteredData)
     } catch (err: unknown) {
@@ -83,11 +102,13 @@ export function DespesasTable() {
     } finally {
       setLoading(false)
     }
-  }, [selectedMonth])
+  }, [selectedMonth, userType, userId])
 
   useEffect(() => {
-    fetchDespesas()
-  }, [fetchDespesas])
+    if (userType) {
+      fetchDespesas()
+    }
+  }, [fetchDespesas, userType])
 
   async function handleDelete(id: number) {
     try {
@@ -141,9 +162,7 @@ export function DespesasTable() {
         <Button variant="outline" onClick={() => setSelectedMonth(subMonths(selectedMonth, 1))}>
           Mês Anterior
         </Button>
-        <div className="font-medium">
-          {format(selectedMonth, "MMMM 'de' yyyy", { locale: ptBR })}
-        </div>
+        <div className="font-medium">{format(selectedMonth, "MMMM 'de' yyyy", { locale: ptBR })}</div>
         <Button
           variant="outline"
           onClick={() => setSelectedMonth(new Date())}

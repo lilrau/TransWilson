@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -13,24 +13,12 @@ import { getAllAgenciador } from "@/lib/services/agenciador-service"
 import { getAllMotorista } from "@/lib/services/motorista-service"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { getSessionData } from "@/lib/auth"
 
 const formSchema = z.object({
   frete_nome: z.string().min(3, {
@@ -76,12 +64,13 @@ export function FretesForm({ id }: FretesFormProps) {
   const [isLoading, setIsLoading] = useState(id ? true : false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [veiculos, setVeiculos] = useState<
-    { id: number; nome: string; motorista?: { id: number } }[]
-  >([])
+  const [veiculos, setVeiculos] = useState<{ id: number; nome: string; motorista?: { id: number } }[]>([])
   const [agenciadores, setAgenciadores] = useState<{ id: number; agenciador_nome: string }[]>([])
   const [motoristas, setMotoristas] = useState<{ id: number; motorista_nome: string }[]>([])
   const [weights, setWeights] = useState<string[]>([""])
+  const [userType, setUserType] = useState<string>("")
+  const [userId, setUserId] = useState<number | null>(null)
+  const [selectedVehicleMotorista, setSelectedVehicleMotorista] = useState<number | undefined>(undefined)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -107,16 +96,9 @@ export function FretesForm({ id }: FretesFormProps) {
           getAllMotorista(),
         ])
 
-        setVeiculos(
-          veiculosData?.map((v) => ({ id: v.id, nome: v.veiculo_nome, motorista: v.motorista })) ||
-            []
-        )
-        setAgenciadores(
-          agenciadoresData?.map((a) => ({ id: a.id, agenciador_nome: a.agenciador_nome })) || []
-        )
-        setMotoristas(
-          motoristasData?.map((m) => ({ id: m.id, motorista_nome: m.motorista_nome })) || []
-        )
+        setVeiculos(veiculosData?.map((v) => ({ id: v.id, nome: v.veiculo_nome, motorista: v.motorista })) || [])
+        setAgenciadores(agenciadoresData?.map((a) => ({ id: a.id, agenciador_nome: a.agenciador_nome })) || [])
+        setMotoristas(motoristasData?.map((m) => ({ id: m.id, motorista_nome: m.motorista_nome })) || [])
 
         if (id) {
           const freteData = await getFrete(Number(id))
@@ -150,6 +132,18 @@ export function FretesForm({ id }: FretesFormProps) {
     fetchData()
   }, [id, form])
 
+  useEffect(() => {
+    async function fetchSession() {
+      const session = await getSessionData()
+      if (session) {
+        setUserType(session.userType)
+        setUserId(session.id)
+      }
+    }
+
+    fetchSession()
+  }, [])
+
   const addWeight = () => {
     setWeights([...weights, ""])
     form.setValue("frete_peso", [...form.getValues("frete_peso"), 0])
@@ -160,7 +154,7 @@ export function FretesForm({ id }: FretesFormProps) {
     setWeights(newWeights)
     form.setValue(
       "frete_peso",
-      form.getValues("frete_peso").filter((_, i) => i !== index)
+      form.getValues("frete_peso").filter((_, i) => i !== index),
     )
   }
 
@@ -185,8 +179,7 @@ export function FretesForm({ id }: FretesFormProps) {
       } else {
         await createFrete({
           ...values,
-          frete_valor_total:
-            values.frete_peso.reduce((acc, peso) => acc + peso, 0) * values.frete_valor_tonelada,
+          frete_valor_total: values.frete_peso.reduce((acc, peso) => acc + peso, 0) * values.frete_valor_tonelada,
         })
       }
 
@@ -211,6 +204,26 @@ export function FretesForm({ id }: FretesFormProps) {
       setIsSubmitting(false)
     }
   }
+
+  const handleVehicleChange = useCallback(
+    (value: string) => {
+      form.setValue("frete_veiculo", Number(value))
+      const selectedVehicle = veiculos.find((v) => v.id === Number(value))
+      setSelectedVehicleMotorista(selectedVehicle?.motorista?.id)
+      if (selectedVehicle?.motorista?.id) {
+        form.setValue("frete_motorista", selectedVehicle.motorista.id)
+      } else if (userType !== "driver") {
+        form.setValue("frete_motorista", 0)
+      }
+    },
+    [form, veiculos, userType],
+  )
+
+  useEffect(() => {
+    if (userType === "driver" && userId !== null) {
+      form.setValue("frete_motorista", userId)
+    }
+  }, [userType, userId, form])
 
   if (isLoading) {
     return (
@@ -255,16 +268,7 @@ export function FretesForm({ id }: FretesFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Veículo</FormLabel>
-                    <Select
-                      onValueChange={(value) => {
-                        field.onChange(Number(value))
-                        const selectedVehicle = veiculos.find((v) => v.id === Number(value))
-                        if (selectedVehicle?.motorista?.id) {
-                          form.setValue("frete_motorista", selectedVehicle.motorista.id)
-                        }
-                      }}
-                      value={field.value?.toString()}
-                    >
+                    <Select onValueChange={handleVehicleChange} value={field.value?.toString()}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione um veículo" />
@@ -326,35 +330,38 @@ export function FretesForm({ id }: FretesFormProps) {
               <FormField
                 control={form.control}
                 name="frete_motorista"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Motorista</FormLabel>
-                    <Select
-                      onValueChange={(value) => {
-                        if (value === "novo") {
-                          router.push("/dashboard/cadastros/agenciadores/novo")
-                          return
-                        }
-                        field.onChange(Number(value))
-                      }}
-                      value={field.value?.toString()}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um motorista" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {motoristas.map((motorista) => (
-                          <SelectItem key={motorista.id} value={motorista.id.toString()}>
-                            {motorista.motorista_nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage>{form.formState.errors.frete_motorista?.message}</FormMessage>
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  return (
+                    <FormItem>
+                      <FormLabel>Motorista</FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          if (value === "novo") {
+                            router.push("/dashboard/cadastros/motoristas/novo")
+                            return
+                          }
+                          field.onChange(Number(value))
+                        }}
+                        value={field.value?.toString()}
+                        disabled={(userType === "driver" && userId !== null) || selectedVehicleMotorista !== undefined}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um motorista" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {motoristas.map((motorista) => (
+                            <SelectItem key={motorista.id} value={motorista.id.toString()}>
+                              {motorista.motorista_nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage>{form.formState.errors.frete_motorista?.message}</FormMessage>
+                    </FormItem>
+                  )
+                }}
               />
 
               <FormField
@@ -411,12 +418,7 @@ export function FretesForm({ id }: FretesFormProps) {
                   <FormItem>
                     <FormLabel>Valor por Tonelada (R$)</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="Valor por tonelada"
-                        {...field}
-                      />
+                      <Input type="number" step="0.01" placeholder="Valor por tonelada" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -443,12 +445,7 @@ export function FretesForm({ id }: FretesFormProps) {
                     onChange={(e) => handleWeightChange(e.target.value, index)}
                   />
                   {weights.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => removeWeight(index)}
-                    >
+                    <Button type="button" variant="destructive" size="icon" onClick={() => removeWeight(index)}>
                       <Trash className="h-4 w-4" />
                     </Button>
                   )}
@@ -457,11 +454,7 @@ export function FretesForm({ id }: FretesFormProps) {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/dashboard/cadastros/fretes")}
-              >
+              <Button type="button" variant="outline" onClick={() => router.push("/dashboard/cadastros/fretes")}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={isSubmitting}>

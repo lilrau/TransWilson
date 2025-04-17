@@ -10,23 +10,11 @@ import { createDespesa, getDespesa, updateDespesa } from "@/lib/services/despesa
 import { getAllVeiculos } from "@/lib/services/veiculo-service"
 import { getAllMotorista } from "@/lib/services/motorista-service"
 import { getTipoDespesaEnum } from "@/lib/services/enum-service"
+import { getSessionData } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -59,10 +47,10 @@ export function DespesasForm({ id }: DespesasFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [tipoOptions, setTipoOptions] = useState<string[]>([])
-  const [veiculos, setVeiculos] = useState<
-    { id: number; nome: string; motorista?: { id: number; nome: string } }[]
-  >([])
+  const [veiculos, setVeiculos] = useState<{ id: number; nome: string; motorista?: { id: number; nome: string } }[]>([])
   const [motoristas, setMotoristas] = useState<{ id: number; nome: string }[]>([])
+  const [userType, setUserType] = useState<string>("")
+  const [userId, setUserId] = useState<number | null>(null)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -75,6 +63,18 @@ export function DespesasForm({ id }: DespesasFormProps) {
       despesa_motorista: null,
     },
   })
+
+  useEffect(() => {
+    async function fetchSession() {
+      const session = await getSessionData()
+      if (session) {
+        setUserType(session.userType)
+        setUserId(session.id)
+      }
+    }
+
+    fetchSession()
+  }, [])
 
   useEffect(() => {
     async function fetchVeiculos() {
@@ -91,7 +91,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
                   nome: veiculo.motorista.motorista_nome,
                 }
               : undefined,
-          })) || []
+          })) || [],
         )
       } catch (err) {
         console.error("Erro ao buscar veículos:", err)
@@ -111,7 +111,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
           data?.map((motorista) => ({
             id: motorista.id,
             nome: motorista.motorista_nome,
-          })) || []
+          })) || [],
         )
       } catch (err) {
         console.error("Erro ao buscar motoristas:", err)
@@ -187,13 +187,16 @@ export function DespesasForm({ id }: DespesasFormProps) {
     setError(null)
 
     try {
+      // Se não for admin, força o motorista atual
+      const motorista = userType !== "admin" && userId !== null ? userId : (values.despesa_motorista ?? null)
+
       const despesaData = {
         despesa_nome: values.despesa_nome,
         despesa_descricao: values.despesa_descricao ?? null,
         despesa_tipo: values.despesa_tipo,
         despesa_valor: values.despesa_valor,
         despesa_veiculo: values.despesa_veiculo ?? null,
-        despesa_motorista: values.despesa_motorista ?? null,
+        despesa_motorista: motorista,
       }
 
       if (id) {
@@ -225,6 +228,47 @@ export function DespesasForm({ id }: DespesasFormProps) {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const MotoristaSelect = ({
+    field,
+  }: { field: { value: number | null | undefined; onChange: (value: number | null) => void } }) => {
+    const [selectedValue, setSelectedValue] = useState<string | undefined>(field.value?.toString() || "none")
+
+    useEffect(() => {
+      if (userType !== "admin" && userId !== null) {
+        field.onChange(userId)
+        setSelectedValue(userId.toString())
+      }
+    }, [field])
+
+    const handleChange = (value: string) => {
+      const newValue = value === "none" ? null : Number.parseInt(value)
+      field.onChange(newValue)
+      setSelectedValue(value)
+    }
+
+    return (
+      <FormItem>
+        <FormLabel>Motorista</FormLabel>
+        <Select onValueChange={handleChange} value={selectedValue} disabled={userType !== "admin" && userId !== null}>
+          <FormControl>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione um motorista" />
+            </SelectTrigger>
+          </FormControl>
+          <SelectContent>
+            <SelectItem value="none">Nenhum</SelectItem>
+            {motoristas.map((motorista) => (
+              <SelectItem key={motorista.id} value={motorista.id.toString()}>
+                {motorista.nome}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <FormMessage />
+      </FormItem>
+    )
   }
 
   if (isLoading) {
@@ -324,11 +368,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
                   <FormItem>
                     <FormLabel>Descrição</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Descrição da despesa"
-                        {...field}
-                        value={field.value || ""}
-                      />
+                      <Input placeholder="Descrição da despesa" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -384,32 +424,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
               <FormField
                 control={form.control}
                 name="despesa_motorista"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Motorista</FormLabel>
-                    <Select
-                      onValueChange={(value) =>
-                        field.onChange(value === "none" ? null : Number.parseInt(value))
-                      }
-                      value={field.value?.toString() || "none"}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um motorista" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">Nenhum</SelectItem>
-                        {motoristas.map((motorista) => (
-                          <SelectItem key={motorista.id} value={motorista.id.toString()}>
-                            {motorista.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => <MotoristaSelect field={field} />}
               />
             </div>
 
