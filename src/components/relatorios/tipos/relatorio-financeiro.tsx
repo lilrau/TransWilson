@@ -67,8 +67,8 @@ type MovimentoFinanceiro = {
   entidade?: {
     tipo: string
     nome: string
-    id?: number
-    motorista_id?: number
+    id?: number // ID da entidade (motorista)
+    motorista_id?: number // ID do motorista associado ao frete
   } | null
 }
 
@@ -360,9 +360,11 @@ export function RelatorioFinanceiro({ filtroPeriodo }: RelatorioFinanceiroProps)
       filtered = filtered.filter((movimento) => {
         if (movimento.tipo === "despesa") {
           return movimento.entidade?.tipo === "motorista" && movimento.entidade.id === filtros.motorista
-        } else {
+        } else if (movimento.tipo === "entrada") {
+          // Verifica se a entrada está ligada a um frete e se o motorista do frete é o selecionado
           return movimento.entidade?.tipo === "frete" && movimento.entidade.motorista_id === filtros.motorista
         }
+        return false // Se não for despesa nem entrada de frete, não filtra por motorista
       })
     }
 
