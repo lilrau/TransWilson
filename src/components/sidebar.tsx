@@ -152,6 +152,7 @@ export function Sidebar() {
       title: "Relatórios",
       href: "/dashboard/relatorios",
       icon: BarChart4,
+      adminOnly: true,
     },
   ]
 
