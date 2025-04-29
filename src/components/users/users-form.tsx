@@ -21,22 +21,9 @@ import { toast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { createUser } from "@/lib/services/users-service"
+ import { userSchema } from "@/lib/db/schema";
 
-const formSchema = z.object({
-  user_nome: z.string().min(3, {
-    message: "O nome deve ter pelo menos 3 caracteres.",
-  }),
-  user_user: z.string().min(3, {
-    message: "O nome de usuário deve ter pelo menos 3 caracteres.",
-  }),
-  user_email: z.string().email({
-    message: "Insira um email válido.",
-  }),
-  user_senha: z.string().min(6, {
-    message: "A senha deve ter pelo menos 6 caracteres.",
-  }),
-  user_ativo: z.boolean(),
-})
+const formSchema = userSchema;
 
 type FormValues = z.infer<typeof formSchema>
 

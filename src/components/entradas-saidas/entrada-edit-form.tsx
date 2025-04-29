@@ -26,22 +26,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { toast } from "@/hooks/use-toast"
-import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Card, CardContent } from "@/components/ui/card"
+import { toast } from "@/hooks/use-toast"
+import { entradaSchema } from "@/lib/db/schema";
 
-const formSchema = z.object({
-  entrada_nome: z.string().min(3, {
-    message: "O nome da entrada deve ter pelo menos 3 caracteres.",
-  }),
-  entrada_valor: z.coerce.number().min(0, {
-    message: "O valor deve ser maior ou igual a zero.",
-  }),
-  entrada_descricao: z.string().optional(),
-  entrada_tipo: z.string().min(1, {
-    message: "O tipo de entrada é obrigatório.",
-  }),
-})
+const formSchema = entradaSchema;
 
 type FormValues = z.infer<typeof formSchema>
 

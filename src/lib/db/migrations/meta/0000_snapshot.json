@@ -1,0 +1,417 @@
+{
+  "id": "a3c91ad6-09e2-4d5d-9d9c-d75b58941924",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.agenciadores": {
+      "name": "agenciadores",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "agenciador_nome": {
+          "name": "agenciador_nome",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "agenciador_cnpj": {
+          "name": "agenciador_cnpj",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agenciador_telefone": {
+          "name": "agenciador_telefone",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.despesas": {
+      "name": "despesas",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "despesa_nome": {
+          "name": "despesa_nome",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "despesa_descricao": {
+          "name": "despesa_descricao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "despesa_tipo": {
+          "name": "despesa_tipo",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "despesa_valor": {
+          "name": "despesa_valor",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "despesa_veiculo": {
+          "name": "despesa_veiculo",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "despesa_motorista": {
+          "name": "despesa_motorista",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.entradas": {
+      "name": "entradas",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "entrada_nome": {
+          "name": "entrada_nome",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entrada_valor": {
+          "name": "entrada_valor",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entrada_descricao": {
+          "name": "entrada_descricao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "entrada_tipo": {
+          "name": "entrada_tipo",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entrada_frete_id": {
+          "name": "entrada_frete_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.fretes": {
+      "name": "fretes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "frete_nome": {
+          "name": "frete_nome",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "frete_veiculo": {
+          "name": "frete_veiculo",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "frete_agenciador": {
+          "name": "frete_agenciador",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "frete_motorista": {
+          "name": "frete_motorista",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "frete_origem": {
+          "name": "frete_origem",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "frete_destino": {
+          "name": "frete_destino",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "frete_distancia": {
+          "name": "frete_distancia",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "frete_peso": {
+          "name": "frete_peso",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "frete_valor_tonelada": {
+          "name": "frete_valor_tonelada",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "frete_valor_total": {
+          "name": "frete_valor_total",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "frete_baixa": {
+          "name": "frete_baixa",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.motoristas": {
+      "name": "motoristas",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "motorista_nome": {
+          "name": "motorista_nome",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "motorista_cnh": {
+          "name": "motorista_cnh",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "motorista_salario": {
+          "name": "motorista_salario",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "motorista_frete": {
+          "name": "motorista_frete",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "motorista_estadia": {
+          "name": "motorista_estadia",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "motorista_admissao": {
+          "name": "motorista_admissao",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "motorista_senha": {
+          "name": "motorista_senha",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_nome": {
+          "name": "user_nome",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_user": {
+          "name": "user_user",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_email": {
+          "name": "user_email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_senha": {
+          "name": "user_senha",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_ativo": {
+          "name": "user_ativo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.veiculos": {
+      "name": "veiculos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "veiculo_nome": {
+          "name": "veiculo_nome",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "veiculo_placa": {
+          "name": "veiculo_placa",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "veiculo_reboque": {
+          "name": "veiculo_reboque",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "veiculo_ano": {
+          "name": "veiculo_ano",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "veiculo_km_inicial": {
+          "name": "veiculo_km_inicial",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "veiculo_litro_inicial": {
+          "name": "veiculo_litro_inicial",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "veiculo_motorista": {
+          "name": "veiculo_motorista",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

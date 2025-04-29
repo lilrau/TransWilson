@@ -12,6 +12,9 @@ import {
   getAgenciador,
   updateAgenciador,
 } from "@/lib/services/agenciador-service"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Card, CardContent } from "@/components/ui/card"
+import { toast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -22,17 +25,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { toast } from "@/hooks/use-toast"
-import { Card, CardContent } from "@/components/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-const formSchema = z.object({
-  agenciador_nome: z.string().min(3, {
-    message: "O nome deve ter pelo menos 3 caracteres.",
-  }),
-  agenciador_cnpj: z.string().optional(),
-  agenciador_telefone: z.string().optional(),
-})
+import { agenciadorSchema } from "@/lib/db/schema";
+
+const formSchema = agenciadorSchema;
 
 type FormValues = z.infer<typeof formSchema>
 

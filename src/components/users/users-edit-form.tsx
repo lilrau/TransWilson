@@ -22,20 +22,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
+import { userSchema } from "@/lib/db/schema";
 
-const formSchema = z.object({
-  user_nome: z.string().min(3, {
-    message: "O nome deve ter pelo menos 3 caracteres.",
-  }),
-  user_user: z.string().min(3, {
-    message: "O nome de usuário deve ter pelo menos 3 caracteres.",
-  }),
-  user_email: z.string().email({
-    message: "Insira um email válido.",
-  }),
-  user_senha: z.string().optional(), // Senha é opcional na edição
-  user_ativo: z.boolean(),
-})
+const formSchema = userSchema;
 
 type FormValues = z.infer<typeof formSchema>
 

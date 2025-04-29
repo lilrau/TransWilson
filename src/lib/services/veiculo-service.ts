@@ -1,43 +1,59 @@
 "use server"
 
 import { unstable_cache, revalidateTag } from "next/cache"
-import { supabase } from "../supabase"
+import { db } from "../db/index"
+import { veiculos, veiculoSchema, motoristas } from "../db/schema"
+import { eq } from "drizzle-orm"
 import { Logger } from "../logger"
+import { z } from "zod"
 
-export interface VeiculoData {
-  veiculo_nome: string
-  veiculo_placa: string
-  veiculo_reboque: string
-  veiculo_ano?: number | null
-  veiculo_km_inicial?: number | null
-  veiculo_litro_inicial?: number | null
-  veiculo_motorista?: number | null
-  veiculo_created_at?: string
+// Infer the type from the schema
+type VeiculoData = z.infer<typeof veiculoSchema> & { id: number } // Add id explicitly
+
+// Define the structure for joined data explicitly
+interface VeiculoWithRelations extends Omit<VeiculoData, 'veiculo_motorista'> { // Omit original foreign key
+  id: number;
+  created_at?: string; // Keep for compatibility if frontend expects it
+  motorista: {
+    id: number;
+    motorista_nome: string;
+  } | null;
 }
 
+// Helper to map Drizzle result (numeric/integer might be string/number)
+const mapQueryResultToVeiculoData = (result: any): VeiculoData => ({
+  ...result,
+  veiculo_ano: result.veiculo_ano !== null ? Number(result.veiculo_ano) : null,
+  veiculo_km_inicial: result.veiculo_km_inicial !== null ? Number(result.veiculo_km_inicial) : null,
+  veiculo_litro_inicial: result.veiculo_litro_inicial !== null ? Number(result.veiculo_litro_inicial) : null,
+  veiculo_motorista: result.veiculo_motorista !== null ? Number(result.veiculo_motorista) : null,
+});
+
 export const getAllVeiculos = unstable_cache(
-  async () => {
+  async (): Promise<VeiculoWithRelations[]> => {
     try {
-      Logger.info("veiculo-service", "Fetching all veiculos")
-      const { data, error } = await supabase()
-        .from("veiculo")
-        .select(
-          `
-          *,
-          motorista:veiculo_motorista(id, motorista_nome)
-        `
-        )
-        .order("veiculo_nome", { ascending: true })
+      Logger.info("veiculo-service", "Fetching all veiculos using Drizzle")
+      const data = await db
+        .select({
+          ...veiculos,
+          motorista: {
+            id: motoristas.id,
+            motorista_nome: motoristas.motorista_nome,
+          },
+        })
+        .from(veiculos)
+        .leftJoin(motoristas, eq(veiculos.veiculo_motorista, motoristas.id))
+        .orderBy(veiculos.veiculo_nome)
 
-      if (error) {
-        Logger.error("veiculo-service", "Failed to fetch all veiculos", { error })
-        throw error
-      }
-
-      Logger.info("veiculo-service", "Successfully fetched all veiculos", { count: data.length })
-      return data
+      Logger.info("veiculo-service", "Successfully fetched all veiculos using Drizzle", { count: data.length })
+      // Map data and add placeholder created_at
+      return data.map(v => ({
+        ...mapQueryResultToVeiculoData(v),
+        motorista: v.motorista,
+        created_at: new Date().toISOString(),
+      })) as VeiculoWithRelations[];
     } catch (error) {
-      Logger.error("veiculo-service", "Unexpected error while fetching all veiculos", { error })
+      Logger.error("veiculo-service", "Unexpected error while fetching all veiculos using Drizzle", { error })
       throw error
     }
   },
@@ -49,20 +65,22 @@ export const getAllVeiculos = unstable_cache(
 )
 
 export const getVeiculo = unstable_cache(
-  async (id: number) => {
+  async (id: number): Promise<VeiculoData | null> => {
     try {
-      Logger.info("veiculo-service", "Fetching veiculo by id", { id })
-      const { data, error } = await supabase().from("veiculo").select("*").eq("id", id).single()
+      Logger.info("veiculo-service", "Fetching veiculo by id using Drizzle", { id })
+      // Note: Original Supabase query didn't join motorista here, so Drizzle won't either
+      const result = await db.select().from(veiculos).where(eq(veiculos.id, id)).limit(1)
 
-      if (error) {
-        Logger.error("veiculo-service", "Failed to fetch veiculo by id", { error, id })
-        throw error
+      if (result.length === 0) {
+        Logger.warn("veiculo-service", "Veiculo not found by id using Drizzle", { id })
+        return null
       }
 
-      Logger.info("veiculo-service", "Successfully fetched veiculo by id", { id })
-      return data
+      Logger.info("veiculo-service", "Successfully fetched veiculo by id using Drizzle", { id })
+      // Map result to ensure correct types
+      return mapQueryResultToVeiculoData(result[0]);
     } catch (error) {
-      Logger.error("veiculo-service", "Unexpected error while fetching veiculo by id", {
+      Logger.error("veiculo-service", "Unexpected error while fetching veiculo by id using Drizzle", {
         error,
         id,
       })
@@ -76,63 +94,97 @@ export const getVeiculo = unstable_cache(
   }
 )
 
-export const createVeiculo = async (data: VeiculoData) => {
+// Adjust input type to match schema (omit id, created_at)
+export const createVeiculo = async (data: Omit<VeiculoData, 'id'>) => {
   try {
-    Logger.info("veiculo-service", "Creating new veiculo", { veiculoData: data })
-    const result = await supabase().from("veiculo").insert(data).select()
+    const validatedData = veiculoSchema.parse(data)
+    Logger.info("veiculo-service", "Creating new veiculo using Drizzle", { veiculoData: validatedData })
 
-    if (result.error) {
-      Logger.error("veiculo-service", "Failed to create veiculo", { error: result.error })
-      throw result.error
-    }
+    // Prepare data for insertion (handle potential type mismatches if necessary, though schema looks ok)
+    const insertData = {
+        ...validatedData,
+        // Ensure numeric/integer fields are correctly formatted if DB expects strings
+        // veiculo_ano: validatedData.veiculo_ano?.toString(),
+        // veiculo_km_inicial: validatedData.veiculo_km_inicial?.toString(),
+        // veiculo_litro_inicial: validatedData.veiculo_litro_inicial?.toString(),
+    };
+
+    const result = await db.insert(veiculos).values(insertData).returning()
 
     revalidateTag("veiculos")
-    Logger.info("veiculo-service", "Successfully created veiculo", { veiculoId: result.data[0].id })
-    return result.data
+    Logger.info("veiculo-service", "Successfully created veiculo using Drizzle", { veiculoId: result[0].id })
+    return result.map(mapQueryResultToVeiculoData);
   } catch (error) {
-    Logger.error("veiculo-service", "Unexpected error while creating veiculo", { error })
+    Logger.error("veiculo-service", "Unexpected error while creating veiculo using Drizzle", { error })
+    if (error instanceof z.ZodError) {
+      console.error("Validation error:", error.errors)
+    }
     throw error
   }
 }
 
-export const updateVeiculo = async (id: number, data: Partial<VeiculoData>) => {
+// Adjust input type for update
+export const updateVeiculo = async (id: number, data: Partial<Omit<VeiculoData, 'id'>>) => {
   try {
-    Logger.info("veiculo-service", "Updating veiculo", { id, veiculoData: data })
-    const result = await supabase().from("veiculo").update(data).eq("id", id).select()
+    const validatedData = veiculoSchema.partial().parse(data)
+    Logger.info("veiculo-service", "Updating veiculo using Drizzle", { id, veiculoData: validatedData })
 
-    if (result.error) {
-      Logger.error("veiculo-service", "Failed to update veiculo", { error: result.error, id })
-      throw result.error
+    const updateData: Partial<typeof veiculos.$inferInsert> = { ...validatedData };
+
+    // Prepare data for update (handle potential type mismatches if necessary)
+    // if (updateData.veiculo_ano !== undefined) updateData.veiculo_ano = updateData.veiculo_ano?.toString();
+    // if (updateData.veiculo_km_inicial !== undefined) updateData.veiculo_km_inicial = updateData.veiculo_km_inicial?.toString();
+    // if (updateData.veiculo_litro_inicial !== undefined) updateData.veiculo_litro_inicial = updateData.veiculo_litro_inicial?.toString();
+
+    const result = await db.update(veiculos).set(updateData).where(eq(veiculos.id, id)).returning()
+
+    if (result.length === 0) {
+      Logger.warn("veiculo-service", "Veiculo not found for update using Drizzle", { id })
+      throw new Error(`Veiculo with id ${id} not found.`)
     }
 
     revalidateTag("veiculos")
     revalidateTag("veiculo")
 
-    Logger.info("veiculo-service", "Successfully updated veiculo", { id })
-    return result.data
+    Logger.info("veiculo-service", "Successfully updated veiculo using Drizzle", { id })
+    return result.map(mapQueryResultToVeiculoData);
   } catch (error) {
-    Logger.error("veiculo-service", "Unexpected error while updating veiculo", { error, id })
+    Logger.error("veiculo-service", "Unexpected error while updating veiculo using Drizzle", { error, id })
+    if (error instanceof z.ZodError) {
+      console.error("Validation error:", error.errors)
+    }
     throw error
   }
 }
 
 export const deleteVeiculo = async (id: number) => {
   try {
-    Logger.info("veiculo-service", "Deleting veiculo", { id })
-    const result = await supabase().from("veiculo").delete().eq("id", id)
+    Logger.info("veiculo-service", "Deleting veiculo using Drizzle", { id })
+    const result = await db.delete(veiculos).where(eq(veiculos.id, id)).returning()
 
-    if (result.error) {
-      Logger.error("veiculo-service", "Failed to delete veiculo", { error: result.error, id })
-      throw result.error
-    }
+    if (result.length === 0) {
+        Logger.warn("veiculo-service", "Veiculo not found for deletion using Drizzle", { id })
+        throw new Error(`Veiculo with id ${id} not found.`)
+     }
 
     revalidateTag("veiculos")
     revalidateTag("veiculo")
 
-    Logger.info("veiculo-service", "Successfully deleted veiculo", { id })
-    return result
-  } catch (error) {
-    Logger.error("veiculo-service", "Unexpected error while deleting veiculo", { error, id })
+    Logger.info("veiculo-service", "Successfully deleted veiculo using Drizzle", { id })
+    return { success: true }
+  } catch (error: any) {
+    // Check for foreign key violation error (Postgres error code 23503)
+    if (error.code === '23503') {
+        const fkError = new Error(
+          "Não é possível excluir o veículo porque há registros associados a ele (ex: fretes, despesas)."
+        )
+        Logger.error("veiculo-service", "Failed to delete veiculo - foreign key constraint", {
+          error: fkError,
+          id,
+        })
+        throw fkError
+    }
+    Logger.error("veiculo-service", "Unexpected error while deleting veiculo using Drizzle", { error, id })
     throw error
   }
 }

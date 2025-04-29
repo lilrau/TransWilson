@@ -27,30 +27,9 @@ import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { tryCatch } from "@/lib/try-catch"
+import { motoristaSchema } from "@/lib/db/schema";
 
-const formSchema = z.object({
-  motorista_nome: z.string().min(3, {
-    message: "O nome deve ter pelo menos 3 caracteres.",
-  }),
-  motorista_cnh: z.string().length(9, {
-    message: "A CNH deve ter 9 caracteres.",
-  }),
-  motorista_salario: z.coerce.number().min(0, {
-    message: "O salário não pode ser negativo.",
-  }),
-  motorista_frete: z.coerce.number().min(0).max(100, {
-    message: "A porcentagem deve estar entre 0 e 100.",
-  }),
-  motorista_estadia: z.coerce.number().min(0).max(100, {
-    message: "A porcentagem deve estar entre 0 e 100.",
-  }),
-  motorista_admissao: z.date({
-    required_error: "A data de admissão é obrigatória.",
-  }),
-  motorista_senha: z.string().min(6, {
-    message: "A senha deve ter pelo menos 6 caracteres.",
-  }),
-})
+const formSchema = motoristaSchema;
 
 type FormValues = z.infer<typeof formSchema>
 

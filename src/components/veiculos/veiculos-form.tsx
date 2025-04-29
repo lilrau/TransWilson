@@ -28,22 +28,9 @@ import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
+import { veiculoSchema } from "@/lib/db/schema";
 
-const formSchema = z.object({
-  veiculo_nome: z.string().min(3, {
-    message: "O nome do veículo deve ter pelo menos 3 caracteres.",
-  }),
-  veiculo_placa: z.string().length(7, {
-    message: "A placa deve ter exatamente 7 caracteres.",
-  }),
-  veiculo_reboque: z.string().nonempty({
-    message: "O tipo de reboque é obrigatório.",
-  }),
-  veiculo_ano: z.coerce.number().min(1900).max(new Date().getFullYear()).nullable().optional(),
-  veiculo_km_inicial: z.coerce.number().min(0).nullable().optional(),
-  veiculo_litro_inicial: z.coerce.number().min(0).nullable().optional(),
-  veiculo_motorista: z.coerce.number().nullable().optional(),
-})
+const formSchema = veiculoSchema;
 
 type FormValues = z.infer<typeof formSchema>
 

@@ -19,21 +19,9 @@ import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
+import { despesaSchema } from "@/lib/db/schema";
 
-const formSchema = z.object({
-  despesa_nome: z.string().min(3, {
-    message: "O nome da despesa deve ter pelo menos 3 caracteres.",
-  }),
-  despesa_descricao: z.string().optional(),
-  despesa_tipo: z.string().min(1, {
-    message: "O tipo de despesa é obrigatório.",
-  }),
-  despesa_valor: z.coerce.number().min(0, {
-    message: "O valor deve ser maior ou igual a zero.",
-  }),
-  despesa_veiculo: z.coerce.number().nullable().optional(),
-  despesa_motorista: z.coerce.number().nullable().optional(),
-})
+const formSchema = despesaSchema;
 
 type FormValues = z.infer<typeof formSchema>
 
