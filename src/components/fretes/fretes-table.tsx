@@ -334,8 +334,8 @@ export function FretesTable() {
         despesa_nome: `Comissão para ${motoristaName} (Frete ${freteId})`,
         despesa_descricao: `Pagamento de comissão para o motorista ${motoristaName} referente ao frete ${freteId}`,
         despesa_valor: valor,
-        despesa_tipo: "Comissão",
-        despesa_motorista_id: motoristaId,
+        despesa_tipo: "Comissão Motorista",
+        despesa_motorista: motoristaId,
         despesa_frete_id: freteId,
       })
 
