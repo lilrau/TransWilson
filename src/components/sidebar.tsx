@@ -187,7 +187,7 @@ export function Sidebar() {
         <div className="flex-1 overflow-auto py-4 transition-all duration-300 ease-in-out">
           <nav className="space-y-1 px-2">
             {/* Single items */}
-            {singleItems.map((item) => (
+            {singleItems.filter(item => !item.adminOnly || isAdminUser).map((item) => (
               <Tooltip key={item.title} delayDuration={0}>
                 <TooltipTrigger asChild>
                   <Link
@@ -260,24 +260,26 @@ export function Sidebar() {
 
               {collapsed && (
                 <div className="mt-1 space-y-1">
-                  {movimentos.items.map((item) => (
-                    <Tooltip key={item.title} delayDuration={0}>
-                      <TooltipTrigger asChild>
-                        <Link
-                          href={item.href}
-                          className={cn(
-                            "flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium",
-                            pathname === item.href
-                              ? "bg-primary text-primary-foreground"
-                              : "text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-900",
-                          )}
-                        >
-                          <item.icon className="h-4 w-4 flex-shrink-0" />
-                        </Link>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">{item.title}</TooltipContent>
-                    </Tooltip>
-                  ))}
+                  {movimentos.items
+                    .filter((item) => !item.adminOnly || isAdminUser)
+                    .map((item) => (
+                      <Tooltip key={item.title} delayDuration={0}>
+                        <TooltipTrigger asChild>
+                          <Link
+                            href={item.href}
+                            className={cn(
+                              "flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium",
+                              pathname === item.href
+                                ? "bg-primary text-primary-foreground"
+                                : "text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-900",
+                            )}
+                          >
+                            <item.icon className="h-4 w-4 flex-shrink-0" />
+                          </Link>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">{item.title}</TooltipContent>
+                      </Tooltip>
+                    ))}
                 </div>
               )}
             </div>
