@@ -12,6 +12,8 @@ import {
   ChevronRight,
   Edit,
   Loader2,
+  Trash2,
+  AlertCircle,
 } from "lucide-react"
 import { getAllDespesa, getTipoDespesaEnum } from "@/lib/services/despesa-service"
 import { getAllEntradas, getTipoEntradaEnum } from "@/lib/services/entrada-service"
@@ -34,7 +36,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
+import { deleteEntrada } from "@/lib/services/entrada-service"
+import { deleteDespesa } from "@/lib/services/despesa-service"
 
 type Movimento = {
   id: string
@@ -69,6 +81,8 @@ export function EntradasSaidasTable() {
   })
   const [categorias, setCategorias] = useState<string[]>([])
   const detailRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [movimentoToDelete, setMovimentoToDelete] = useState<Movimento | null>(null)
 
   useEffect(() => {
     async function fetchCategorias() {
@@ -223,6 +237,31 @@ export function EntradasSaidasTable() {
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR })
+  }
+
+  const handleDeleteClick = (movimento: Movimento, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setMovimentoToDelete(movimento)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!movimentoToDelete) return
+
+    try {
+      const id = Number(movimentoToDelete.id.split("-")[1])
+      if (movimentoToDelete.tipo === "entrada") {
+        await deleteEntrada(id)
+      } else {
+        await deleteDespesa(id)
+      }
+      setDeleteDialogOpen(false)
+      setMovimentoToDelete(null)
+      // Refresh the data
+      setSelectedMonth(new Date(selectedMonth))
+    } catch (error) {
+      console.error("Erro ao deletar movimento:", error)
+    }
   }
 
   if (loading) {
@@ -437,19 +476,30 @@ export function EntradasSaidasTable() {
                             <CardContent className="p-4 space-y-2">
                               <div className="flex justify-between items-start mb-2">
                                 <h3 className="text-base font-medium">Detalhes do Movimento</h3>
-                                <Button variant="outline" size="sm" asChild>
-                                  <Link
-                                    href={
-                                      movimento.tipo === "entrada"
-                                        ? `/dashboard/movimentos/entradas/${movimento.id.replace("entrada-", "")}/editar`
-                                        : `/dashboard/movimentos/despesas/${movimento.id.replace("despesa-", "")}`
-                                    }
+                                <div className="flex gap-2">
+                                  <Button variant="outline" size="sm" asChild>
+                                    <Link
+                                      href={
+                                        movimento.tipo === "entrada"
+                                          ? `/dashboard/movimentos/entradas/${movimento.id.replace("entrada-", "")}/editar`
+                                          : `/dashboard/movimentos/despesas/${movimento.id.replace("despesa-", "")}`
+                                      }
+                                      className="flex items-center gap-1"
+                                    >
+                                      <Edit className="h-3.5 w-3.5" />
+                                      <span>Editar</span>
+                                    </Link>
+                                  </Button>
+                                  <Button 
+                                    variant="destructive" 
+                                    size="sm"
+                                    onClick={(e) => handleDeleteClick(movimento, e)}
                                     className="flex items-center gap-1"
                                   >
-                                    <Edit className="h-3.5 w-3.5" />
-                                    <span>Editar</span>
-                                  </Link>
-                                </Button>
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    <span>Excluir</span>
+                                  </Button>
+                                </div>
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
@@ -495,6 +545,43 @@ export function EntradasSaidasTable() {
           </Table>
         </div>
       )}
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
+              Confirmar Exclusão
+            </DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir este {movimentoToDelete?.tipo === "entrada" ? "recebimento" : "pagamento"}?
+              {movimentoToDelete && (
+                <div className="mt-2 p-3 bg-muted rounded-lg">
+                  <p className="font-medium">{movimentoToDelete.nome}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {format(new Date(movimentoToDelete.data), "dd/MM/yyyy")} - {formatCurrency(movimentoToDelete.valor)}
+                  </p>
+                </div>
+              )}
+              <p className="mt-2">Esta ação não pode ser desfeita.</p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="ghost"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+            >
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
