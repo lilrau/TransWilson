@@ -15,7 +15,7 @@ import {
   MoreHorizontal,
   Trash,
 } from "lucide-react"
-import { createEntrada } from "@/lib/services/entrada-service"
+import { createEntrada, getAllEntradas } from "@/lib/services/entrada-service"
 import { darBaixaFrete, deleteFrete, getAllFrete, getFrete } from "@/lib/services/frete-service"
 import { getMotorista } from "@/lib/services/motorista-service"
 import { createDespesa } from "@/lib/services/despesa-service"
@@ -212,6 +212,12 @@ export function FretesTable() {
   const [deletingId, setDeletingId] = useState<number | null>(null)
   // Adicionar estado para filtro de status
   const [statusFilter, setStatusFilter] = useState<"todos" | "andamento" | "baixados">("todos")
+  const [adiantamentoDialogOpen, setAdiantamentoDialogOpen] = useState(false)
+  const [adiantamentoFrete, setAdiantamentoFrete] = useState<Frete | null>(null)
+  const [adiantamentoValor, setAdiantamentoValor] = useState("")
+  const [isRegisteringAdiantamento, setIsRegisteringAdiantamento] = useState(false)
+  const [baixaValores, setBaixaValores] = useState<{ total: number, adiantado: number, final: number } | null>(null)
+  const [baixaFreteId, setBaixaFreteId] = useState<number | null>(null)
 
   useEffect(() => {
     fetchFretes()
@@ -256,31 +262,43 @@ export function FretesTable() {
     }
   }
 
-  // Adicionar função para dar baixa no frete
+  async function prepararValoresBaixa(frete: Frete) {
+    // Busca e calcula os valores para exibir no dialog
+    const entradas = await getAllEntradas()
+    const entradasDoFrete = (entradas || []).filter((entrada) => entrada.entrada_frete_id === frete.id)
+    const totalAdiantado = entradasDoFrete.reduce((acc, entrada) => acc + (entrada.entrada_valor || 0), 0)
+    const valorTotal = frete.frete_valor_total || 0
+    const valorFinal = valorTotal - totalAdiantado
+    setBaixaValores({ total: valorTotal, adiantado: totalAdiantado, final: valorFinal })
+    setBaixaFreteId(frete.id)
+  }
+
   async function handleDarBaixa(frete: Frete) {
     try {
       setDandomBaixa(frete.id)
-
+      // Buscar todas as entradas relacionadas a este frete (adiantamentos, etc)
+      const entradas = await getAllEntradas()
+      const entradasDoFrete = (entradas || []).filter((entrada) => entrada.entrada_frete_id === frete.id)
+      const totalAdiantado = entradasDoFrete.reduce((acc, entrada) => acc + (entrada.entrada_valor || 0), 0)
+      // Calcular valor restante a receber
+      const valorFinal = (frete.frete_valor_total || 0) - totalAdiantado
       // Atualizar o status do frete
       await darBaixaFrete(frete.id, true)
-
-      // Criar uma entrada financeira com o valor do frete
-      if (frete.frete_valor_total) {
+      // Criar uma entrada financeira apenas se houver valor a receber
+      if (valorFinal > 0) {
         await createEntrada({
           entrada_nome: `Recebimento do frete: ${frete.frete_nome}`,
           entrada_descricao: `Origem: ${frete.frete_origem || "N/A"} - Destino: ${frete.frete_destino || "N/A"}`,
-          entrada_valor: frete.frete_valor_total,
+          entrada_valor: valorFinal,
           entrada_tipo: "Frete",
           entrada_frete_id: frete.id,
         })
       }
-
       // Atualizar a lista de fretes
       setFretes(fretes.map((f) => (f.id === frete.id ? { ...f, frete_baixa: true } : f)))
-
       toast({
         title: "Frete baixado com sucesso",
-        description: `O frete ${frete.frete_nome} foi baixado e uma entrada financeira foi criada.`,
+        description: `O frete ${frete.frete_nome} foi baixado e uma entrada financeira foi criada com valor de R$ ${valorFinal.toFixed(2)}.`,
       })
     } catch (err) {
       console.error("Erro ao dar baixa no frete:", err)
@@ -291,6 +309,8 @@ export function FretesTable() {
       })
     } finally {
       setDandomBaixa(null)
+      setBaixaFreteId(null)
+      setBaixaValores(null)
     }
   }
 
@@ -356,6 +376,36 @@ export function FretesTable() {
       })
     } finally {
       setIsPayingCommission(false)
+    }
+  }
+
+  async function handleRegistrarAdiantamento() {
+    if (!adiantamentoFrete || !adiantamentoValor) return
+    try {
+      setIsRegisteringAdiantamento(true)
+      await createEntrada({
+        entrada_nome: `Adiantamento do frete: ${adiantamentoFrete.frete_nome}`,
+        entrada_descricao: `Adiantamento recebido do cliente para o frete ${adiantamentoFrete.frete_nome}`,
+        entrada_valor: Number(adiantamentoValor),
+        entrada_tipo: "Frete",
+        entrada_frete_id: adiantamentoFrete.id,
+      })
+      toast({
+        title: "Adiantamento registrado",
+        description: `O adiantamento de R$ ${Number(adiantamentoValor).toFixed(2)} foi registrado para o frete ${adiantamentoFrete.frete_nome}.`,
+      })
+      setAdiantamentoDialogOpen(false)
+      setAdiantamentoFrete(null)
+      setAdiantamentoValor("")
+    } catch (err) {
+      console.error("Erro ao registrar adiantamento:", err)
+      toast({
+        variant: "destructive",
+        title: "Erro ao registrar adiantamento",
+        description: err instanceof Error ? err.message : "Ocorreu um erro ao registrar o adiantamento.",
+      })
+    } finally {
+      setIsRegisteringAdiantamento(false)
     }
   }
 
@@ -478,11 +528,15 @@ export function FretesTable() {
 
                     {/* Opção de dar baixa ou reativar */}
                     {!frete.frete_baixa ? (
-                      <AlertDialog>
+                      <AlertDialog open={baixaFreteId === frete.id} onOpenChange={(open) => {
+                        if (open) prepararValoresBaixa(frete)
+                        else { setBaixaFreteId(null); setBaixaValores(null) }
+                      }}>
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem
                             onSelect={(e) => {
                               e.preventDefault()
+                              prepararValoresBaixa(frete)
                             }}
                           >
                             <Check className="mr-2 h-4 w-4" />
@@ -493,13 +547,15 @@ export function FretesTable() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Confirmar baixa do frete</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Tem certeza que deseja dar baixa neste frete? Isso irá criar uma
-                              entrada financeira no valor de{" "}
-                              {new Intl.NumberFormat("pt-BR", {
-                                style: "currency",
-                                currency: "BRL",
-                              }).format(frete.frete_valor_total || 0)}
-                              .
+                              {baixaValores ? (
+                                <div className="space-y-1">
+                                  <div>Valor total do frete: <strong>{baixaValores.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></div>
+                                  <div>Total já adiantado: <strong className="text-amber-600">{baixaValores.adiantado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></div>
+                                  <div>Valor a receber nesta baixa: <strong className="text-green-700">{baixaValores.final.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></div>
+                                </div>
+                              ) : (
+                                <span>Carregando valores...</span>
+                              )}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -597,6 +653,17 @@ export function FretesTable() {
                       </>
                     )}
 
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault()
+                        setAdiantamentoFrete(frete)
+                        setAdiantamentoDialogOpen(true)
+                      }}
+                    >
+                      <DollarSign className="mr-2 h-4 w-4" />
+                      Registrar Adiantamento
+                    </DropdownMenuItem>
+
                     <DropdownMenuItem asChild>
                       <Link href={`/dashboard/cadastros/fretes/${frete.id}`}>
                         <Edit className="mr-2 h-4 w-4" />
@@ -650,6 +717,48 @@ export function FretesTable() {
           ))}
         </TableBody>
       </Table>
+      <AlertDialog open={adiantamentoDialogOpen} onOpenChange={setAdiantamentoDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Registrar Adiantamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Informe o valor do adiantamento recebido do cliente para o frete <strong>{adiantamentoFrete?.frete_nome}</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="Valor do adiantamento"
+              value={adiantamentoValor}
+              onChange={(e) => setAdiantamentoValor(e.target.value)}
+              className="mb-2"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setAdiantamentoDialogOpen(false)
+              setAdiantamentoFrete(null)
+              setAdiantamentoValor("")
+            }}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRegistrarAdiantamento}
+              disabled={isRegisteringAdiantamento || !adiantamentoValor}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {isRegisteringAdiantamento ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Registrando...
+                </>
+              ) : (
+                "Registrar"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
