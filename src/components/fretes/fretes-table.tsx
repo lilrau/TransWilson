@@ -16,7 +16,7 @@ import {
   Trash,
 } from "lucide-react"
 import { createEntrada, getAllEntradas } from "@/lib/services/entrada-service"
-import { darBaixaFrete, deleteFrete, getAllFrete, getFrete } from "@/lib/services/frete-service"
+import { darBaixaFrete, deleteFrete, getAllFrete, getFrete, getFreteBalance } from "@/lib/services/frete-service"
 import { getMotorista } from "@/lib/services/motorista-service"
 import { createDespesa } from "@/lib/services/despesa-service"
 import { Button } from "@/components/ui/button"
@@ -49,6 +49,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { cn } from "@/lib/utils"
 
 // Atualizar a interface Frete para incluir o campo frete_baixa
 type Frete = {
@@ -62,6 +63,13 @@ type Frete = {
   veiculo?: { id: number; veiculo_nome: string } | null
   motorista?: { id: number; motorista_nome: string } | null
   agenciador?: { id: number; agenciador_nome: string } | null
+}
+
+type FreteBalance = {
+  saldo: number
+  totalEntradas: number
+  totalDespesas: number
+  valorFrete: number
 }
 
 type CommissionCalculatorProps = {
@@ -207,10 +215,8 @@ export function FretesTable() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isPayingCommission, setIsPayingCommission] = useState(false)
   const [commissionValue, setCommissionValue] = useState<string>("")
-  // Adicionar estado para controlar a operação de baixa
   const [dandomBaixa, setDandomBaixa] = useState<number | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
-  // Adicionar estado para filtro de status
   const [statusFilter, setStatusFilter] = useState<"todos" | "andamento" | "baixados">("todos")
   const [adiantamentoDialogOpen, setAdiantamentoDialogOpen] = useState(false)
   const [adiantamentoFrete, setAdiantamentoFrete] = useState<Frete | null>(null)
@@ -218,6 +224,7 @@ export function FretesTable() {
   const [isRegisteringAdiantamento, setIsRegisteringAdiantamento] = useState(false)
   const [baixaValores, setBaixaValores] = useState<{ total: number, adiantado: number, final: number } | null>(null)
   const [baixaFreteId, setBaixaFreteId] = useState<number | null>(null)
+  const [fretesBalance, setFretesBalance] = useState<Record<number, FreteBalance>>({})
 
   useEffect(() => {
     fetchFretes()
@@ -228,6 +235,18 @@ export function FretesTable() {
       setLoading(true)
       const data = await getAllFrete()
       setFretes(data || [])
+
+      // Fetch balances for all fretes
+      const balances: Record<number, FreteBalance> = {}
+      for (const frete of data || []) {
+        try {
+          const balance = await getFreteBalance(frete.id)
+          balances[frete.id] = balance
+        } catch (err) {
+          console.error(`Erro ao buscar saldo do frete ${frete.id}:`, err)
+        }
+      }
+      setFretesBalance(balances)
     } catch (err: unknown) {
       console.error("Erro ao buscar fretes:", err)
       if (err instanceof Error) {
@@ -296,6 +315,12 @@ export function FretesTable() {
       }
       // Atualizar a lista de fretes
       setFretes(fretes.map((f) => (f.id === frete.id ? { ...f, frete_baixa: true } : f)))
+      // Atualizar o saldo
+      const newBalance = await getFreteBalance(frete.id)
+      setFretesBalance(prev => ({
+        ...prev,
+        [frete.id]: newBalance
+      }))
       toast({
         title: "Frete baixado com sucesso",
         description: `O frete ${frete.frete_nome} foi baixado e uma entrada financeira foi criada com valor de R$ ${valorFinal.toFixed(2)}.`,
@@ -359,6 +384,13 @@ export function FretesTable() {
         despesa_frete_id: freteId,
       })
 
+      // Atualizar o saldo
+      const newBalance = await getFreteBalance(freteId)
+      setFretesBalance(prev => ({
+        ...prev,
+        [freteId]: newBalance
+      }))
+
       toast({
         title: "Comissão paga com sucesso",
         description: `A comissão de ${new Intl.NumberFormat("pt-BR", {
@@ -390,6 +422,14 @@ export function FretesTable() {
         entrada_tipo: "Frete",
         entrada_frete_id: adiantamentoFrete.id,
       })
+
+      // Atualizar o saldo
+      const newBalance = await getFreteBalance(adiantamentoFrete.id)
+      setFretesBalance(prev => ({
+        ...prev,
+        [adiantamentoFrete.id]: newBalance
+      }))
+
       toast({
         title: "Adiantamento registrado",
         description: `O adiantamento de R$ ${Number(adiantamentoValor).toFixed(2)} foi registrado para o frete ${adiantamentoFrete.frete_nome}.`,
@@ -472,6 +512,7 @@ export function FretesTable() {
             <TableHead>Motorista</TableHead>
             <TableHead>Agenciador</TableHead>
             <TableHead>Valor Total</TableHead>
+            <TableHead>Saldo</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Data</TableHead>
             <TableHead className="text-right">Ações</TableHead>
@@ -494,6 +535,23 @@ export function FretesTable() {
                   style: "currency",
                   currency: "BRL",
                 }).format(frete.frete_valor_total || 0)}
+              </TableCell>
+              <TableCell>
+                {fretesBalance[frete.id] ? (
+                  <div className={cn(
+                    "font-medium",
+                    fretesBalance[frete.id].saldo > 0 ? "text-green-600 dark:text-green-400" :
+                    fretesBalance[frete.id].saldo < 0 ? "text-red-600 dark:text-red-400" :
+                    "text-muted-foreground"
+                  )}>
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(fretesBalance[frete.id].saldo)}
+                  </div>
+                ) : (
+                  <div className="text-muted-foreground">-</div>
+                )}
               </TableCell>
               <TableCell>
                 {frete.frete_baixa ? (

@@ -208,3 +208,63 @@ export const darBaixaFrete = async (id: number, baixado = true) => {
     throw error
   }
 }
+
+export const getFreteBalance = async (freteId: number) => {
+  try {
+    Logger.info("frete-service", "Calculating frete balance", { freteId })
+    
+    // Get the frete to get its total value
+    const frete = await getFrete(freteId)
+    if (!frete) {
+      throw new Error("Frete não encontrado")
+    }
+
+    // Get all entries related to this frete
+    const { data: entradas, error: entradasError } = await supabase()
+      .from("entrada")
+      .select("entrada_valor")
+      .eq("entrada_frete_id", freteId)
+
+    if (entradasError) {
+      Logger.error("frete-service", "Failed to fetch frete entries", { error: entradasError, freteId })
+      throw entradasError
+    }
+
+    // Get all expenses related to this frete
+    const { data: despesas, error: despesasError } = await supabase()
+      .from("despesa")
+      .select("despesa_valor")
+      .eq("despesa_frete_id", freteId)
+
+    if (despesasError) {
+      Logger.error("frete-service", "Failed to fetch frete expenses", { error: despesasError, freteId })
+      throw despesasError
+    }
+
+    // Calculate total entries
+    const totalEntradas = entradas.reduce((acc, entrada) => acc + (entrada.entrada_valor || 0), 0)
+    
+    // Calculate total expenses
+    const totalDespesas = despesas.reduce((acc, despesa) => acc + (despesa.despesa_valor || 0), 0)
+
+    // Calculate balance
+    const saldo = totalEntradas - totalDespesas
+
+    Logger.info("frete-service", "Successfully calculated frete balance", { 
+      freteId,
+      totalEntradas,
+      totalDespesas,
+      saldo
+    })
+
+    return {
+      saldo,
+      totalEntradas,
+      totalDespesas,
+      valorFrete: frete.frete_valor_total || 0
+    }
+  } catch (error) {
+    Logger.error("frete-service", "Unexpected error while calculating frete balance", { error, freteId })
+    throw error
+  }
+}
