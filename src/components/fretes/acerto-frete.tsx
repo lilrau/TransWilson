@@ -51,7 +51,6 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createDespesa } from "@/lib/services/despesa-service"
 import { createEntrada, getAllEntradas } from "@/lib/services/entrada-service"
 import { toast } from "@/hooks/use-toast"
 import { 
@@ -204,7 +203,7 @@ export function AcertoFreteComponent() {
   }
 
   // Add function to calculate Km/L
-  function calcularMediaKmL(frete: any, despesas: Despesa[]) {
+  function calcularMediaKmL(frete: Frete, despesas: Despesa[]) {
     // Check if we have distance and fuel expenses
     if (!frete || !frete.frete_distancia || !despesas.length) {
       setMediaKmL("- Km/L")
@@ -292,7 +291,7 @@ export function AcertoFreteComponent() {
       };
       
       // Use the Supabase client directly to include the frete_id
-      const { data, error } = await supabase()
+      const { error } = await supabase()
         .from("despesa")
         .insert({
           ...despesaData,

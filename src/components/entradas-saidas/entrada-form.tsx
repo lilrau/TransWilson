@@ -91,33 +91,34 @@ export function EntradaForm() {
     fetchTiposEntrada()
   }, [])
 
-  useEffect(() => {
-    const tipoEntrada = form.watch("entrada_tipo")?.toLowerCase()
-    async function fetchFretes() {
-      if (tipoEntrada === "frete") {
-        try {
-          setIsLoadingFretes(true)
-          const data = await getAllFrete().then(fretes => fretes.filter(f => !f.frete_baixa))
-          if (data) {
-            setFretes(data)
-          }
-        } catch (err) {
-          console.error("Erro ao buscar fretes:", err)
-          toast({
-            variant: "destructive",
-            title: "Erro ao carregar fretes",
-            description: "Não foi possível carregar a lista de fretes.",
-          })
-        } finally {
-          setIsLoadingFretes(false)
-        }
-      } else {
-        setFretes([])
-      }
-    }
+  const entradaTipo = form.watch("entrada_tipo");
 
-    fetchFretes()
-  }, [form.watch("entrada_tipo")])
+  async function fetchFretes() {
+    if (entradaTipo?.toLowerCase() === "frete") {
+      setIsLoadingFretes(true)
+      try {
+        const data = await getAllFrete().then(fretes => fretes.filter(f => !f.frete_baixa))
+        if (data) {
+          setFretes(data)
+        }
+      } catch (err) {
+        console.error("Erro ao buscar fretes:", err)
+        toast({
+          variant: "destructive",
+          title: "Erro ao carregar fretes",
+          description: "Não foi possível carregar a lista de fretes.",
+        })
+      } finally {
+        setIsLoadingFretes(false)
+      }
+    } else {
+      setFretes([])
+    }
+  }
+
+  useEffect(() => {
+    fetchFretes();
+  }, [entradaTipo]);
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
