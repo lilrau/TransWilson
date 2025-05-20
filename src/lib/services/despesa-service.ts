@@ -12,6 +12,7 @@ export interface DespesaData {
   despesa_veiculo: number | null
   despesa_motorista: number | null
   created_at?: string
+  comprovante_url?: string | null
 }
 
 export interface DespesaMotoristaResumo {
@@ -187,3 +188,65 @@ export const getTipoDespesaEnum = unstable_cache(
     tags: ["enums", "tipo-despesa"],
   }
 )
+
+export const uploadComprovante = async (file: File, despesaId: number) => {
+  try {
+    Logger.info("despesa-service", "Uploading comprovante", { despesaId })
+    
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${despesaId}-${Date.now()}.${fileExt}`
+    const filePath = `${fileName}`
+
+    const { data, error } = await supabase()
+      .storage
+      .from('notasfiscais')
+      .upload(filePath, file)
+
+    if (error) {
+      Logger.error("despesa-service", "Failed to upload comprovante", { error })
+      throw error
+    }
+
+    const { data: { publicUrl } } = supabase()
+      .storage
+      .from('notasfiscais')
+      .getPublicUrl(filePath)
+
+    // Update the despesa with the comprovante URL
+    await updateDespesa(despesaId, { comprovante_url: publicUrl })
+
+    Logger.info("despesa-service", "Successfully uploaded comprovante", { despesaId })
+    return publicUrl
+  } catch (error) {
+    Logger.error("despesa-service", "Unexpected error while uploading comprovante", { error })
+    throw error
+  }
+}
+
+export const deleteComprovante = async (despesaId: number, url: string) => {
+  try {
+    Logger.info("despesa-service", "Deleting comprovante", { despesaId })
+    
+    // Extract filename from URL
+    const fileName = url.split('/').pop()
+    if (!fileName) throw new Error('Invalid file URL')
+
+    const { error } = await supabase()
+      .storage
+      .from('notasfiscais')
+      .remove([fileName])
+
+    if (error) {
+      Logger.error("despesa-service", "Failed to delete comprovante", { error })
+      throw error
+    }
+
+    // Update the despesa to remove the comprovante URL
+    await updateDespesa(despesaId, { comprovante_url: null })
+
+    Logger.info("despesa-service", "Successfully deleted comprovante", { despesaId })
+  } catch (error) {
+    Logger.error("despesa-service", "Unexpected error while deleting comprovante", { error })
+    throw error
+  }
+}

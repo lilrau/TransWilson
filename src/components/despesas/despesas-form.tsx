@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
+import { cn } from "@/lib/utils"
 
-import { createDespesa, getDespesa, updateDespesa } from "@/lib/services/despesa-service"
+import { createDespesa, getDespesa, updateDespesa, uploadComprovante, deleteComprovante } from "@/lib/services/despesa-service"
 import { getAllVeiculos } from "@/lib/services/veiculo-service"
 import { getAllMotorista } from "@/lib/services/motorista-service"
 import { getTipoDespesaEnum } from "@/lib/services/enum-service"
@@ -18,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Loader2 } from "lucide-react"
+import { Loader2, Edit, MoreHorizontal, Trash, FileText, Upload, X } from "lucide-react"
 
 const formSchema = z.object({
   despesa_nome: z.string().min(3, {
@@ -33,6 +34,7 @@ const formSchema = z.object({
   }),
   despesa_veiculo: z.coerce.number().nullable().optional(),
   despesa_motorista: z.coerce.number().nullable().optional(),
+  comprovante: z.instanceof(File).optional(),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -51,6 +53,9 @@ export function DespesasForm({ id }: DespesasFormProps) {
   const [motoristas, setMotoristas] = useState<{ id: number; nome: string }[]>([])
   const [userType, setUserType] = useState<string>("")
   const [userId, setUserId] = useState<number | null>(null)
+  const [uploadingFile, setUploadingFile] = useState(false)
+  const [comprovanteUrl, setComprovanteUrl] = useState<string | null>(null)
+  const [despesaData, setDespesaData] = useState<any>(null)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -154,6 +159,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
         const data = await getDespesa(Number(id))
 
         if (data) {
+          setDespesaData(data)
           form.reset({
             despesa_nome: data.despesa_nome || "",
             despesa_descricao: data.despesa_descricao || "",
@@ -162,6 +168,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
             despesa_veiculo: data.despesa_veiculo || null,
             despesa_motorista: data.despesa_motorista || null,
           })
+          setComprovanteUrl(data.comprovante_url || null)
         } else {
           setError("Despesa não encontrada.")
         }
@@ -199,20 +206,46 @@ export function DespesasForm({ id }: DespesasFormProps) {
         despesa_motorista: motorista,
       }
 
+      let despesaId: number
+
       if (id) {
         // Modo de edição
-        await updateDespesa(Number(id), despesaData)
+        const result = await updateDespesa(Number(id), despesaData)
+        despesaId = Number(id)
         toast({
           title: "Despesa atualizada",
           description: "A despesa foi atualizada com sucesso.",
         })
       } else {
         // Modo de criação
-        await createDespesa(despesaData)
+        const result = await createDespesa(despesaData)
+        despesaId = result[0].id
         toast({
           title: "Despesa criada",
           description: "A despesa foi criada com sucesso.",
         })
+      }
+
+      // Upload do comprovante se houver
+      if (values.comprovante) {
+        setUploadingFile(true)
+        try {
+          const url = await uploadComprovante(values.comprovante, despesaId)
+          setComprovanteUrl(url)
+          toast({
+            title: "Comprovante enviado",
+            description: "O comprovante foi enviado com sucesso.",
+          })
+        } catch (err) {
+          console.error("Erro ao enviar comprovante:", err)
+          toast({
+            variant: "destructive",
+            title: "Erro ao enviar comprovante",
+            description: "Não foi possível enviar o comprovante.",
+          })
+        } finally {
+          setUploadingFile(false)
+        }
       }
 
       // Redirecionar para a lista de despesas
@@ -428,20 +461,147 @@ export function DespesasForm({ id }: DespesasFormProps) {
               />
             </div>
 
+            <div className="grid grid-cols-1 gap-6">
+              <FormField
+                control={form.control}
+                name="comprovante"
+                render={({ field: { value, onChange, ...field } }) => (
+                  <FormItem>
+                    <FormLabel>Comprovante</FormLabel>
+                    <FormControl>
+                      <div className="flex flex-col gap-4">
+                        <div
+                          className={cn(
+                            "relative flex flex-col items-center justify-center w-full p-6 border-2 border-dashed rounded-lg transition-colors",
+                            "hover:border-primary/50 hover:bg-muted/50",
+                            "focus-within:border-primary focus-within:bg-muted/50",
+                            "dark:border-zinc-800 dark:hover:border-zinc-700",
+                            value ? "border-primary/50 bg-muted/50" : "border-muted-foreground/25"
+                          )}
+                        >
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) {
+                                onChange(file)
+                              }
+                            }}
+                            {...field}
+                          />
+                          <div className="flex flex-col items-center justify-center text-center">
+                            {value ? (
+                              <>
+                                <div className="flex items-center gap-2 mb-2">
+                                  <FileText className="h-8 w-8 text-primary" />
+                                  <span className="font-medium">{value.name}</span>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    onChange(null)
+                                  }}
+                                >
+                                  <X className="h-4 w-4 mr-2" />
+                                  Remover arquivo
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
+                                <div className="text-sm text-muted-foreground">
+                                  <span className="font-medium text-primary">Clique para selecionar</span> ou arraste e solte
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Suporta imagens e PDFs
+                                </p>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {comprovanteUrl && !value && (
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 bg-muted rounded-lg mt-2">
+                            <div className="flex items-center gap-2 mb-2 sm:mb-0">
+                              <FileText className="h-5 w-5 text-primary" />
+                              <span className="text-sm">Comprovante atual</span>
+                            </div>
+                            <div className="flex gap-2 w-full sm:w-auto">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                asChild
+                                className="w-full sm:w-auto justify-center"
+                              >
+                                <a
+                                  href={comprovanteUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:text-primary/80"
+                                >
+                                  Visualizar
+                                </a>
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive w-full sm:w-auto justify-center"
+                                onClick={async () => {
+                                  if (id && comprovanteUrl) {
+                                    try {
+                                      await deleteComprovante(Number(id), comprovanteUrl)
+                                      setComprovanteUrl(null)
+                                      toast({
+                                        title: "Comprovante excluído",
+                                        description: "O comprovante foi excluído com sucesso.",
+                                      })
+                                    } catch (err) {
+                                      console.error("Erro ao excluir comprovante:", err)
+                                      toast({
+                                        variant: "destructive",
+                                        title: "Erro ao excluir comprovante",
+                                        description: "Não foi possível excluir o comprovante.",
+                                      })
+                                    }
+                                  }
+                                }}
+                              >
+                                <X className="h-4 w-4 mr-2" />
+                                Excluir
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <div className="flex justify-end space-x-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.push("/dashboard/cadastros/despesas")}
-                disabled={isSubmitting}
+                disabled={isSubmitting || uploadingFile}
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
+              <Button type="submit" disabled={isSubmitting || uploadingFile}>
+                {isSubmitting || uploadingFile ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Salvando...
+                    {uploadingFile ? "Enviando comprovante..." : "Salvando..."}
                   </>
                 ) : id ? (
                   "Atualizar Despesa"
