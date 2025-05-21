@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
-import { Edit, Loader2, MoreHorizontal, Trash } from "lucide-react"
+import { Edit, Loader2, MoreHorizontal, Trash, FileText, FileX } from "lucide-react"
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import Image from "next/image"
 
 import { deleteDespesa, getAllDespesa } from "@/lib/services/despesa-service"
 import { getSessionData } from "@/lib/auth"
@@ -37,6 +38,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 type Despesa = {
   id: number
@@ -47,6 +56,7 @@ type Despesa = {
   despesa_veiculo: number | null
   despesa_motorista: number | null
   created_at: string
+  comprovante_url: string | null
   veiculo: { id: number; veiculo_nome: string } | null
   motorista: { id: number; motorista_nome: string } | null
 }
@@ -202,6 +212,7 @@ export function DespesasTable() {
                   <TableHead className="hidden md:table-cell">Veículo</TableHead>
                   <TableHead className="hidden md:table-cell">Motorista</TableHead>
                   <TableHead className="hidden md:table-cell">Data</TableHead>
+                  <TableHead>Comprovante</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -219,6 +230,61 @@ export function DespesasTable() {
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       {format(new Date(despesa.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {despesa.comprovante_url ? (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <FileText className="h-4 w-4" />
+                              <span className="sr-only">Ver comprovante</span>
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-[95vw] sm:max-w-4xl">
+                            <DialogHeader>
+                              <DialogTitle className="text-base sm:text-lg">Comprovante - {despesa.despesa_nome}</DialogTitle>
+                              <DialogDescription className="text-xs sm:text-sm">
+                                Comprovante da despesa de {format(new Date(despesa.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="mt-4">
+                              {despesa.comprovante_url.endsWith('.pdf') ? (
+                                <iframe
+                                  src={despesa.comprovante_url}
+                                  className="w-full h-[50vh] sm:h-[600px] border-0"
+                                  title="Comprovante PDF"
+                                />
+                              ) : (
+                                <div className="relative w-full h-[50vh] sm:h-[600px]">
+                                  <Image
+                                    src={despesa.comprovante_url}
+                                    alt="Comprovante"
+                                    fill
+                                    className="object-contain"
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                            <div className="mt-4 flex justify-end">
+                              <Button asChild size="sm" className="w-full sm:w-auto">
+                                <a
+                                  href={despesa.comprovante_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  Abrir em nova aba
+                                </a>
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      ) : (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" disabled>
+                          <FileX className="h-4 w-4" />
+                          <span className="sr-only">Sem comprovante</span>
+                        </Button>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <AlertDialog>
