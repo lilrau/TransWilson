@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Loader2, Edit, MoreHorizontal, Trash, FileText, Upload, X } from "lucide-react"
+import { Loader2, FileText, Upload, X } from "lucide-react"
 
 const formSchema = z.object({
   despesa_nome: z.string().min(3, {
@@ -55,7 +55,6 @@ export function DespesasForm({ id }: DespesasFormProps) {
   const [userId, setUserId] = useState<number | null>(null)
   const [uploadingFile, setUploadingFile] = useState(false)
   const [comprovanteUrl, setComprovanteUrl] = useState<string | null>(null)
-  const [despesaData, setDespesaData] = useState<any>(null)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -159,7 +158,6 @@ export function DespesasForm({ id }: DespesasFormProps) {
         const data = await getDespesa(Number(id))
 
         if (data) {
-          setDespesaData(data)
           form.reset({
             despesa_nome: data.despesa_nome || "",
             despesa_descricao: data.despesa_descricao || "",
@@ -210,7 +208,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
 
       if (id) {
         // Modo de edição
-        const result = await updateDespesa(Number(id), despesaData)
+        await updateDespesa(Number(id), despesaData)
         despesaId = Number(id)
         toast({
           title: "Despesa atualizada",

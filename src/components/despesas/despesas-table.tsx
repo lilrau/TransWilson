@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Edit, Loader2, MoreHorizontal, Trash, FileText, FileX } from "lucide-react"
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import Image from "next/image"
 
 import { deleteDespesa, getAllDespesa } from "@/lib/services/despesa-service"
 import { getSessionData } from "@/lib/auth"
@@ -254,11 +255,15 @@ export function DespesasTable() {
                                   title="Comprovante PDF"
                                 />
                               ) : (
-                                <img
-                                  src={despesa.comprovante_url}
-                                  alt="Comprovante"
-                                  className="w-full h-auto max-h-[50vh] sm:max-h-[600px] object-contain"
-                                />
+                                <div className="relative w-full h-[50vh] sm:h-[600px]">
+                                  <Image
+                                    src={despesa.comprovante_url}
+                                    alt="Comprovante"
+                                    fill
+                                    className="object-contain"
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                  />
+                                </div>
                               )}
                             </div>
                             <div className="mt-4 flex justify-end">

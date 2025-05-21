@@ -197,7 +197,7 @@ export const uploadComprovante = async (file: File, despesaId: number) => {
     const fileName = `${despesaId}-${Date.now()}.${fileExt}`
     const filePath = `${fileName}`
 
-    const { data, error } = await supabase()
+    const { error } = await supabase()
       .storage
       .from('notasfiscais')
       .upload(filePath, file)
