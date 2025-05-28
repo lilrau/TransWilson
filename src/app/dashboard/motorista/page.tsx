@@ -52,7 +52,7 @@ interface DadosGrafico {
 interface Motorista {
   id: number
   motorista_nome: string
-  motorista_cnh: string
+  motorista_cpf: string
   motorista_salario: number
   motorista_frete: number
   motorista_estadia: number

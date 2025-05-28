@@ -46,11 +46,19 @@ import { tryCatch } from "@/lib/try-catch"
 interface MotoristaData {
   id: number
   motorista_nome: string
-  motorista_cnh: string
+  motorista_cpf: string
   motorista_salario: number
   motorista_frete: number
   motorista_estadia: number
   motorista_admissao: string | Date | null
+}
+
+// Add the formatCPF function
+const formatCPF = (cpf: string) => {
+  // Remove any non-digit characters
+  const cleaned = cpf.replace(/\D/g, "")
+  // Format as XXX.XXX.XXX-XX
+  return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")
 }
 
 export function MotoristasTable() {
@@ -176,7 +184,7 @@ export function MotoristasTable() {
         <TableHeader>
           <TableRow>
             <TableHead>Nome</TableHead>
-            <TableHead>CNH</TableHead>
+            <TableHead>CPF</TableHead>
             <TableHead className="hidden md:table-cell">Salário</TableHead>
             <TableHead className="hidden md:table-cell">% Frete</TableHead>
             <TableHead className="hidden md:table-cell">% Estadia</TableHead>
@@ -188,7 +196,7 @@ export function MotoristasTable() {
           {motoristas.map((motorista) => (
             <TableRow key={motorista.id}>
               <TableCell className="font-medium">{motorista.motorista_nome}</TableCell>
-              <TableCell>{motorista.motorista_cnh}</TableCell>
+              <TableCell>{formatCPF(motorista.motorista_cpf)}</TableCell>
               <TableCell className="hidden md:table-cell">
                 {new Intl.NumberFormat("pt-BR", {
                   style: "currency",

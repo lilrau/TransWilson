@@ -55,7 +55,7 @@ import { RelatorioGraficoContainer } from "../ui/relatorio-grafico-container"
 type MotoristaRelatorio = {
   id: number
   nome: string
-  cnh: string
+  cpf: string
   salario: number
   percentualFrete: number
   percentualEstadia: number
@@ -182,7 +182,7 @@ export function RelatorioMotoristas({ filtroPeriodo }: RelatorioMotoristasProps)
             return {
               id: motorista.id,
               nome: motorista.motorista_nome,
-              cnh: motorista.motorista_cnh,
+              cpf: motorista.motorista_cpf,
               salario: motorista.motorista_salario,
               percentualFrete: motorista.motorista_frete,
               percentualEstadia: motorista.motorista_estadia,
@@ -279,7 +279,7 @@ export function RelatorioMotoristas({ filtroPeriodo }: RelatorioMotoristasProps)
       filtered = filtered.filter(
         (motorista) =>
           motorista.nome.toLowerCase().includes(termoBusca) ||
-          motorista.cnh.toLowerCase().includes(termoBusca)
+          motorista.cpf.toLowerCase().includes(termoBusca)
       )
     }
 
@@ -609,7 +609,7 @@ export function RelatorioMotoristas({ filtroPeriodo }: RelatorioMotoristasProps)
                 <TableHeader>
                   <TableRow>
                     <TableHead>Motorista</TableHead>
-                    <TableHead>CNH</TableHead>
+                    <TableHead>CPF</TableHead>
                     <TableHead>Fretes</TableHead>
                     <TableHead>Valor Fretes</TableHead>
                     <TableHead>Despesas</TableHead>
@@ -625,7 +625,7 @@ export function RelatorioMotoristas({ filtroPeriodo }: RelatorioMotoristasProps)
                           <span>{motorista.nome}</span>
                         </div>
                       </TableCell>
-                      <TableCell>{motorista.cnh}</TableCell>
+                      <TableCell>{motorista.cpf}</TableCell>
                       <TableCell>{motorista.totalFretes}</TableCell>
                       <TableCell>{formatarMoeda(motorista.valorFretes)}</TableCell>
                       <TableCell>{formatarMoeda(motorista.valorDespesas)}</TableCell>

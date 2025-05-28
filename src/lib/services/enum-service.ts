@@ -16,3 +16,17 @@ export const getTipoDespesaEnum = unstable_cache(
     tags: ["enums", "tipo-despesa"],
   }
 )
+
+export const getTipoReboqueEnum = unstable_cache(
+  async () => {
+    const { data, error } = await supabase().rpc("get_tipo_reboque_enum")
+
+    if (error) throw error
+    return data
+  },
+  ["tipo-reboque-enum"],
+  {
+    revalidate: 3600, // Revalidar a cada hora, já que enums mudam com pouca frequência
+    tags: ["enums", "tipo-reboque"],
+  }
+)

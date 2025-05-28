@@ -8,6 +8,7 @@ import { z } from "zod"
 
 import { createVeiculo, getVeiculo, updateVeiculo } from "@/lib/services/veiculo-service"
 import { getAllMotorista } from "@/lib/services/motorista-service"
+import { getTipoReboqueEnum } from "@/lib/services/enum-service"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -56,7 +57,7 @@ export function VeiculosForm({ id }: VeiculosFormProps) {
   const [isLoading, setIsLoading] = useState(id ? true : false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const reboqueOptions = ["Carreta", "Bi-trem", "Rodotrem", "Simples"]
+  const [reboqueOptions, setReboqueOptions] = useState<string[]>([])
   const [selectedReboque, setSelectedReboque] = useState<string>("")
   const [motoristas, setMotoristas] = useState<{ id: number; nome: string }[]>([])
   const [selectedMotorista, setSelectedMotorista] = useState<string>("")
@@ -75,28 +76,31 @@ export function VeiculosForm({ id }: VeiculosFormProps) {
   })
 
   useEffect(() => {
-    async function fetchMotoristas() {
+    async function fetchData() {
       try {
-        const data = await getAllMotorista()
-
-        // Mapeia os dados retornados pelo serviço
+        // Fetch motoristas
+        const motoristasData = await getAllMotorista()
         setMotoristas(
-          data?.map((motorista) => ({
+          motoristasData?.map((motorista) => ({
             id: motorista.id,
             nome: motorista.motorista_nome,
           })) || []
         )
+
+        // Fetch reboque options
+        const reboqueData = await getTipoReboqueEnum()
+        setReboqueOptions(reboqueData || [])
       } catch (err) {
-        console.error("Erro ao buscar motoristas:", err)
+        console.error("Erro ao buscar dados:", err)
         toast({
           variant: "destructive",
-          title: "Erro ao carregar motoristas",
-          description: "Não foi possível carregar a lista de motoristas.",
+          title: "Erro ao carregar dados",
+          description: "Não foi possível carregar os dados necessários.",
         })
       }
     }
 
-    fetchMotoristas()
+    fetchData()
   }, [])
 
   // Add useEffect for fetching vehicle data when in edit mode
