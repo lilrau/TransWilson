@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -187,6 +187,36 @@ export function DespesasForm({ id }: DespesasFormProps) {
     }
   }, [id, form])
 
+  // Handle vehicle change and automatically set the associated driver
+  const handleVehicleChange = useCallback(
+    (value: string) => {
+      const newValue = value === "none" ? null : Number(value)
+      form.setValue("despesa_veiculo", newValue)
+      
+      const selectedVehicle = veiculos.find((v) => v.id === newValue)
+      
+      if (selectedVehicle?.motorista?.id) {
+        form.setValue("despesa_motorista", selectedVehicle.motorista.id)
+      } else if (userType !== "driver") {
+        form.setValue("despesa_motorista", null)
+      }
+    },
+    [form, veiculos, userType]
+  )
+
+  // Set driver ID if user is a driver
+  useEffect(() => {
+    if (userType === "driver" && userId !== null) {
+      form.setValue("despesa_motorista", userId)
+
+      // Find the vehicle assigned to the driver
+      const driverVehicle = veiculos.find(v => v.motorista?.id === userId)
+      if (driverVehicle) {
+        form.setValue("despesa_veiculo", driverVehicle.id)
+      }
+    }
+  }, [userType, userId, form, veiculos])
+
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
     setError(null)
@@ -266,12 +296,16 @@ export function DespesasForm({ id }: DespesasFormProps) {
   }: { field: { value: number | null | undefined; onChange: (value: number | null) => void } }) => {
     const [selectedValue, setSelectedValue] = useState<string | undefined>(field.value?.toString() || "none")
 
+    // Move userType and userId to dependencies since they are used in the effect
+    const currentUserType = userType
+    const currentUserId = userId
+
     useEffect(() => {
-      if (userType !== "admin" && userId !== null) {
-        field.onChange(userId)
-        setSelectedValue(userId.toString())
+      if (currentUserType === "driver" && currentUserId !== null) {
+        field.onChange(currentUserId)
+        setSelectedValue(currentUserId.toString())
       }
-    }, [field])
+    }, [field, currentUserType, currentUserId])
 
     const handleChange = (value: string) => {
       const newValue = value === "none" ? null : Number.parseInt(value)
@@ -282,7 +316,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
     return (
       <FormItem>
         <FormLabel>Motorista</FormLabel>
-        <Select onValueChange={handleChange} value={selectedValue} disabled={userType !== "admin" && userId !== null}>
+        <Select onValueChange={handleChange} value={selectedValue} disabled={userType === "driver"}>
           <FormControl>
             <SelectTrigger>
               <SelectValue placeholder="Selecione um motorista" />
@@ -414,24 +448,10 @@ export function DespesasForm({ id }: DespesasFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Veículo</FormLabel>
-                    <Select
-                      onValueChange={(value) => {
-                        const newValue = value === "none" ? null : Number.parseInt(value)
-                        field.onChange(newValue)
-
-                        // Seleciona automaticamente o motorista associado ao veículo
-                        if (newValue !== null) {
-                          const selectedVehicle = veiculos.find((v) => v.id === newValue)
-                          if (selectedVehicle?.motorista?.id) {
-                            form.setValue("despesa_motorista", selectedVehicle.motorista.id)
-                          } else {
-                            form.setValue("despesa_motorista", null)
-                          }
-                        } else {
-                          form.setValue("despesa_motorista", null)
-                        }
-                      }}
+                    <Select 
+                      onValueChange={handleVehicleChange} 
                       value={field.value?.toString() || "none"}
+                      disabled={userType === "driver"}
                     >
                       <FormControl>
                         <SelectTrigger>
