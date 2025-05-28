@@ -10,10 +10,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-// Adicionar a importação da função isAuthenticated
 import { authenticateUser, setSessionCookie, type UserType, isAuthenticated } from "@/lib/auth"
+import { maskCPF, unmaskCPF } from "@/lib/utils"
 
-// Modificar o componente LoginForm para verificar autenticação
 export function LoginForm() {
   const router = useRouter()
   const [username, setUsername] = useState("")
@@ -54,8 +53,11 @@ export function LoginForm() {
     try {
       setLoading(true)
 
+      // Se for motorista, usar o CPF sem máscara para autenticação
+      const cleanUsername = userType === "driver" ? unmaskCPF(username) : username
+
       // Autenticar usuário com base no tipo selecionado
-      const session = await authenticateUser(username, password, userType)
+      const session = await authenticateUser(cleanUsername, password, userType)
 
       if (!session) {
         setError("Credenciais inválidas. Tente novamente.")
@@ -72,6 +74,16 @@ export function LoginForm() {
       setError("Falha na autenticação. Tente novamente.")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    if (userType === "driver") {
+      const rawValue = unmaskCPF(value)
+      setUsername(rawValue)
+    } else {
+      setUsername(value)
     }
   }
 
@@ -118,7 +130,10 @@ export function LoginForm() {
                 <select
                   id="userType"
                   value={userType}
-                  onChange={(e) => setUserType(e.target.value as UserType)}
+                  onChange={(e) => {
+                    setUserType(e.target.value as UserType)
+                    setUsername("") // Limpar o campo ao trocar o tipo de usuário
+                  }}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white mt-2"
                 >
                   <option value="admin">Administrador</option>
@@ -132,8 +147,9 @@ export function LoginForm() {
                 <Input
                   id="username"
                   type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder={userType === "driver" ? "000.000.000-00" : "Nome de usuário"}
+                  value={userType === "driver" ? maskCPF(username) : username}
+                  onChange={handleUsernameChange}
                   required
                   className="dark:bg-zinc-800 dark:border-zinc-700 dark:text-white mt-2"
                 />
@@ -153,7 +169,14 @@ export function LoginForm() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Entrando..." : "Entrar"}
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Entrando...
+                </>
+              ) : (
+                "Entrar"
+              )}
             </Button>
           </div>
         </form>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -30,7 +30,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { useEffect } from "react"
 
 const formSchema = z.object({
   entrada_nome: z.string().min(3, {
@@ -93,16 +92,19 @@ export function EntradaForm() {
 
   const entradaTipo = form.watch("entrada_tipo");
 
-  async function fetchFretes() {
+  const fetchFretes = useCallback(async () => {
     if (entradaTipo?.toLowerCase() === "frete") {
       setIsLoadingFretes(true)
       try {
-        const data = await getAllFrete().then(fretes => fretes.filter(f => !f.frete_baixa))
-        if (data) {
-          setFretes(data)
-        }
-      } catch (err) {
-        console.error("Erro ao buscar fretes:", err)
+        const fretesData = await getAllFrete().then(fretes => fretes.filter(f => !f.frete_baixa))
+        setFretes(
+          fretesData?.map((f: { id: number; frete_nome: string }) => ({
+            id: f.id,
+            frete_nome: f.frete_nome,
+          })) || []
+        )
+      } catch (error) {
+        console.error("Erro ao carregar fretes:", error)
         toast({
           variant: "destructive",
           title: "Erro ao carregar fretes",
@@ -114,11 +116,11 @@ export function EntradaForm() {
     } else {
       setFretes([])
     }
-  }
+  }, [entradaTipo]);
 
   useEffect(() => {
     fetchFretes();
-  }, [entradaTipo]);
+  }, [fetchFretes]);
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
