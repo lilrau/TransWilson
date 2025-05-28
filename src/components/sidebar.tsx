@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  BadgeDollarSign
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -103,6 +104,11 @@ export function Sidebar() {
         href: "/dashboard/movimentos/acerto-frete",
         icon: FileText,
         adminOnly: true,
+      },
+      {
+        title: "Caixa",
+        href: "/dashboard/movimentos/caixa",
+        icon: BadgeDollarSign,
       },
       {
         title: "Despesas",

@@ -604,11 +604,11 @@ export function AcertoFreteComponent() {
                         <AlertDialogTitle>Confirmar baixa do frete</AlertDialogTitle>
                         <AlertDialogDescription>
                           {baixaValores ? (
-                            <div className="space-y-1">
-                              <div>Valor total do frete: <strong>{baixaValores.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></div>
-                              <div>Total já adiantado: <strong className="text-amber-600">{baixaValores.adiantado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></div>
-                              <div>Valor a receber nesta baixa: <strong className="text-green-700">{baixaValores.final.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></div>
-                            </div>
+                            <span className="space-y-1 block">
+                              <span className="block">Valor total do frete: <strong>{baixaValores.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></span>
+                              <span className="block">Total já adiantado: <strong className="text-amber-600">{baixaValores.adiantado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></span>
+                              <span className="block">Valor a receber nesta baixa: <strong className="text-green-700">{baixaValores.final.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></span>
+                            </span>
                           ) : (
                             <span>Carregando valores...</span>
                           )}
