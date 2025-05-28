@@ -12,15 +12,17 @@ interface EditarDespesaPageProps {
   }
 }
 
-export default function EditarDespesaPage({ params }: EditarDespesaPageProps) {
+export default async function EditarDespesaPage({ params }: EditarDespesaPageProps) {
+  const { id } = await params
+
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Editar Despesa</h1>
-        <p className="text-muted-foreground">Edite os dados da despesa selecionada.</p>
+        <p className="text-muted-foreground">Edite os dados da despesa no sistema.</p>
       </div>
 
-      <DespesasForm id={params.id} />
+      <DespesasForm id={id} />
     </div>
   )
 }

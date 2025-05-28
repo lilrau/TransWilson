@@ -606,13 +606,15 @@ export function FretesTable() {
                             <AlertDialogTitle>Confirmar baixa do frete</AlertDialogTitle>
                             <AlertDialogDescription>
                               {baixaValores ? (
-                                <div className="space-y-1">
-                                  <div>Valor total do frete: <strong>{baixaValores.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></div>
-                                  <div>Total já adiantado: <strong className="text-amber-600">{baixaValores.adiantado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></div>
-                                  <div>Valor a receber nesta baixa: <strong className="text-green-700">{baixaValores.final.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></div>
-                                </div>
+                                <>
+                                  Total do frete: <strong>{baixaValores.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
+                                  <br />
+                                  Já adiantado: <strong className="text-amber-600">{baixaValores.adiantado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
+                                  <br />
+                                  A receber: <strong className="text-green-700">{baixaValores.final.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
+                                </>
                               ) : (
-                                <span>Carregando valores...</span>
+                                "Carregando valores..."
                               )}
                             </AlertDialogDescription>
                           </AlertDialogHeader>

@@ -27,6 +27,7 @@ import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { tryCatch } from "@/lib/try-catch"
+import { maskCPF, unmaskCPF } from "@/lib/utils"
 
 const formSchema = z.object({
   motorista_nome: z.string().min(3, {
@@ -34,7 +35,7 @@ const formSchema = z.object({
   }),
   motorista_cpf: z.string().length(11, {
     message: "O CPF deve ter 11 dígitos.",
-  }),
+  }).transform(value => unmaskCPF(value)),
   motorista_salario: z.coerce.number().min(0, {
     message: "O salário não pode ser negativo.",
   }),
@@ -80,17 +81,6 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
     onChange(sanitizedValue)
   }
 
-  // Função para permitir apenas entrada de dígitos (sem pontos decimais)
-  const handleDigitsOnly = (
-    e: ChangeEvent<HTMLInputElement>,
-    onChange: (value: string) => void
-  ) => {
-    // Remove qualquer caractere que não seja número
-    const value = e.target.value.replace(/[^0-9]/g, "")
-
-    // Atualiza o valor do campo
-    onChange(value)
-  }
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -100,7 +90,7 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
       motorista_frete: 0,
       motorista_estadia: 0,
       motorista_admissao: new Date(),
-      motorista_senha: "",
+      motorista_senha: id ? undefined : "",
     },
   })
 
@@ -127,6 +117,7 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
             motorista_frete: data.motorista_frete || 0,
             motorista_estadia: data.motorista_estadia || 0,
             motorista_admissao: admissaoDate,
+            motorista_senha: undefined,
           })
         } else {
           setError("Motorista não encontrado.")
@@ -225,18 +216,20 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
                       <FormLabel>CPF</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Número do CPF"
-                          maxLength={11}
-                          inputMode="numeric"
+                          placeholder="000.000.000-00"
                           {...field}
-                          onChange={(e) => handleDigitsOnly(e, field.onChange)}
+                          value={field.value ? maskCPF(field.value) : ""}
+                          onChange={(e) => {
+                            const rawValue = unmaskCPF(e.target.value)
+                            field.onChange(rawValue)
+                          }}
                         />
                       </FormControl>
                       {error ? (
                         <FormMessage />
                       ) : (
                         <FormDescription>
-                          Número do CPF (11 dígitos)
+                          Digite apenas os números do CPF
                         </FormDescription>
                       )}
                     </FormItem>

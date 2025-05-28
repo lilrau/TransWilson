@@ -555,15 +555,13 @@ export function EntradasSaidasTable() {
             </DialogTitle>
             <DialogDescription>
               Tem certeza que deseja excluir este {movimentoToDelete?.tipo === "entrada" ? "recebimento" : "pagamento"}?
-              {movimentoToDelete && (
-                <div className="mt-2 p-3 bg-muted rounded-lg">
-                  <p className="font-medium">{movimentoToDelete.nome}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {format(new Date(movimentoToDelete.data), "dd/MM/yyyy")} - {formatCurrency(movimentoToDelete.valor)}
-                  </p>
+              <div className="mt-2 p-3 bg-muted rounded-lg space-y-1">
+                <div className="font-medium">{movimentoToDelete?.nome}</div>
+                <div className="text-sm text-muted-foreground">
+                  {movimentoToDelete && format(new Date(movimentoToDelete.data), "dd/MM/yyyy")} - {movimentoToDelete && formatCurrency(movimentoToDelete.valor)}
                 </div>
-              )}
-              <p className="mt-2">Esta ação não pode ser desfeita.</p>
+              </div>
+              <div className="mt-2">Esta ação não pode ser desfeita.</div>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">

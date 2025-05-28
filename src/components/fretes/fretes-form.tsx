@@ -96,9 +96,15 @@ export function FretesForm({ id }: FretesFormProps) {
           getAllMotorista(),
         ])
 
-        setVeiculos(veiculosData?.map((v) => ({ id: v.id, nome: v.veiculo_nome, motorista: v.motorista })) || [])
-        setAgenciadores(agenciadoresData?.map((a) => ({ id: a.id, agenciador_nome: a.agenciador_nome })) || [])
-        setMotoristas(motoristasData?.map((m) => ({ id: m.id, motorista_nome: m.motorista_nome })) || [])
+        setVeiculos(veiculosData?.map((v: { id: number; veiculo_nome: string; motorista?: { id: number } }) => 
+          ({ id: v.id, nome: v.veiculo_nome, motorista: v.motorista })) || []
+        )
+        setAgenciadores(agenciadoresData?.map((a: { id: number; agenciador_nome: string }) => 
+          ({ id: a.id, agenciador_nome: a.agenciador_nome })) || []
+        )
+        setMotoristas(motoristasData?.map((m: { id: number; motorista_nome: string }) => 
+          ({ id: m.id, motorista_nome: m.motorista_nome })) || []
+        )
 
         if (id) {
           const freteData = await getFrete(Number(id))
@@ -138,11 +144,22 @@ export function FretesForm({ id }: FretesFormProps) {
       if (session) {
         setUserType(session.userType)
         setUserId(session.id)
+        
+        // Se for motorista, buscar e setar o veículo automaticamente
+        if (session.userType === "driver" && session.id) {
+          const veiculosData = await getAllVeiculos()
+          const veiculoDoMotorista = veiculosData?.find((v: { motorista?: { id: number } }) => v.motorista?.id === session.id)
+          if (veiculoDoMotorista) {
+            form.setValue("frete_veiculo", veiculoDoMotorista.id)
+            form.setValue("frete_motorista", session.id)
+            setSelectedVehicleMotorista(session.id)
+          }
+        }
       }
     }
 
     fetchSession()
-  }, [])
+  }, [form])
 
   const addWeight = () => {
     setWeights([...weights, ""])
@@ -268,7 +285,11 @@ export function FretesForm({ id }: FretesFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Veículo</FormLabel>
-                    <Select onValueChange={handleVehicleChange} value={field.value?.toString()}>
+                    <Select 
+                      onValueChange={handleVehicleChange} 
+                      value={field.value?.toString()}
+                      disabled={userType === "driver"}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione um veículo" />
