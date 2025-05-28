@@ -32,8 +32,8 @@ const formSchema = z.object({
   motorista_nome: z.string().min(3, {
     message: "O nome deve ter pelo menos 3 caracteres.",
   }),
-  motorista_cnh: z.string().length(9, {
-    message: "A CNH deve ter 9 caracteres.",
+  motorista_cpf: z.string().length(11, {
+    message: "O CPF deve ter 11 dígitos.",
   }),
   motorista_salario: z.coerce.number().min(0, {
     message: "O salário não pode ser negativo.",
@@ -95,7 +95,7 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       motorista_nome: "",
-      motorista_cnh: "",
+      motorista_cpf: "",
       motorista_salario: 0,
       motorista_frete: 0,
       motorista_estadia: 0,
@@ -122,7 +122,7 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
 
           form.reset({
             motorista_nome: data.motorista_nome || "",
-            motorista_cnh: data.motorista_cnh || "",
+            motorista_cpf: data.motorista_cpf || "",
             motorista_salario: data.motorista_salario || 0,
             motorista_frete: data.motorista_frete || 0,
             motorista_estadia: data.motorista_estadia || 0,
@@ -217,16 +217,16 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
 
               <FormField
                 control={form.control}
-                name="motorista_cnh"
+                name="motorista_cpf"
                 render={({ field }) => {
-                  const { error } = form.getFieldState("motorista_cnh", form.formState)
+                  const { error } = form.getFieldState("motorista_cpf", form.formState)
                   return (
                     <FormItem>
-                      <FormLabel>CNH</FormLabel>
+                      <FormLabel>CPF</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Número da CNH"
-                          maxLength={9}
+                          placeholder="Número do CPF"
+                          maxLength={11}
                           inputMode="numeric"
                           {...field}
                           onChange={(e) => handleDigitsOnly(e, field.onChange)}
@@ -236,7 +236,7 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
                         <FormMessage />
                       ) : (
                         <FormDescription>
-                          Número da Carteira Nacional de Habilitação (9 dígitos)
+                          Número do CPF (11 dígitos)
                         </FormDescription>
                       )}
                     </FormItem>

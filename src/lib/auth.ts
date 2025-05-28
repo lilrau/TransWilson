@@ -129,14 +129,14 @@ export async function authenticateUser(
       const motorista = await getMotoristaByCredentials(identifier)
 
       if (!motorista || !motorista.motorista_senha) {
-        Logger.warn("auth", "Tentativa de login com CNH de motorista inválida", { cnh: identifier })
+        Logger.warn("auth", "Tentativa de login com CPF de motorista inválida", { cpf: identifier })
         return null
       }
 
       const isPasswordValid = await verifyPassword(password, motorista.motorista_senha)
 
       if (!isPasswordValid) {
-        Logger.warn("auth", "Senha inválida para motorista", { cnh: identifier })
+        Logger.warn("auth", "Senha inválida para motorista", { cpf: identifier })
         return null
       }
 

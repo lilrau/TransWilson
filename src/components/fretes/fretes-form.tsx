@@ -439,7 +439,7 @@ export function FretesForm({ id }: FretesFormProps) {
                 <div key={index} className="flex gap-2">
                   <Input
                     type="number"
-                    step="0.01"
+                    step="0.0001"
                     placeholder="Peso em toneladas"
                     value={weight}
                     onChange={(e) => handleWeightChange(e.target.value, index)}

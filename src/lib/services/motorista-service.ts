@@ -8,7 +8,7 @@ import { Logger } from "../logger"
 export interface MotoristaData {
   id: number
   motorista_nome: string
-  motorista_cnh: string
+  motorista_cpf: string
   motorista_salario: number
   motorista_frete: number
   motorista_estadia: number
@@ -169,30 +169,30 @@ export const deleteMotorista = async (id: number) => {
   }
 }
 
-export const getMotoristaByCredentials = async (cnh: string): Promise<MotoristaData | null> => {
+export const getMotoristaByCredentials = async (cpf: string): Promise<MotoristaData | null> => {
   try {
-    Logger.info("motorista-service", "Fetching motorista by CNH", { cnh })
+    Logger.info("motorista-service", "Fetching motorista by CPF", { cpf })
     const { data, error } = await supabase()
       .from("motorista")
       .select("*")
-      .eq("motorista_cnh", cnh)
+      .eq("motorista_cpf", cpf)
       .single()
 
     if (error) {
       if (error.code === "PGRST116") {
-        Logger.info("motorista-service", "No motorista found with provided CNH", { cnh })
+        Logger.info("motorista-service", "No motorista found with provided CPF", { cpf })
         return null
       }
-      Logger.error("motorista-service", "Failed to fetch motorista by CNH", { error, cnh })
+      Logger.error("motorista-service", "Failed to fetch motorista by CPF", { error, cpf })
       throw error
     }
 
-    Logger.info("motorista-service", "Successfully fetched motorista by CNH", { cnh })
+    Logger.info("motorista-service", "Successfully fetched motorista by CPF", { cpf })
     return data
   } catch (error) {
-    Logger.error("motorista-service", "Unexpected error while fetching motorista by CNH", {
+    Logger.error("motorista-service", "Unexpected error while fetching motorista by CPF", {
       error,
-      cnh,
+      cpf,
     })
     throw error
   }

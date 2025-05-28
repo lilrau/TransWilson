@@ -127,7 +127,7 @@ export function LoginForm() {
               </div>
               <div className="space-y-2 mt-4">
                 <Label htmlFor="username" className="dark:text-white">
-                  {userType === "admin" ? "Usuário" : "CNH"}
+                  {userType === "admin" ? "Usuário" : "CPF"}
                 </Label>
                 <Input
                   id="username"
