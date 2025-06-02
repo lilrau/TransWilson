@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  lint:
+    build:
+      context: .
+      dockerfile: Dockerfile.lint
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    command: pnpm lint
+
+volumes:
+  node_modules: 

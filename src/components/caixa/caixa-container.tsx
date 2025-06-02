@@ -74,7 +74,6 @@ export function CaixaContainer() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [saldo, setSaldo] = useState(0)
   const [userType, setUserType] = useState<"admin" | "driver" | "">("")
-  const [userId, setUserId] = useState<number | null>(null)
   const [isAuthorized, setIsAuthorized] = useState(false)
 
   useEffect(() => {
@@ -82,7 +81,6 @@ export function CaixaContainer() {
       const session = await getSessionData()
       if (session) {
         setUserType(session.userType)
-        setUserId(session.id)
         
         // Se for motorista, buscar e setar o veículo automaticamente
         if (session.userType === "driver" && session.id) {

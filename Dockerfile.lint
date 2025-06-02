@@ -1,0 +1,21 @@
+FROM node:20-slim
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
+
+# Install dependencies
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+
+# Copy TypeScript and ESLint configurations
+COPY tsconfig.json .
+COPY eslint.config.mjs .
+COPY next.config.ts .
+
+# Copy source files
+COPY src/ src/ 
