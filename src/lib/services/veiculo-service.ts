@@ -52,7 +52,14 @@ export const getVeiculo = unstable_cache(
   async (id: number) => {
     try {
       Logger.info("veiculo-service", "Fetching veiculo by id", { id })
-      const { data, error } = await supabase().from("veiculo").select("*").eq("id", id).single()
+      const { data, error } = await supabase()
+        .from("veiculo")
+        .select(`
+          *,
+          motorista:veiculo_motorista(id, motorista_nome)
+        `)
+        .eq("id", id)
+        .single()
 
       if (error) {
         Logger.error("veiculo-service", "Failed to fetch veiculo by id", { error, id })

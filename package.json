@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:docker": "docker-compose -f docker-compose.lint.yml up --build",
     "prettier": "prettier . --write"
   },
   "dependencies": {

@@ -6,6 +6,14 @@ import { Logger } from "./lib/logger"
 // Constantes
 const TOKEN_COOKIE_NAME = "trans_wilson_session"
 
+// Rotas permitidas para motoristas
+const DRIVER_ALLOWED_ROUTES = [
+  "/dashboard/motorista",
+  "/dashboard/movimentos/criar-frete",
+  "/dashboard/movimentos/despesas",
+  "/dashboard/movimentos/caixa"
+]
+
 // Middleware para verificar autenticação
 export async function middleware(request: NextRequest) {
   // Verificar se o cookie de sessão existe
@@ -37,10 +45,15 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    // Redirecionar motoristas para sua dashboard específica
-    if (session.userType === "driver" && request.nextUrl.pathname === "/dashboard") {
-      const url = new URL("/dashboard/motorista", request.url)
-      return NextResponse.redirect(url)
+    // Se for motorista, verifica se a rota é permitida
+    if (session.userType === "driver") {
+      const isAllowedRoute = DRIVER_ALLOWED_ROUTES.some(route => 
+        request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(`${route}/`)
+      )
+
+      if (!isAllowedRoute) {
+        return NextResponse.redirect(new URL("/dashboard/motorista", request.url))
+      }
     }
 
     // Autenticação válida, continuar

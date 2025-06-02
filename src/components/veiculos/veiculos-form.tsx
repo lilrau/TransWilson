@@ -123,8 +123,8 @@ export function VeiculosForm({ id }: VeiculosFormProps) {
             veiculo_motorista: data.veiculo_motorista || null,
           })
           setSelectedReboque(data.veiculo_reboque || "")
-          if (data.motorista_nome) {
-            setSelectedMotorista(data.motorista_nome)
+          if (data.motorista?.motorista_nome) {
+            setSelectedMotorista(data.motorista.motorista_nome)
           }
         } else {
           setError("Veículo não encontrado.")
