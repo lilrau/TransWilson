@@ -30,7 +30,13 @@ export const getAllEntradas = unstable_cache(
         .select(
           `
           *,
-          frete:entrada_frete_id(id, frete_nome, motorista:frete_motorista(id))
+          frete:entrada_frete_id(
+            id, 
+            frete_nome, 
+            frete_baixa,
+            veiculo:frete_veiculo(id, veiculo_nome),
+            motorista:frete_motorista(id)
+          )
         `
         )
         .order("created_at", { ascending: false })

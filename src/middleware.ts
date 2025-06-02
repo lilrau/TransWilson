@@ -11,6 +11,7 @@ const DRIVER_ALLOWED_ROUTES = [
   "/dashboard/motorista",
   "/dashboard/movimentos/criar-frete",
   "/dashboard/movimentos/despesas",
+  "/dashboard/movimentos/caixa"
 ]
 
 // Middleware para verificar autenticação

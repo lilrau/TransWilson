@@ -10,6 +10,7 @@ import { getAllVeiculos } from "@/lib/services/veiculo-service"
 import { getAllDespesa } from "@/lib/services/despesa-service"
 import { getAllEntradas } from "@/lib/services/entrada-service"
 import { Loader2, Check, Clock } from "lucide-react"
+import { getSessionData } from "@/lib/auth"
 
 interface Transaction {
   id: number
@@ -18,6 +19,7 @@ interface Transaction {
   data: string
   descricao: string
   baixado: boolean
+  entrada_tipo?: string
   veiculo?: {
     id: number
     nome: string
@@ -53,13 +55,16 @@ interface EntradaData {
   entrada_nome: string
   entrada_valor: number
   created_at: string
+  entrada_tipo: string
   frete?: {
+    id: number
+    frete_nome: string
     frete_baixa: boolean
     veiculo?: {
       id: number
       veiculo_nome: string
-    }
-  }
+    } | null
+  } | null
 }
 
 export function CaixaContainer() {
@@ -68,6 +73,31 @@ export function CaixaContainer() {
   const [selectedVeiculo, setSelectedVeiculo] = useState<string>("geral")
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [saldo, setSaldo] = useState(0)
+  const [userType, setUserType] = useState<"admin" | "driver" | "">("")
+  const [userId, setUserId] = useState<number | null>(null)
+  const [isAuthorized, setIsAuthorized] = useState(false)
+
+  useEffect(() => {
+    async function loadUserData() {
+      const session = await getSessionData()
+      if (session) {
+        setUserType(session.userType)
+        setUserId(session.id)
+        
+        // Se for motorista, buscar e setar o veículo automaticamente
+        if (session.userType === "driver" && session.id) {
+          const veiculosData = await getAllVeiculos()
+          const veiculoDoMotorista = veiculosData?.find((v: { motorista?: { id: number } }) => v.motorista?.id === session.id)
+          if (veiculoDoMotorista) {
+            setSelectedVeiculo(veiculoDoMotorista.id.toString())
+          }
+        }
+        setIsAuthorized(true)
+      }
+    }
+
+    loadUserData()
+  }, [])
 
   useEffect(() => {
     async function loadVeiculos() {
@@ -114,7 +144,8 @@ export function CaixaContainer() {
           valor: entrada.entrada_valor || 0,
           data: entrada.created_at,
           descricao: entrada.entrada_nome,
-          baixado: entrada.frete?.frete_baixa || false,
+          baixado: entrada.entrada_tipo === "Frete" ? entrada.frete?.frete_baixa || false : true,
+          entrada_tipo: entrada.entrada_tipo,
           veiculo: entrada.frete?.veiculo ? {
             id: entrada.frete.veiculo.id,
             nome: entrada.frete.veiculo.veiculo_nome,
@@ -152,6 +183,14 @@ export function CaixaContainer() {
     loadTransactions()
   }, [selectedVeiculo])
 
+  if (!isAuthorized) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -166,59 +205,63 @@ export function CaixaContainer() {
         <CardHeader>
           <div className="flex flex-col md:flex-row justify-between gap-4">
             <CardTitle>Fluxo de Caixa</CardTitle>
-            <Select value={selectedVeiculo} onValueChange={setSelectedVeiculo}>
-              <SelectTrigger className="w-full md:w-[200px]">
-                <SelectValue placeholder="Selecione um veículo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="geral">Geral</SelectItem>
-                {veiculos.map((veiculo) => (
-                  <SelectItem key={veiculo.id} value={veiculo.id.toString()}>
-                    {veiculo.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {userType === "admin" && (
+              <Select value={selectedVeiculo} onValueChange={setSelectedVeiculo}>
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="Selecione um veículo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="geral">Geral</SelectItem>
+                  {veiculos.map((veiculo) => (
+                    <SelectItem key={veiculo.id} value={veiculo.id.toString()}>
+                      {veiculo.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Saldo</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className={`text-2xl font-bold ${saldo >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(saldo)}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Entradas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-green-500">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                      transactions.reduce((acc: number, t: Transaction) => t.tipo === "entrada" ? acc + t.valor : acc, 0)
-                    )}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Saídas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-red-500">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                      transactions.reduce((acc: number, t: Transaction) => t.tipo === "saida" ? acc + t.valor : acc, 0)
-                    )}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+            {userType === "admin" && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Saldo</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className={`text-2xl font-bold ${saldo >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(saldo)}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Entradas</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold text-green-500">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                        transactions.reduce((acc: number, t: Transaction) => t.tipo === "entrada" ? acc + t.valor : acc, 0)
+                      )}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Saídas</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold text-red-500">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                        transactions.reduce((acc: number, t: Transaction) => t.tipo === "saida" ? acc + t.valor : acc, 0)
+                      )}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
             <Card>
               <CardHeader>
@@ -237,13 +280,15 @@ export function CaixaContainer() {
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="font-medium">{transaction.descricao}</p>
-                            <Badge variant={transaction.baixado ? "default" : "secondary"} className="ml-2">
-                              {transaction.baixado ? (
-                                <><Check className="w-3 h-3 mr-1" /> Baixado</>
-                              ) : (
-                                <><Clock className="w-3 h-3 mr-1" /> Em Aberto</>
-                              )}
-                            </Badge>
+                            {transaction.tipo === "entrada" && transaction.entrada_tipo === "Frete" && (
+                              <Badge variant={transaction.baixado ? "default" : "secondary"} className="ml-2">
+                                {transaction.baixado ? (
+                                  <><Check className="w-3 h-3 mr-1" /> Baixado</>
+                                ) : (
+                                  <><Clock className="w-3 h-3 mr-1" /> Em Aberto</>
+                                )}
+                              </Badge>
+                            )}
                           </div>
                           <p className="text-sm text-muted-foreground">
                             {format(new Date(transaction.data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
