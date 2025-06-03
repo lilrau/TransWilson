@@ -13,6 +13,7 @@ export interface DespesaData {
   despesa_motorista: number | null
   created_at?: string
   comprovante_url?: string | null
+  despesa_metodo_pagamento?: string | null
 }
 
 export interface DespesaMotoristaResumo {
@@ -93,6 +94,7 @@ export const getDespesa = unstable_cache(
 )
 
 export const createDespesa = async (data: DespesaData) => {
+  Logger.info("despesa-service", "Despesa data", { data })
   try {
     Logger.info("despesa-service", "Creating new despesa", { despesaData: data })
     const result = await supabase().from("despesa").insert(data).select()
