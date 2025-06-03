@@ -13,6 +13,8 @@ export interface DespesaData {
   despesa_motorista: number | null
   created_at?: string
   comprovante_url?: string | null
+  despesa_metodo_pagamento?: string | null
+  despesa_parcelas?: number
 }
 
 export interface DespesaMotoristaResumo {
@@ -93,9 +95,26 @@ export const getDespesa = unstable_cache(
 )
 
 export const createDespesa = async (data: DespesaData) => {
+  Logger.info("despesa-service", "Despesa data", { data })
   try {
     Logger.info("despesa-service", "Creating new despesa", { despesaData: data })
-    const result = await supabase().from("despesa").insert(data).select()
+    let result
+    if (data.despesa_parcelas && data.despesa_parcelas == 1) {
+      result = await supabase().from("despesa").insert(data).select()
+    } else {
+      const parcelas = data.despesa_parcelas || 1
+      delete data.despesa_parcelas 
+      const valorPorParcela = data.despesa_valor / parcelas
+
+      const despesas = Array.from({ length: parcelas }, (_, index) => ({
+        ...data,
+        despesa_nome: `${data.despesa_nome} - Parcela ${index + 1}`,
+        despesa_valor: valorPorParcela,
+        created_at: new Date(new Date().setMonth(new Date().getMonth() + index)).toISOString(),
+      }))
+
+      result = await supabase().from("despesa").insert(despesas).select()
+    }
 
     if (result.error) {
       Logger.error("despesa-service", "Failed to create despesa", { error: result.error })

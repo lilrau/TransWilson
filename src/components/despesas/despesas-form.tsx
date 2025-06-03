@@ -34,8 +34,14 @@ const formSchema = z.object({
   }),
   despesa_veiculo: z.coerce.number().nullable().optional(),
   despesa_motorista: z.coerce.number().nullable().optional(),
-  comprovante: z.instanceof(File).optional(),
+  comprovante: z.instanceof(File).optional().nullable(),
+  despesa_metodo_pagamento: z.string().optional().nullable(),
+  despesa_parcelas: z.number().min(1, {
+    message: "O número de parcelas deve ser pelo menos 1.",
+  }),
 })
+
+const despesaMetodoPagamentoSchema = ["dinheiro", "pix", "debito", "credito"]
 
 type FormValues = z.infer<typeof formSchema>
 
@@ -65,6 +71,9 @@ export function DespesasForm({ id }: DespesasFormProps) {
       despesa_valor: 0,
       despesa_veiculo: null,
       despesa_motorista: null,
+      comprovante: null,
+      despesa_metodo_pagamento: null,
+      despesa_parcelas: 1,
     },
   })
 
@@ -91,9 +100,9 @@ export function DespesasForm({ id }: DespesasFormProps) {
             nome: veiculo.veiculo_nome,
             motorista: veiculo.motorista
               ? {
-                  id: veiculo.motorista.id,
-                  nome: veiculo.motorista.motorista_nome,
-                }
+                id: veiculo.motorista.id,
+                nome: veiculo.motorista.motorista_nome,
+              }
               : undefined,
           })) || [],
         )
@@ -165,6 +174,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
             despesa_valor: data.despesa_valor || null,
             despesa_veiculo: data.despesa_veiculo || null,
             despesa_motorista: data.despesa_motorista || null,
+            despesa_metodo_pagamento: data.despesa_metodo_pagamento || 1,
           })
           setComprovanteUrl(data.comprovante_url || null)
         } else {
@@ -192,9 +202,9 @@ export function DespesasForm({ id }: DespesasFormProps) {
     (value: string) => {
       const newValue = value === "none" ? null : Number(value)
       form.setValue("despesa_veiculo", newValue)
-      
+
       const selectedVehicle = veiculos.find((v) => v.id === newValue)
-      
+
       if (selectedVehicle?.motorista?.id) {
         form.setValue("despesa_motorista", selectedVehicle.motorista.id)
       } else if (userType !== "driver") {
@@ -232,6 +242,8 @@ export function DespesasForm({ id }: DespesasFormProps) {
         despesa_valor: values.despesa_valor,
         despesa_veiculo: values.despesa_veiculo ?? null,
         despesa_motorista: motorista,
+        despesa_metodo_pagamento: values.despesa_metodo_pagamento ?? null,
+        despesa_parcelas: values.despesa_metodo_pagamento?.toLowerCase() === "credito" ? values.despesa_parcelas ?? null : null,
       }
 
       let despesaId: number
@@ -448,8 +460,8 @@ export function DespesasForm({ id }: DespesasFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Veículo</FormLabel>
-                    <Select 
-                      onValueChange={handleVehicleChange} 
+                    <Select
+                      onValueChange={handleVehicleChange}
                       value={field.value?.toString() || "none"}
                       disabled={userType === "driver"}
                     >
@@ -477,6 +489,59 @@ export function DespesasForm({ id }: DespesasFormProps) {
                 name="despesa_motorista"
                 render={({ field }) => <MotoristaSelect field={field} />}
               />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="despesa_metodo_pagamento"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Método de pagamento</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || "none"}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o método de pagamento" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">Selecione o método de pagamento</SelectItem>
+                        {
+                          despesaMetodoPagamentoSchema.map((tipo) => (
+                            <SelectItem key={tipo} value={tipo}>
+                              {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
+                            </SelectItem>
+                          ))
+                        }
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {form.watch("despesa_metodo_pagamento")?.toLowerCase() === "credito" && (
+                <FormField
+                  control={form.control}
+                  name="despesa_parcelas"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número de parcelas</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="1"
+                          placeholder="1"
+                          {...field}
+                          value={field.value === null ? "" : field.value}
+                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : null)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-1 gap-6">
