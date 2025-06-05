@@ -1,4 +1,5 @@
 "use client"
+export const dynamic = "force-dynamic"
 import { DespesasForm } from "@/components/despesas/despesas-form"
 import { useSearchParams } from "next/navigation"
 
