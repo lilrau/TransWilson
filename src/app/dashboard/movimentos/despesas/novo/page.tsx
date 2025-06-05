@@ -1,12 +1,8 @@
 "use client"
-export const dynamic = "force-dynamic"
 import { DespesasForm } from "@/components/despesas/despesas-form"
-import { useSearchParams } from "next/navigation"
 
-export default function NovaDespesaPage() {
-  const searchParams = useSearchParams()
-  const freteIdParam = searchParams.get("freteId")
-  const despesa_frete_id = freteIdParam ? Number(freteIdParam) : undefined
+export default function NovaDespesaPage({ params }: { params: { freteId: string } }) {
+  const despesa_frete_id = Number(params.freteId)
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
