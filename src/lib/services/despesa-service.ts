@@ -15,6 +15,7 @@ export interface DespesaData {
   comprovante_url?: string | null
   despesa_metodo_pagamento?: string | null
   despesa_parcelas?: number
+  despesa_frete_id?: number
 }
 
 export interface DespesaMotoristaResumo {

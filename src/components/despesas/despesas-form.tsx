@@ -20,6 +20,7 @@ import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2, FileText, Upload, X } from "lucide-react"
+import { getAllFrete, getFrete } from "@/lib/services/frete-service"
 
 const formSchema = z.object({
   despesa_nome: z.string().min(3, {
@@ -39,6 +40,7 @@ const formSchema = z.object({
   despesa_parcelas: z.number().min(1, {
     message: "O número de parcelas deve ser pelo menos 1.",
   }),
+  despesa_frete_id: z.coerce.number().nullable().optional(),
 })
 
 const despesaMetodoPagamentoSchema = ["dinheiro", "pix", "debito", "credito"]
@@ -47,9 +49,10 @@ type FormValues = z.infer<typeof formSchema>
 
 interface DespesasFormProps {
   id?: string
+  despesa_frete_id?: number
 }
 
-export function DespesasForm({ id }: DespesasFormProps) {
+export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(id ? true : false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -61,6 +64,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
   const [userId, setUserId] = useState<number | null>(null)
   const [uploadingFile, setUploadingFile] = useState(false)
   const [comprovanteUrl, setComprovanteUrl] = useState<string | null>(null)
+  const [fretes, setFretes] = useState<{ id: number; frete_nome: string; frete_origem: string | null; frete_destino: string | null }[]>([])
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -74,6 +78,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
       comprovante: null,
       despesa_metodo_pagamento: null,
       despesa_parcelas: 1,
+      despesa_frete_id: despesa_frete_id ?? null,
     },
   })
 
@@ -92,27 +97,14 @@ export function DespesasForm({ id }: DespesasFormProps) {
   useEffect(() => {
     async function fetchVeiculos() {
       try {
+        setIsLoading(true)
+        setError(null)
         const data = await getAllVeiculos()
-
-        setVeiculos(
-          data?.map((veiculo) => ({
-            id: veiculo.id,
-            nome: veiculo.veiculo_nome,
-            motorista: veiculo.motorista
-              ? {
-                id: veiculo.motorista.id,
-                nome: veiculo.motorista.motorista_nome,
-              }
-              : undefined,
-          })) || [],
-        )
-      } catch (err) {
-        console.error("Erro ao buscar veículos:", err)
-        toast({
-          variant: "destructive",
-          title: "Erro ao carregar veículos",
-          description: "Não foi possível carregar a lista de veículos.",
-        })
+        setVeiculos(data || [])
+      } catch {
+        setError("Erro ao buscar veículos.")
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -152,9 +144,28 @@ export function DespesasForm({ id }: DespesasFormProps) {
       }
     }
 
+    async function fetchFretes() {
+      try {
+        const data = await getAllFrete()
+        setFretes(
+          (data || [])
+            .filter((f: { frete_baixa?: boolean }) => !f.frete_baixa)
+            .map((f: { id: number; frete_nome: string; frete_origem: string; frete_destino: string }) => ({
+              id: f.id,
+              frete_nome: f.frete_nome,
+              frete_origem: f.frete_origem,
+              frete_destino: f.frete_destino,
+            }))
+        )
+      } catch {
+        // Silencioso
+      }
+    }
+
     fetchVeiculos()
     fetchMotoristas()
     fetchTiposDespesa()
+    fetchFretes()
   }, [])
 
   // Fetch despesa data when in edit mode
@@ -175,6 +186,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
             despesa_veiculo: data.despesa_veiculo || null,
             despesa_motorista: data.despesa_motorista || null,
             despesa_metodo_pagamento: data.despesa_metodo_pagamento || 1,
+            despesa_frete_id: data.despesa_frete_id || null,
           })
           setComprovanteUrl(data.comprovante_url || null)
         } else {
@@ -227,6 +239,36 @@ export function DespesasForm({ id }: DespesasFormProps) {
     }
   }, [userType, userId, form, veiculos])
 
+  // Após o carregamento dos veículos e motoristas, se despesa_frete_id estiver preenchido e não for edição, preencha automaticamente:
+  useEffect(() => {
+    async function autoFillFromFrete() {
+      if (!id) {
+        const freteId = form.getValues("despesa_frete_id")
+        const parsedFreteId = Number(freteId)
+        if (parsedFreteId && !isNaN(parsedFreteId)) {
+          try {
+            const frete = await getFrete(parsedFreteId)
+            if (frete) {
+              if (frete.veiculo?.id) {
+                form.setValue("despesa_veiculo", frete.veiculo.id)
+              } else if (frete.frete_veiculo) {
+                form.setValue("despesa_veiculo", frete.frete_veiculo)
+              }
+              if (frete.motorista?.id) {
+                form.setValue("despesa_motorista", frete.motorista.id)
+              } else if (frete.frete_motorista) {
+                form.setValue("despesa_motorista", frete.frete_motorista)
+              }
+            }
+          } catch {
+            // Silencioso
+          }
+        }
+      }
+    }
+    autoFillFromFrete()
+  }, [id, form, veiculos, motoristas])
+
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
     setError(null)
@@ -243,8 +285,13 @@ export function DespesasForm({ id }: DespesasFormProps) {
         despesa_veiculo: values.despesa_veiculo ?? null,
         despesa_motorista: motorista,
         despesa_metodo_pagamento: values.despesa_metodo_pagamento ?? null,
-        despesa_parcelas: values.despesa_metodo_pagamento?.toLowerCase() === "credito" ? values.despesa_parcelas ?? null : null,
+        despesa_parcelas: values.despesa_metodo_pagamento?.toLowerCase() === "credito"
+          ? (values.despesa_parcelas ?? undefined)
+          : undefined,
+        ...(values.despesa_frete_id != null ? { despesa_frete_id: values.despesa_frete_id } : {}),
       }
+      // Remover despesa_parcelas se for null
+      if (despesaData.despesa_parcelas === null) delete despesaData.despesa_parcelas
 
       let despesaId: number
 
@@ -276,8 +323,7 @@ export function DespesasForm({ id }: DespesasFormProps) {
             title: "Comprovante enviado",
             description: "O comprovante foi enviado com sucesso.",
           })
-        } catch (err) {
-          console.error("Erro ao enviar comprovante:", err)
+        } catch {
           toast({
             variant: "destructive",
             title: "Erro ao enviar comprovante",
@@ -291,10 +337,10 @@ export function DespesasForm({ id }: DespesasFormProps) {
       // Redirecionar para a lista de despesas
       router.push("/dashboard/cadastros/despesas")
       router.refresh()
-    } catch (err) {
-      console.error("Erro ao salvar despesa:", err)
-      if (err instanceof Error) {
-        setError(err.message || "Ocorreu um erro ao salvar a despesa.")
+    } catch (error) {
+      console.error("Erro ao salvar despesa:", error)
+      if (error instanceof Error) {
+        setError(error.message || "Ocorreu um erro ao salvar a despesa.")
       } else {
         setError("Ocorreu um erro desconhecido.")
       }
@@ -520,29 +566,58 @@ export function DespesasForm({ id }: DespesasFormProps) {
                 )}
               />
 
-              {form.watch("despesa_metodo_pagamento")?.toLowerCase() === "credito" && (
-                <FormField
-                  control={form.control}
-                  name="despesa_parcelas"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Número de parcelas</FormLabel>
+              <FormField
+                control={form.control}
+                name="despesa_frete_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Frete (em andamento)</FormLabel>
+                    <Select
+                      onValueChange={(value) => field.onChange(value === "none" ? null : Number(value))}
+                      value={field.value ? String(field.value) : "none"}
+                    >
                       <FormControl>
-                        <Input
-                          type="number"
-                          step="1"
-                          placeholder="1"
-                          {...field}
-                          value={field.value === null ? "" : field.value}
-                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : null)}
-                        />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o frete em andamento" />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+                      <SelectContent>
+                        <SelectItem value="none">Nenhum</SelectItem>
+                        {fretes.map((frete) => (
+                          <SelectItem key={frete.id} value={frete.id.toString()}>
+                            {frete.frete_nome} ({frete.frete_origem || "-"} → {frete.frete_destino || "-"})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
+
+            {form.watch("despesa_metodo_pagamento")?.toLowerCase() === "credito" && (
+              <FormField
+                control={form.control}
+                name="despesa_parcelas"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Número de parcelas</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="1"
+                        placeholder="1"
+                        {...field}
+                        value={field.value === null ? "" : field.value}
+                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : null)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="grid grid-cols-1 gap-6">
               <FormField

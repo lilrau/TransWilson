@@ -14,6 +14,8 @@ import {
   Loader2,
   MoreHorizontal,
   Trash,
+  Percent,
+  Wallet,
 } from "lucide-react"
 import { createEntrada, getAllEntradas } from "@/lib/services/entrada-service"
 import { darBaixaFrete, deleteFrete, getAllFrete, getFrete, getFreteBalance } from "@/lib/services/frete-service"
@@ -366,6 +368,14 @@ export function FretesTable() {
     }
   }
 
+  type DespesaData = {
+    despesa_nome: string;
+    despesa_descricao: string;
+    despesa_valor: number;
+    despesa_tipo: string;
+    despesa_motorista: number;
+  };
+
   async function handleCommissionPayment(
     freteId: number,
     motoristaId: number,
@@ -380,9 +390,13 @@ export function FretesTable() {
         despesa_descricao: `Pagamento de comissão para o motorista ${motoristaName} referente ao frete ${freteId}`,
         despesa_valor: valor,
         despesa_tipo: "Comissão Motorista",
+        despesa_veiculo: null,
         despesa_motorista: motoristaId,
+        despesa_metodo_pagamento: null,
+        despesa_parcelas: 1,
+        comprovante_url: null,
         despesa_frete_id: freteId,
-      })
+      } as unknown as DespesaData)
 
       // Atualizar o saldo
       const newBalance = await getFreteBalance(freteId)
@@ -686,7 +700,7 @@ export function FretesTable() {
                                 e.preventDefault()
                               }}
                             >
-                              <DollarSign className="mr-2 h-4 w-4" />
+                              <Percent className="mr-2 h-4 w-4" />
                               Registrar Comissão
                             </DropdownMenuItem>
                           </AlertDialogTrigger>
@@ -700,8 +714,8 @@ export function FretesTable() {
                               onPayment={(valor) =>
                                 handleCommissionPayment(
                                   frete.id,
-                                  frete.motorista.id,
-                                  frete.motorista.motorista_nome,
+                                  frete.motorista!.id,
+                                  frete.motorista!.motorista_nome,
                                   valor
                                 )
                               }
@@ -722,6 +736,13 @@ export function FretesTable() {
                     >
                       <DollarSign className="mr-2 h-4 w-4" />
                       Registrar Adiantamento
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/movimentos/despesas/novo?freteId=${frete.id}`}>
+                        <Wallet className="mr-2 h-4 w-4" />
+                        Nova Despesa
+                      </Link>
                     </DropdownMenuItem>
 
                     <DropdownMenuItem asChild>
