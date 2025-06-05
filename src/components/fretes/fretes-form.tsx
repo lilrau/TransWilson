@@ -6,12 +6,14 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Loader2, Plus, Trash, UserPlus } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { Button } from "@/components/ui/button"
 
 import { createFrete, getFrete, updateFrete } from "@/lib/services/frete-service"
 import { getAllVeiculos } from "@/lib/services/veiculo-service"
 import { getAllAgenciador } from "@/lib/services/agenciador-service"
 import { getAllMotorista } from "@/lib/services/motorista-service"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -51,6 +53,9 @@ const formSchema = z.object({
   frete_distancia: z.coerce.number().min(0).nullable(),
   frete_peso: z.array(z.coerce.number().min(0)),
   frete_valor_tonelada: z.coerce.number().min(0),
+  created_at: z.date({
+    required_error: "Por favor, selecione a data do frete."
+  }),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -84,6 +89,7 @@ export function FretesForm({ id }: FretesFormProps) {
       frete_distancia: null,
       frete_peso: [0],
       frete_valor_tonelada: 0,
+      created_at: new Date(),
     },
   })
 
@@ -120,6 +126,7 @@ export function FretesForm({ id }: FretesFormProps) {
               frete_distancia: freteData.frete_distancia,
               frete_peso: freteData.frete_peso,
               frete_valor_tonelada: freteData.frete_valor_tonelada || 0,
+              created_at: freteData.created_at ? new Date(freteData.created_at) : new Date(),
             })
           }
         }
@@ -191,11 +198,15 @@ export function FretesForm({ id }: FretesFormProps) {
     setError(null)
 
     try {
+      const payload = {
+        ...values,
+        created_at: values.created_at.toISOString(),
+      }
       if (id) {
-        await updateFrete(Number(id), values)
+        await updateFrete(Number(id), payload)
       } else {
         await createFrete({
-          ...values,
+          ...payload,
           frete_valor_total: values.frete_peso.reduce((acc, peso) => acc + peso, 0) * values.frete_valor_tonelada,
         })
       }
@@ -274,6 +285,41 @@ export function FretesForm({ id }: FretesFormProps) {
                     <FormControl>
                       <Input placeholder="Nome do frete" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="created_at"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Data do Frete</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={`w-full pl-3 text-left font-normal ${!field.value ? "text-muted-foreground" : ""}`}
+                          >
+                            {field.value ? (
+                              new Date(field.value).toLocaleDateString("pt-BR")
+                            ) : (
+                              <span>Selecione uma data</span>
+                            )}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
