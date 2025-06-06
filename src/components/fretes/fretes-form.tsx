@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { Loader2, Plus, Trash, UserPlus } from "lucide-react"
+import { Loader2, Plus, Trash, UserPlus, FileText, X, Upload } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
-import { createFrete, getFrete, updateFrete } from "@/lib/services/frete-service"
+import { createFrete, getFrete, updateFrete, uploadComprovante, deleteComprovante } from "@/lib/services/frete-service"
 import { getAllVeiculos } from "@/lib/services/veiculo-service"
 import { getAllAgenciador } from "@/lib/services/agenciador-service"
 import { getAllMotorista } from "@/lib/services/motorista-service"
@@ -56,12 +57,20 @@ const formSchema = z.object({
   created_at: z.date({
     required_error: "Por favor, selecione a data do frete."
   }),
+  comprovante: z.instanceof(File).optional().nullable(),
 })
 
-type FormValues = z.infer<typeof formSchema>
+type FormValues = z.infer<typeof formSchema> & {
+  comprovante?: File | null
+}
 
 interface FretesFormProps {
   id?: string
+}
+
+function formatCurrencyBRL(value: number | string) {
+  const number = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value
+  return number.toLocaleString("pt-BR", { style: "decimal", minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 export function FretesForm({ id }: FretesFormProps) {
@@ -76,6 +85,8 @@ export function FretesForm({ id }: FretesFormProps) {
   const [userType, setUserType] = useState<string>("")
   const [userId, setUserId] = useState<number | null>(null)
   const [selectedVehicleMotorista, setSelectedVehicleMotorista] = useState<number | undefined>(undefined)
+  const [uploadingFile, setUploadingFile] = useState(false)
+  const [comprovanteUrl, setComprovanteUrl] = useState<string | null>(null)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -128,6 +139,9 @@ export function FretesForm({ id }: FretesFormProps) {
               frete_valor_tonelada: freteData.frete_valor_tonelada || 0,
               created_at: freteData.created_at ? new Date(freteData.created_at) : new Date(),
             })
+            if (freteData.comprovante) {
+              setComprovanteUrl(URL.createObjectURL(freteData.comprovante))
+            }
           }
         }
       } catch (err) {
@@ -198,17 +212,45 @@ export function FretesForm({ id }: FretesFormProps) {
     setError(null)
 
     try {
-      const payload = {
-        ...values,
+      // Remove o arquivo do payload que será enviado para o banco
+      const { comprovante, ...payload } = values
+
+      const freteData = {
+        ...payload,
         created_at: values.created_at.toISOString(),
       }
+      let freteId: number
+
       if (id) {
-        await updateFrete(Number(id), payload)
+        await updateFrete(Number(id), freteData)
+        freteId = Number(id)
       } else {
-        await createFrete({
-          ...payload,
+        const result = await createFrete({
+          ...freteData,
           frete_valor_total: values.frete_peso.reduce((acc, peso) => acc + peso, 0) * values.frete_valor_tonelada,
         })
+        freteId = result[0].id
+      }
+
+      // Upload do comprovante se houver
+      if (comprovante) {
+        setUploadingFile(true)
+        try {
+          const url = await uploadComprovante(comprovante, freteId)
+          setComprovanteUrl(url)
+          toast({
+            title: "Comprovante enviado",
+            description: "O comprovante foi enviado com sucesso.",
+          })
+        } catch {
+          toast({
+            variant: "destructive",
+            title: "Erro ao enviar comprovante",
+            description: "Não foi possível enviar o comprovante.",
+          })
+        } finally {
+          setUploadingFile(false)
+        }
       }
 
       toast({
@@ -485,7 +527,16 @@ export function FretesForm({ id }: FretesFormProps) {
                   <FormItem>
                     <FormLabel>Valor por Tonelada (R$)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="Valor por tonelada" {...field} />
+                      <Input
+                        inputMode="decimal"
+                        placeholder="0,00"
+                        value={formatCurrencyBRL(field.value ?? 0)}
+                        onChange={e => {
+                          const raw = e.target.value.replace(/\D/g, "")
+                          const float = Number(raw) / 100
+                          field.onChange(float)
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -520,20 +571,154 @@ export function FretesForm({ id }: FretesFormProps) {
               ))}
             </div>
 
-            <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => router.push("/dashboard/cadastros/fretes")}>
+            <div className="grid grid-cols-1 gap-6">
+              <FormField
+                control={form.control}
+                name="comprovante"
+                render={({ field: { value, onChange, ...field } }) => (
+                  <FormItem>
+                    <FormLabel>Comprovante</FormLabel>
+                    <FormControl>
+                      <div className="flex flex-col gap-4">
+                        <div
+                          className={cn(
+                            "relative flex flex-col items-center justify-center w-full p-6 border-2 border-dashed rounded-lg transition-colors",
+                            "hover:border-primary/50 hover:bg-muted/50",
+                            "focus-within:border-primary focus-within:bg-muted/50",
+                            "dark:border-zinc-800 dark:hover:border-zinc-700",
+                            value ? "border-primary/50 bg-muted/50" : "border-muted-foreground/25"
+                          )}
+                        >
+                          {!value && (
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  onChange(file)
+                                }
+                              }}
+                              {...field}
+                            />
+                          )}
+                          <div className="flex flex-col items-center justify-center text-center">
+                            {value instanceof File ? (
+                              <>
+                                <div className="flex items-center gap-2 mb-2">
+                                  <FileText className="h-8 w-8 text-primary" />
+                                  <span className="font-medium">{value.name}</span>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    onChange(null)
+                                  }}
+                                >
+                                  <X className="h-4 w-4 mr-2" />
+                                  Remover arquivo
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
+                                <div className="text-sm text-muted-foreground">
+                                  <span className="font-medium text-primary">Clique para selecionar</span> ou arraste e solte
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Suporta imagens e PDFs
+                                </p>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {comprovanteUrl && !value && (
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 bg-muted rounded-lg mt-2">
+                            <div className="flex items-center gap-2 mb-2 sm:mb-0">
+                              <FileText className="h-5 w-5 text-primary" />
+                              <span className="text-sm">Comprovante atual</span>
+                            </div>
+                            <div className="flex gap-2 w-full sm:w-auto">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                asChild
+                                className="w-full sm:w-auto justify-center"
+                              >
+                                <a
+                                  href={comprovanteUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:text-primary/80"
+                                >
+                                  Visualizar
+                                </a>
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive w-full sm:w-auto justify-center"
+                                onClick={async () => {
+                                  if (id && comprovanteUrl) {
+                                    try {
+                                      await deleteComprovante(Number(id), comprovanteUrl)
+                                      setComprovanteUrl(null)
+                                      toast({
+                                        title: "Comprovante excluído",
+                                        description: "O comprovante foi excluído com sucesso.",
+                                      })
+                                    } catch (err) {
+                                      console.error("Erro ao excluir comprovante:", err)
+                                      toast({
+                                        variant: "destructive",
+                                        title: "Erro ao excluir comprovante",
+                                        description: "Não foi possível excluir o comprovante.",
+                                      })
+                                    }
+                                  }
+                                }}
+                              >
+                                <X className="h-4 w-4 mr-2" />
+                                Excluir
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="flex justify-end space-x-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push("/dashboard/cadastros/fretes")}
+                disabled={isSubmitting || uploadingFile}
+              >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
+              <Button type="submit" disabled={isSubmitting || uploadingFile}>
+                {isSubmitting || uploadingFile ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {id ? "Atualizando..." : "Cadastrando..."}
+                    {uploadingFile ? "Enviando comprovante..." : "Salvando..."}
                   </>
                 ) : id ? (
                   "Atualizar Frete"
                 ) : (
-                  "Cadastrar Frete"
+                  "Criar Frete"
                 )}
               </Button>
             </div>

@@ -52,6 +52,11 @@ interface VeiculosFormProps {
   id?: string
 }
 
+function formatCurrencyBRL(value: number | string) {
+  const number = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value
+  return number.toLocaleString("pt-BR", { style: "decimal", minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
 export function VeiculosForm({ id }: VeiculosFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(id ? true : false)
@@ -338,11 +343,14 @@ export function VeiculosForm({ id }: VeiculosFormProps) {
                     <FormLabel>Litros Iniciais</FormLabel>
                     <FormControl>
                       <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="Litros iniciais no tanque"
-                        {...field}
-                        value={field.value || ""}
+                        inputMode="decimal"
+                        placeholder="0,00"
+                        value={formatCurrencyBRL(field.value ?? 0)}
+                        onChange={e => {
+                          const raw = e.target.value.replace(/\D/g, "")
+                          const float = Number(raw) / 100
+                          field.onChange(float)
+                        }}
                       />
                     </FormControl>
                     <FormMessage />

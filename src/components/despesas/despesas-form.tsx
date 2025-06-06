@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm, ControllerRenderProps } from "react-hook-form"
 import { z } from "zod"
 import { cn } from "@/lib/utils"
 
@@ -21,6 +21,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2, FileText, Upload, X } from "lucide-react"
 import { getAllFrete, getFrete } from "@/lib/services/frete-service"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 const formSchema = z.object({
   despesa_nome: z.string().min(3, {
@@ -40,7 +42,8 @@ const formSchema = z.object({
   despesa_parcelas: z.number().min(1, {
     message: "O número de parcelas deve ser pelo menos 1.",
   }),
-  despesa_frete_id: z.coerce.number().nullable().optional(),
+  despesa_frete_id: z.number().nullable().optional(),
+  created_at: z.date({ required_error: "A data é obrigatória." }),
 })
 
 const despesaMetodoPagamentoSchema = ["dinheiro", "pix", "debito", "credito"]
@@ -49,22 +52,55 @@ type FormValues = z.infer<typeof formSchema>
 
 interface DespesasFormProps {
   id?: string
-  despesa_frete_id?: number
+  despesa_frete_id?: string
+  freteId?: string
 }
 
-export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
+function formatCurrencyBRL(value: number | string) {
+  const number = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value
+  return number.toLocaleString("pt-BR", { style: "decimal", minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+const ValorField = ({ field }: { field: ControllerRenderProps<FormValues, "despesa_valor"> }) => {
+  const inputRef = useRef<HTMLInputElement>(null)
+  return (
+    <FormItem>
+      <FormLabel>Valor</FormLabel>
+      <FormControl>
+        <Input
+          ref={inputRef}
+          inputMode="decimal"
+          placeholder="0,00"
+          value={formatCurrencyBRL(field.value ?? 0)}
+          onChange={e => {
+            const raw = e.target.value.replace(/\D/g, "")
+            const float = Number(raw) / 100
+            field.onChange(float)
+          }}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )
+}
+
+export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(id ? true : false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [tipoOptions, setTipoOptions] = useState<string[]>([])
-  const [veiculos, setVeiculos] = useState<{ id: number; nome: string; motorista?: { id: number; nome: string } }[]>([])
-  const [motoristas, setMotoristas] = useState<{ id: number; nome: string }[]>([])
+  const [isLoadingTipos, setIsLoadingTipos] = useState(true)
+  const [veiculos, setVeiculos] = useState<{ id: number; veiculo_nome: string; motorista?: { id: number } }[]>([])
+  const [isLoadingVeiculos, setIsLoadingVeiculos] = useState(false)
+  const [motoristas, setMotoristas] = useState<{ id: number; motorista_nome: string }[]>([])
+  const [isLoadingMotoristas, setIsLoadingMotoristas] = useState(false)
+  const [fretes, setFretes] = useState<{ id: number; frete_nome: string }[]>([])
+  const [isLoadingFretes, setIsLoadingFretes] = useState(false)
+  const [comprovanteUrl, setComprovanteUrl] = useState<string | null>(null)
+  const [uploadingFile, setUploadingFile] = useState(false)
   const [userType, setUserType] = useState<string>("")
   const [userId, setUserId] = useState<number | null>(null)
-  const [uploadingFile, setUploadingFile] = useState(false)
-  const [comprovanteUrl, setComprovanteUrl] = useState<string | null>(null)
-  const [fretes, setFretes] = useState<{ id: number; frete_nome: string; frete_origem: string | null; frete_destino: string | null }[]>([])
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -78,7 +114,8 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
       comprovante: null,
       despesa_metodo_pagamento: null,
       despesa_parcelas: 1,
-      despesa_frete_id: despesa_frete_id ?? null,
+      despesa_frete_id: freteId ? Number(freteId) : despesa_frete_id ? Number(despesa_frete_id) : null,
+      created_at: new Date(),
     },
   })
 
@@ -95,27 +132,58 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
   }, [])
 
   useEffect(() => {
+    async function fetchTiposDespesa() {
+      try {
+        setIsLoadingTipos(true)
+        const data = await getTipoDespesaEnum()
+        if (data && Array.isArray(data)) {
+          setTipoOptions(data)
+          if (freteId) {
+            form.setValue("despesa_tipo", "Frete")
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao buscar tipos de despesa:", err)
+        toast({
+          variant: "destructive",
+          title: "Erro ao carregar tipos de despesa",
+          description: "Não foi possível carregar os tipos de despesa.",
+        })
+      } finally {
+        setIsLoadingTipos(false)
+      }
+    }
+
+    fetchTiposDespesa()
+  }, [freteId, form])
+
+  useEffect(() => {
     async function fetchVeiculos() {
       try {
-        setIsLoading(true)
+        setIsLoadingVeiculos(true)
         setError(null)
         const data = await getAllVeiculos()
-        setVeiculos(data || [])
+        setVeiculos((data || []).map((v) => ({
+          id: v.id,
+          veiculo_nome: v.veiculo_nome,
+          motorista: v.motorista,
+        })))
       } catch {
         setError("Erro ao buscar veículos.")
       } finally {
-        setIsLoading(false)
+        setIsLoadingVeiculos(false)
       }
     }
 
     async function fetchMotoristas() {
       try {
+        setIsLoadingMotoristas(true)
         const data = await getAllMotorista()
 
         setMotoristas(
           data?.map((motorista) => ({
             id: motorista.id,
-            nome: motorista.motorista_nome,
+            motorista_nome: motorista.motorista_nome,
           })) || [],
         )
       } catch (err) {
@@ -125,46 +193,32 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
           title: "Erro ao carregar motoristas",
           description: "Não foi possível carregar a lista de motoristas.",
         })
-      }
-    }
-
-    async function fetchTiposDespesa() {
-      try {
-        const data = await getTipoDespesaEnum()
-        if (data && Array.isArray(data)) {
-          setTipoOptions(data)
-        }
-      } catch (err) {
-        console.error("Erro ao buscar tipos de despesa:", err)
-        toast({
-          variant: "destructive",
-          title: "Erro ao carregar tipos de despesa",
-          description: "Não foi possível carregar os tipos de despesa.",
-        })
+      } finally {
+        setIsLoadingMotoristas(false)
       }
     }
 
     async function fetchFretes() {
       try {
+        setIsLoadingFretes(true)
         const data = await getAllFrete()
         setFretes(
           (data || [])
             .filter((f: { frete_baixa?: boolean }) => !f.frete_baixa)
-            .map((f: { id: number; frete_nome: string; frete_origem: string; frete_destino: string }) => ({
+            .map((f: { id: number; frete_nome: string }) => ({
               id: f.id,
               frete_nome: f.frete_nome,
-              frete_origem: f.frete_origem,
-              frete_destino: f.frete_destino,
             }))
         )
       } catch {
         // Silencioso
+      } finally {
+        setIsLoadingFretes(false)
       }
     }
 
     fetchVeiculos()
     fetchMotoristas()
-    fetchTiposDespesa()
     fetchFretes()
   }, [])
 
@@ -185,8 +239,10 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
             despesa_valor: data.despesa_valor || null,
             despesa_veiculo: data.despesa_veiculo || null,
             despesa_motorista: data.despesa_motorista || null,
-            despesa_metodo_pagamento: data.despesa_metodo_pagamento || 1,
+            despesa_metodo_pagamento: typeof data.despesa_metodo_pagamento === "string" ? data.despesa_metodo_pagamento : null,
+            despesa_parcelas: data.despesa_parcelas || 1,
             despesa_frete_id: data.despesa_frete_id || null,
+            created_at: data.created_at ? new Date(data.created_at) : new Date(),
           })
           setComprovanteUrl(data.comprovante_url || null)
         } else {
@@ -215,15 +271,11 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
       const newValue = value === "none" ? null : Number(value)
       form.setValue("despesa_veiculo", newValue)
 
-      const selectedVehicle = veiculos.find((v) => v.id === newValue)
-
-      if (selectedVehicle?.motorista?.id) {
-        form.setValue("despesa_motorista", selectedVehicle.motorista.id)
-      } else if (userType !== "driver") {
+      if (userType !== "driver") {
         form.setValue("despesa_motorista", null)
       }
     },
-    [form, veiculos, userType]
+    [form, userType]
   )
 
   // Set driver ID if user is a driver
@@ -289,6 +341,7 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
           ? (values.despesa_parcelas ?? undefined)
           : undefined,
         ...(values.despesa_frete_id != null ? { despesa_frete_id: values.despesa_frete_id } : {}),
+        created_at: values.created_at.toISOString(),
       }
       // Remover despesa_parcelas se for null
       if (despesaData.despesa_parcelas === null) delete despesaData.despesa_parcelas
@@ -374,19 +427,27 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
     return (
       <FormItem>
         <FormLabel>Motorista</FormLabel>
-        <Select onValueChange={handleChange} value={selectedValue} disabled={userType === "driver"}>
+        <Select onValueChange={handleChange} value={selectedValue} disabled={userType === "driver" || isLoadingMotoristas}>
           <FormControl>
             <SelectTrigger>
               <SelectValue placeholder="Selecione um motorista" />
             </SelectTrigger>
           </FormControl>
           <SelectContent>
-            <SelectItem value="none">Nenhum</SelectItem>
-            {motoristas.map((motorista) => (
-              <SelectItem key={motorista.id} value={motorista.id.toString()}>
-                {motorista.nome}
+            {isLoadingMotoristas ? (
+              <SelectItem value="carregando" disabled>
+                Carregando motoristas...
               </SelectItem>
-            ))}
+            ) : (
+              <>
+                <SelectItem value="none">Nenhum</SelectItem>
+                {motoristas.map((motorista) => (
+                  <SelectItem key={motorista.id} value={motorista.id.toString()}>
+                    {motorista.motorista_nome}
+                  </SelectItem>
+                ))}
+              </>
+            )}
           </SelectContent>
         </Select>
         <FormMessage />
@@ -437,23 +498,23 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Tipo de Despesa</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || "none"}>
+                    <Select onValueChange={field.onChange} value={field.value || "none"} disabled={isLoadingTipos}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o tipo de despesa" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {tipoOptions.length > 0 ? (
+                        {isLoadingTipos ? (
+                          <SelectItem value="carregando" disabled>
+                            Carregando tipos...
+                          </SelectItem>
+                        ) : (
                           tipoOptions.map((tipo) => (
                             <SelectItem key={tipo} value={tipo}>
                               {tipo}
                             </SelectItem>
                           ))
-                        ) : (
-                          <SelectItem value="carregando" disabled>
-                            Carregando tipos...
-                          </SelectItem>
                         )}
                       </SelectContent>
                     </Select>
@@ -467,21 +528,7 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
               <FormField
                 control={form.control}
                 name="despesa_valor"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Valor</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        {...field}
-                        value={field.value === null ? "" : field.value}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => <ValorField field={field} />}
               />
 
               <FormField
@@ -509,7 +556,7 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
                     <Select
                       onValueChange={handleVehicleChange}
                       value={field.value?.toString() || "none"}
-                      disabled={userType === "driver"}
+                      disabled={userType === "driver" || isLoadingVeiculos}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -517,12 +564,20 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">Nenhum</SelectItem>
-                        {veiculos.map((veiculo) => (
-                          <SelectItem key={veiculo.id} value={veiculo.id.toString()}>
-                            {veiculo.nome}
+                        {isLoadingVeiculos ? (
+                          <SelectItem value="carregando" disabled>
+                            Carregando veículos...
                           </SelectItem>
-                        ))}
+                        ) : (
+                          <>
+                            <SelectItem value="none">Nenhum</SelectItem>
+                            {veiculos.map((veiculo) => (
+                              <SelectItem key={veiculo.id} value={veiculo.id.toString()}>
+                                {veiculo.veiculo_nome}
+                              </SelectItem>
+                            ))}
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -575,6 +630,7 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
                     <Select
                       onValueChange={(value) => field.onChange(value === "none" ? null : Number(value))}
                       value={field.value ? String(field.value) : "none"}
+                      disabled={isLoadingFretes}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -582,12 +638,20 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">Nenhum</SelectItem>
-                        {fretes.map((frete) => (
-                          <SelectItem key={frete.id} value={frete.id.toString()}>
-                            {frete.frete_nome} ({frete.frete_origem || "-"} → {frete.frete_destino || "-"})
+                        {isLoadingFretes ? (
+                          <SelectItem value="carregando" disabled>
+                            Carregando fretes...
                           </SelectItem>
-                        ))}
+                        ) : (
+                          <>
+                            <SelectItem value="none">Nenhum</SelectItem>
+                            {fretes.map((frete) => (
+                              <SelectItem key={frete.id} value={frete.id.toString()}>
+                                {frete.frete_nome}
+                              </SelectItem>
+                            ))}
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -596,28 +660,69 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
               />
             </div>
 
-            {form.watch("despesa_metodo_pagamento")?.toLowerCase() === "credito" && (
+            {(() => {
+              const metodoPagamento = form.watch("despesa_metodo_pagamento")
+              const isCredito = metodoPagamento && typeof metodoPagamento === "string" && metodoPagamento.toLowerCase() === "credito"
+              return isCredito ? (
+                <FormField
+                  control={form.control}
+                  name="despesa_parcelas"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número de parcelas</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="1"
+                          placeholder="1"
+                          {...field}
+                          value={field.value === null ? "" : field.value}
+                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : null)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : null
+            })()}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
-                name="despesa_parcelas"
+                name="created_at"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Número de parcelas</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="1"
-                        placeholder="1"
-                        {...field}
-                        value={field.value === null ? "" : field.value}
-                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : null)}
-                      />
-                    </FormControl>
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Data</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={`w-full pl-3 text-left font-normal ${!field.value ? "text-muted-foreground" : ""}`}
+                          >
+                            {field.value ? (
+                              new Date(field.value).toLocaleDateString("pt-BR")
+                            ) : (
+                              <span>Selecione uma data</span>
+                            )}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            )}
+            </div>
 
             <div className="grid grid-cols-1 gap-6">
               <FormField
@@ -637,18 +742,20 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
                             value ? "border-primary/50 bg-muted/50" : "border-muted-foreground/25"
                           )}
                         >
-                          <input
-                            type="file"
-                            accept="image/*,.pdf"
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0]
-                              if (file) {
-                                onChange(file)
-                              }
-                            }}
-                            {...field}
-                          />
+                          {!value && (
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  onChange(file)
+                                }
+                              }}
+                              {...field}
+                            />
+                          )}
                           <div className="flex flex-col items-center justify-center text-center">
                             {value ? (
                               <>

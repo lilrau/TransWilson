@@ -97,7 +97,7 @@ export const getEntrada = unstable_cache(
   }
 )
 
-export const createEntrada = async (data: Omit<EntradaData, "id" | "created_at">) => {
+export const createEntrada = async (data: Omit<EntradaData, "id">) => {
   try {
     Logger.info("entrada-service", "Creating new entrada", { entradaData: data })
     const result = await supabase().from("entrada").insert(data).select()
@@ -118,7 +118,7 @@ export const createEntrada = async (data: Omit<EntradaData, "id" | "created_at">
 
 export const updateEntrada = async (
   id: number,
-  data: Partial<Omit<EntradaData, "id" | "created_at">>
+  data: Partial<Omit<EntradaData, "id">>
 ) => {
   try {
     Logger.info("entrada-service", "Updating entrada", { id, entradaData: data })

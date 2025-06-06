@@ -6,7 +6,11 @@ export const metadata: Metadata = {
   description: "Registro de nova entrada financeira no sistema de fretagem",
 }
 
-export default function NovaEntradaPage() {
+export default function NovaEntradaPage({
+  searchParams,
+}: {
+  searchParams: { freteId?: string }
+}) {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
@@ -14,7 +18,7 @@ export default function NovaEntradaPage() {
         <p className="text-muted-foreground">Registre uma nova entrada financeira no sistema.</p>
       </div>
 
-      <EntradaForm />
+      <EntradaForm freteId={searchParams.freteId} />
     </div>
   )
 }

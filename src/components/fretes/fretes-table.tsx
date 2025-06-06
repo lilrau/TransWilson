@@ -16,6 +16,8 @@ import {
   Trash,
   Percent,
   Wallet,
+  FileText,
+  FileX,
 } from "lucide-react"
 import { createEntrada, getAllEntradas } from "@/lib/services/entrada-service"
 import { darBaixaFrete, deleteFrete, getAllFrete, getFrete, getFreteBalance } from "@/lib/services/frete-service"
@@ -62,6 +64,7 @@ type Frete = {
   frete_valor_total: number | null
   frete_baixa: boolean | null
   created_at: string
+  comprovante_url: string | null
   veiculo?: { id: number; veiculo_nome: string } | null
   motorista?: { id: number; motorista_nome: string } | null
   agenciador?: { id: number; agenciador_nome: string } | null
@@ -138,14 +141,12 @@ function CommissionCalculator({
         <AlertDialogDescription>
           <div className="space-y-2">
             {isCalculating ? (
-              <div className="flex items-center justify-center py-2">
+              <span className="flex items-center justify-center py-2">
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                <span>Calculando comissão...</span>
-              </div>
+                Calculando comissão...
+              </span>
             ) : calculationError ? (
-              <div className="text-destructive">
-                <p>{calculationError}</p>
-              </div>
+              <span className="text-destructive block">{calculationError}</span>
             ) : calculationData ? (
               <>
                 <p>
@@ -169,10 +170,9 @@ function CommissionCalculator({
                     }).format(calculationData.valorComissao)}
                   </strong>
                 </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Informe o valor da comissão a ser paga para o motorista{" "}
-                  <strong>{motoristaName}</strong>.
-                </p>
+                <span className="text-sm text-muted-foreground mt-2 block">
+                  Informe o valor da comissão a ser paga para o motorista <strong>{motoristaName}</strong>.
+                </span>
               </>
             ) : null}
           </div>
@@ -313,6 +313,7 @@ export function FretesTable() {
           entrada_valor: valorFinal,
           entrada_tipo: "Frete",
           entrada_frete_id: frete.id,
+          created_at: new Date().toISOString(),
         })
       }
       // Atualizar a lista de fretes
@@ -368,14 +369,6 @@ export function FretesTable() {
     }
   }
 
-  type DespesaData = {
-    despesa_nome: string;
-    despesa_descricao: string;
-    despesa_valor: number;
-    despesa_tipo: string;
-    despesa_motorista: number;
-  };
-
   async function handleCommissionPayment(
     freteId: number,
     motoristaId: number,
@@ -393,10 +386,10 @@ export function FretesTable() {
         despesa_veiculo: null,
         despesa_motorista: motoristaId,
         despesa_metodo_pagamento: null,
-        despesa_parcelas: 1,
         comprovante_url: null,
         despesa_frete_id: freteId,
-      } as unknown as DespesaData)
+        created_at: new Date().toISOString(),
+      })
 
       // Atualizar o saldo
       const newBalance = await getFreteBalance(freteId)
@@ -430,11 +423,12 @@ export function FretesTable() {
     try {
       setIsRegisteringAdiantamento(true)
       await createEntrada({
-        entrada_nome: `Adiantamento do frete: ${adiantamentoFrete.frete_nome}`,
-        entrada_descricao: `Adiantamento recebido do cliente para o frete ${adiantamentoFrete.frete_nome}`,
+        entrada_nome: "Adiantamento",
+        entrada_descricao: "Adiantamento registrado",
         entrada_valor: Number(adiantamentoValor),
-        entrada_tipo: "Frete",
+        entrada_tipo: "Adiantamento",
         entrada_frete_id: adiantamentoFrete.id,
+        created_at: new Date().toISOString(),
       })
 
       // Atualizar o saldo
@@ -529,6 +523,7 @@ export function FretesTable() {
             <TableHead>Saldo</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Data</TableHead>
+            <TableHead>Comprovante</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -584,6 +579,30 @@ export function FretesTable() {
                 {format(new Date(frete.created_at), "dd/MM/yyyy", {
                   locale: ptBR,
                 })}
+              </TableCell>
+              <TableCell>
+                {frete.comprovante_url ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    asChild
+                    className="h-8 w-8"
+                  >
+                    <a
+                      href={frete.comprovante_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:text-primary/80"
+                    >
+                      <FileText className="h-4 w-4" />
+                    </a>
+                  </Button>
+                ) : (
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" disabled>
+                    <FileX className="h-4 w-4" />
+                    <span className="sr-only">Sem comprovante</span>
+                  </Button>
+                )}
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
@@ -736,6 +755,13 @@ export function FretesTable() {
                     >
                       <DollarSign className="mr-2 h-4 w-4" />
                       Registrar Adiantamento
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/movimentos/entradas/novo?freteId=${frete.id}`}>
+                        <DollarSign className="mr-2 h-4 w-4" />
+                        Nova Entrada
+                      </Link>
                     </DropdownMenuItem>
 
                     <DropdownMenuItem asChild>
