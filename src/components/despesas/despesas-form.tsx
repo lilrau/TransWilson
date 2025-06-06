@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm, ControllerRenderProps } from "react-hook-form"
 import { z } from "zod"
 import { cn } from "@/lib/utils"
 
@@ -42,7 +42,7 @@ const formSchema = z.object({
   despesa_parcelas: z.number().min(1, {
     message: "O número de parcelas deve ser pelo menos 1.",
   }),
-  despesa_frete_id: z.coerce.number().nullable().optional(),
+  despesa_frete_id: z.number().nullable().optional(),
   created_at: z.date({ required_error: "A data é obrigatória." }),
 })
 
@@ -58,6 +58,29 @@ interface DespesasFormProps {
 function formatCurrencyBRL(value: number | string) {
   const number = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value
   return number.toLocaleString("pt-BR", { style: "decimal", minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+const ValorField = ({ field }: { field: ControllerRenderProps<FormValues, "despesa_valor"> }) => {
+  const inputRef = useRef<HTMLInputElement>(null)
+  return (
+    <FormItem>
+      <FormLabel>Valor</FormLabel>
+      <FormControl>
+        <Input
+          ref={inputRef}
+          inputMode="decimal"
+          placeholder="0,00"
+          value={formatCurrencyBRL(field.value ?? 0)}
+          onChange={e => {
+            const raw = e.target.value.replace(/\D/g, "")
+            const float = Number(raw) / 100
+            field.onChange(float)
+          }}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )
 }
 
 export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
@@ -483,28 +506,7 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
               <FormField
                 control={form.control}
                 name="despesa_valor"
-                render={({ field }) => {
-                  const inputRef = useRef<HTMLInputElement>(null)
-                  return (
-                    <FormItem>
-                      <FormLabel>Valor</FormLabel>
-                      <FormControl>
-                        <Input
-                          ref={inputRef}
-                          inputMode="decimal"
-                          placeholder="0,00"
-                          value={formatCurrencyBRL(field.value ?? 0)}
-                          onChange={e => {
-                            const raw = e.target.value.replace(/\D/g, "")
-                            const float = Number(raw) / 100
-                            field.onChange(float)
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )
-                }}
+                render={({ field }) => <ValorField field={field} />}
               />
 
               <FormField
@@ -621,7 +623,7 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
 
             {(() => {
               const metodoPagamento = form.watch("despesa_metodo_pagamento")
-              const isCredito = typeof metodoPagamento === "string" && metodoPagamento.toLowerCase() === "credito"
+              const isCredito = metodoPagamento && typeof metodoPagamento === "string" && metodoPagamento.toLowerCase() === "credito"
               return isCredito ? (
                 <FormField
                   control={form.control}

@@ -365,14 +365,6 @@ export function FretesTable() {
     }
   }
 
-  type DespesaData = {
-    despesa_nome: string;
-    despesa_descricao: string;
-    despesa_valor: number;
-    despesa_tipo: string;
-    despesa_motorista: number;
-  };
-
   async function handleCommissionPayment(
     freteId: number,
     motoristaId: number,
