@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -21,6 +21,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2, FileText, Upload, X } from "lucide-react"
 import { getAllFrete, getFrete } from "@/lib/services/frete-service"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 const formSchema = z.object({
   despesa_nome: z.string().min(3, {
@@ -41,6 +43,7 @@ const formSchema = z.object({
     message: "O número de parcelas deve ser pelo menos 1.",
   }),
   despesa_frete_id: z.coerce.number().nullable().optional(),
+  created_at: z.date({ required_error: "A data é obrigatória." }),
 })
 
 const despesaMetodoPagamentoSchema = ["dinheiro", "pix", "debito", "credito"]
@@ -50,6 +53,11 @@ type FormValues = z.infer<typeof formSchema>
 interface DespesasFormProps {
   id?: string
   despesa_frete_id?: number
+}
+
+function formatCurrencyBRL(value: number | string) {
+  const number = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value
+  return number.toLocaleString("pt-BR", { style: "decimal", minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
@@ -79,6 +87,7 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
       despesa_metodo_pagamento: null,
       despesa_parcelas: 1,
       despesa_frete_id: despesa_frete_id ?? null,
+      created_at: new Date(),
     },
   })
 
@@ -100,7 +109,11 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
         setIsLoading(true)
         setError(null)
         const data = await getAllVeiculos()
-        setVeiculos(data || [])
+        setVeiculos((data || []).map((v) => ({
+          id: v.id,
+          nome: v.veiculo_nome,
+          motorista: v.motorista ? { id: v.motorista.id, nome: v.motorista.motorista_nome } : undefined,
+        })))
       } catch {
         setError("Erro ao buscar veículos.")
       } finally {
@@ -185,8 +198,10 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
             despesa_valor: data.despesa_valor || null,
             despesa_veiculo: data.despesa_veiculo || null,
             despesa_motorista: data.despesa_motorista || null,
-            despesa_metodo_pagamento: data.despesa_metodo_pagamento || 1,
+            despesa_metodo_pagamento: typeof data.despesa_metodo_pagamento === "string" ? data.despesa_metodo_pagamento : null,
+            despesa_parcelas: data.despesa_parcelas || 1,
             despesa_frete_id: data.despesa_frete_id || null,
+            created_at: data.created_at ? new Date(data.created_at) : new Date(),
           })
           setComprovanteUrl(data.comprovante_url || null)
         } else {
@@ -289,6 +304,7 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
           ? (values.despesa_parcelas ?? undefined)
           : undefined,
         ...(values.despesa_frete_id != null ? { despesa_frete_id: values.despesa_frete_id } : {}),
+        created_at: values.created_at.toISOString(),
       }
       // Remover despesa_parcelas se for null
       if (despesaData.despesa_parcelas === null) delete despesaData.despesa_parcelas
@@ -467,21 +483,28 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
               <FormField
                 control={form.control}
                 name="despesa_valor"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Valor</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        {...field}
-                        value={field.value === null ? "" : field.value}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const inputRef = useRef<HTMLInputElement>(null)
+                  return (
+                    <FormItem>
+                      <FormLabel>Valor</FormLabel>
+                      <FormControl>
+                        <Input
+                          ref={inputRef}
+                          inputMode="decimal"
+                          placeholder="0,00"
+                          value={formatCurrencyBRL(field.value ?? 0)}
+                          onChange={e => {
+                            const raw = e.target.value.replace(/\D/g, "")
+                            const float = Number(raw) / 100
+                            field.onChange(float)
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
 
               <FormField
@@ -596,28 +619,69 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
               />
             </div>
 
-            {form.watch("despesa_metodo_pagamento")?.toLowerCase() === "credito" && (
+            {(() => {
+              const metodoPagamento = form.watch("despesa_metodo_pagamento")
+              const isCredito = typeof metodoPagamento === "string" && metodoPagamento.toLowerCase() === "credito"
+              return isCredito ? (
+                <FormField
+                  control={form.control}
+                  name="despesa_parcelas"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número de parcelas</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="1"
+                          placeholder="1"
+                          {...field}
+                          value={field.value === null ? "" : field.value}
+                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : null)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : null
+            })()}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
-                name="despesa_parcelas"
+                name="created_at"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Número de parcelas</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="1"
-                        placeholder="1"
-                        {...field}
-                        value={field.value === null ? "" : field.value}
-                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : null)}
-                      />
-                    </FormControl>
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Data</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={`w-full pl-3 text-left font-normal ${!field.value ? "text-muted-foreground" : ""}`}
+                          >
+                            {field.value ? (
+                              new Date(field.value).toLocaleDateString("pt-BR")
+                            ) : (
+                              <span>Selecione uma data</span>
+                            )}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            )}
+            </div>
 
             <div className="grid grid-cols-1 gap-6">
               <FormField

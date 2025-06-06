@@ -30,6 +30,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 const formSchema = z.object({
   entrada_nome: z.string().min(3, {
@@ -43,9 +45,15 @@ const formSchema = z.object({
     message: "O tipo de entrada é obrigatório.",
   }),
   entrada_frete_id: z.number().nullable(),
+  created_at: z.date({ required_error: "A data é obrigatória." }),
 })
 
 type FormValues = z.infer<typeof formSchema>
+
+function formatCurrencyBRL(value: number | string) {
+  const number = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value
+  return number.toLocaleString("pt-BR", { style: "decimal", minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
 
 export function EntradaForm() {
   const router = useRouter()
@@ -64,6 +72,7 @@ export function EntradaForm() {
       entrada_descricao: "",
       entrada_tipo: "",
       entrada_frete_id: null,
+      created_at: new Date(),
     },
   })
 
@@ -139,6 +148,7 @@ export function EntradaForm() {
         entrada_tipo: values.entrada_tipo,
         entrada_frete_id:
           values.entrada_tipo.toLowerCase() === "frete" ? values.entrada_frete_id : null,
+        created_at: values.created_at.toISOString(),
       })
 
       toast({
@@ -227,11 +237,14 @@ export function EntradaForm() {
                     <FormLabel>Valor</FormLabel>
                     <FormControl>
                       <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        {...field}
-                        value={field.value === 0 ? "" : field.value}
+                        inputMode="decimal"
+                        placeholder="0,00"
+                        value={formatCurrencyBRL(field.value ?? 0)}
+                        onChange={e => {
+                          const raw = e.target.value.replace(/\D/g, "")
+                          const float = Number(raw) / 100
+                          field.onChange(float)
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -298,6 +311,41 @@ export function EntradaForm() {
                         value={field.value || ""}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="created_at"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Data</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={`w-full pl-3 text-left font-normal ${!field.value ? "text-muted-foreground" : ""}`}
+                          >
+                            {field.value ? (
+                              new Date(field.value).toLocaleDateString("pt-BR")
+                            ) : (
+                              <span>Selecione uma data</span>
+                            )}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}

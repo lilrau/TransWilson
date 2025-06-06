@@ -81,6 +81,11 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
     onChange(sanitizedValue)
   }
 
+  function formatCurrencyBRL(value: number | string) {
+    const number = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value
+    return number.toLocaleString("pt-BR", { style: "decimal", minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  }
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -245,11 +250,14 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
                     <FormLabel>Salário</FormLabel>
                     <FormControl>
                       <Input
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="0.00"
-                        {...field}
-                        onChange={(e) => handleNumericInput(e, field.onChange)}
+                        inputMode="decimal"
+                        placeholder="0,00"
+                        value={formatCurrencyBRL(field.value ?? 0)}
+                        onChange={e => {
+                          const raw = e.target.value.replace(/\D/g, "")
+                          const float = Number(raw) / 100
+                          field.onChange(float)
+                        }}
                       />
                     </FormControl>
                     <FormMessage />

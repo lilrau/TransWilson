@@ -138,14 +138,12 @@ function CommissionCalculator({
         <AlertDialogDescription>
           <div className="space-y-2">
             {isCalculating ? (
-              <div className="flex items-center justify-center py-2">
+              <span className="flex items-center justify-center py-2">
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                <span>Calculando comissão...</span>
-              </div>
+                Calculando comissão...
+              </span>
             ) : calculationError ? (
-              <div className="text-destructive">
-                <p>{calculationError}</p>
-              </div>
+              <span className="text-destructive block">{calculationError}</span>
             ) : calculationData ? (
               <>
                 <p>
@@ -169,10 +167,9 @@ function CommissionCalculator({
                     }).format(calculationData.valorComissao)}
                   </strong>
                 </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Informe o valor da comissão a ser paga para o motorista{" "}
-                  <strong>{motoristaName}</strong>.
-                </p>
+                <span className="text-sm text-muted-foreground mt-2 block">
+                  Informe o valor da comissão a ser paga para o motorista <strong>{motoristaName}</strong>.
+                </span>
               </>
             ) : null}
           </div>
@@ -393,10 +390,9 @@ export function FretesTable() {
         despesa_veiculo: null,
         despesa_motorista: motoristaId,
         despesa_metodo_pagamento: null,
-        despesa_parcelas: 1,
         comprovante_url: null,
         despesa_frete_id: freteId,
-      } as unknown as DespesaData)
+      })
 
       // Atualizar o saldo
       const newBalance = await getFreteBalance(freteId)

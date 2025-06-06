@@ -111,7 +111,7 @@ export const createDespesa = async (data: DespesaData) => {
         ...data,
         despesa_nome: `${data.despesa_nome} - Parcela ${index + 1}`,
         despesa_valor: valorPorParcela,
-        created_at: new Date(new Date().setMonth(new Date().getMonth() + index)).toISOString(),
+        created_at: data.created_at || new Date(new Date().setMonth(new Date().getMonth() + index)).toISOString(),
       }))
 
       result = await supabase().from("despesa").insert(despesas).select()

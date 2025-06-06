@@ -29,6 +29,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 const formSchema = z.object({
   entrada_nome: z.string().min(3, {
@@ -41,6 +43,7 @@ const formSchema = z.object({
   entrada_tipo: z.string().min(1, {
     message: "O tipo de entrada é obrigatório.",
   }),
+  created_at: z.date({ required_error: "A data é obrigatória." }),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -63,6 +66,7 @@ export function EntradaEditForm({ id }: EntradaEditFormProps) {
       entrada_valor: 0,
       entrada_descricao: "",
       entrada_tipo: "",
+      created_at: new Date(),
     },
   })
 
@@ -87,6 +91,7 @@ export function EntradaEditForm({ id }: EntradaEditFormProps) {
             entrada_valor: entradaData.entrada_valor,
             entrada_descricao: entradaData.entrada_descricao || "",
             entrada_tipo: entradaData.entrada_tipo || "",
+            created_at: entradaData.created_at ? new Date(entradaData.created_at) : new Date(),
           })
         } else {
           setError("Entrada não encontrada.")
@@ -112,6 +117,7 @@ export function EntradaEditForm({ id }: EntradaEditFormProps) {
         entrada_valor: values.entrada_valor,
         entrada_descricao: values.entrada_descricao || null,
         entrada_tipo: values.entrada_tipo,
+        created_at: values.created_at.toISOString(),
       })
 
       toast({
@@ -228,6 +234,41 @@ export function EntradaEditForm({ id }: EntradaEditFormProps) {
                         value={field.value || ""}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="created_at"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Data</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={`w-full pl-3 text-left font-normal ${!field.value ? "text-muted-foreground" : ""}`}
+                          >
+                            {field.value ? (
+                              new Date(field.value).toLocaleDateString("pt-BR")
+                            ) : (
+                              <span>Selecione uma data</span>
+                            )}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
