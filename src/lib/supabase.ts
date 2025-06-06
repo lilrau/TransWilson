@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js"
 // Make sure these environment variables are available
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_KEY
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY
 
 if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
   throw new Error("Missing Supabase environment variables. Please check your .env file.")
