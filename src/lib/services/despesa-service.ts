@@ -100,9 +100,7 @@ export const createDespesa = async (data: DespesaData) => {
   try {
     Logger.info("despesa-service", "Creating new despesa", { despesaData: data })
     let result
-    if (data.despesa_parcelas && data.despesa_parcelas == 1) {
-      result = await supabase().from("despesa").insert(data).select()
-    } else {
+    if (data.despesa_metodo_pagamento && data.despesa_metodo_pagamento === "credito") {
       const parcelas = data.despesa_parcelas || 1
       delete data.despesa_parcelas 
       const valorPorParcela = data.despesa_valor / parcelas
@@ -115,6 +113,8 @@ export const createDespesa = async (data: DespesaData) => {
       }))
 
       result = await supabase().from("despesa").insert(despesas).select()
+    } else {
+      result = await supabase().from("despesa").insert(data).select()
     }
 
     if (result.error) {

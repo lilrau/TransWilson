@@ -703,18 +703,20 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
                             value ? "border-primary/50 bg-muted/50" : "border-muted-foreground/25"
                           )}
                         >
-                          <input
-                            type="file"
-                            accept="image/*,.pdf"
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0]
-                              if (file) {
-                                onChange(file)
-                              }
-                            }}
-                            {...field}
-                          />
+                          {!value && (
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  onChange(file)
+                                }
+                              }}
+                              {...field}
+                            />
+                          )}
                           <div className="flex flex-col items-center justify-center text-center">
                             {value ? (
                               <>

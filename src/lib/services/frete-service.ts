@@ -16,6 +16,7 @@ export interface FreteData {
   frete_valor_tonelada: number | null
   frete_valor_total: number | null
   created_at?: string
+  comprovante_url?: string | null
 }
 
 export const getAllFrete = unstable_cache(
@@ -265,6 +266,68 @@ export const getFreteBalance = async (freteId: number) => {
     }
   } catch (error) {
     Logger.error("frete-service", "Unexpected error while calculating frete balance", { error, freteId })
+    throw error
+  }
+}
+
+export const uploadComprovante = async (file: File, freteId: number) => {
+  try {
+    Logger.info("frete-service", "Uploading comprovante", { freteId })
+    
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${freteId}-${Date.now()}.${fileExt}`
+    const filePath = `${fileName}`
+
+    const { error } = await supabase()
+      .storage
+      .from('notasfiscais')
+      .upload(filePath, file)
+
+    if (error) {
+      Logger.error("frete-service", "Failed to upload comprovante", { error })
+      throw error
+    }
+
+    const { data: { publicUrl } } = supabase()
+      .storage
+      .from('notasfiscais')
+      .getPublicUrl(filePath)
+
+    // Update the frete with the comprovante URL
+    await updateFrete(freteId, { comprovante_url: publicUrl })
+
+    Logger.info("frete-service", "Successfully uploaded comprovante", { freteId })
+    return publicUrl
+  } catch (error) {
+    Logger.error("frete-service", "Unexpected error while uploading comprovante", { error })
+    throw error
+  }
+}
+
+export const deleteComprovante = async (freteId: number, url: string) => {
+  try {
+    Logger.info("frete-service", "Deleting comprovante", { freteId })
+    
+    // Extract filename from URL
+    const fileName = url.split('/').pop()
+    if (!fileName) throw new Error('Invalid file URL')
+
+    const { error } = await supabase()
+      .storage
+      .from('notasfiscais')
+      .remove([fileName])
+
+    if (error) {
+      Logger.error("frete-service", "Failed to delete comprovante", { error })
+      throw error
+    }
+
+    // Update the frete to remove the comprovante URL
+    await updateFrete(freteId, { comprovante_url: null })
+
+    Logger.info("frete-service", "Successfully deleted comprovante", { freteId })
+  } catch (error) {
+    Logger.error("frete-service", "Unexpected error while deleting comprovante", { error })
     throw error
   }
 }

@@ -16,6 +16,7 @@ import {
   Trash,
   Percent,
   Wallet,
+  FileText,
 } from "lucide-react"
 import { createEntrada, getAllEntradas } from "@/lib/services/entrada-service"
 import { darBaixaFrete, deleteFrete, getAllFrete, getFrete, getFreteBalance } from "@/lib/services/frete-service"
@@ -62,6 +63,7 @@ type Frete = {
   frete_valor_total: number | null
   frete_baixa: boolean | null
   created_at: string
+  comprovante_url: string | null
   veiculo?: { id: number; veiculo_nome: string } | null
   motorista?: { id: number; motorista_nome: string } | null
   agenciador?: { id: number; agenciador_nome: string } | null
@@ -310,6 +312,7 @@ export function FretesTable() {
           entrada_valor: valorFinal,
           entrada_tipo: "Frete",
           entrada_frete_id: frete.id,
+          created_at: new Date().toISOString(),
         })
       }
       // Atualizar a lista de fretes
@@ -384,6 +387,7 @@ export function FretesTable() {
         despesa_metodo_pagamento: null,
         comprovante_url: null,
         despesa_frete_id: freteId,
+        created_at: new Date().toISOString(),
       })
 
       // Atualizar o saldo
@@ -418,11 +422,12 @@ export function FretesTable() {
     try {
       setIsRegisteringAdiantamento(true)
       await createEntrada({
-        entrada_nome: `Adiantamento do frete: ${adiantamentoFrete.frete_nome}`,
-        entrada_descricao: `Adiantamento recebido do cliente para o frete ${adiantamentoFrete.frete_nome}`,
+        entrada_nome: "Adiantamento",
+        entrada_descricao: "Adiantamento registrado",
         entrada_valor: Number(adiantamentoValor),
-        entrada_tipo: "Frete",
+        entrada_tipo: "Adiantamento",
         entrada_frete_id: adiantamentoFrete.id,
+        created_at: new Date().toISOString(),
       })
 
       // Atualizar o saldo
@@ -517,6 +522,7 @@ export function FretesTable() {
             <TableHead>Saldo</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Data</TableHead>
+            <TableHead>Comprovante</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -572,6 +578,25 @@ export function FretesTable() {
                 {format(new Date(frete.created_at), "dd/MM/yyyy", {
                   locale: ptBR,
                 })}
+              </TableCell>
+              <TableCell>
+                {frete.comprovante_url ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    asChild
+                    className="h-8 w-8"
+                  >
+                    <a
+                      href={frete.comprovante_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:text-primary/80"
+                    >
+                      <FileText className="h-4 w-4" />
+                    </a>
+                  </Button>
+                ) : null}
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
