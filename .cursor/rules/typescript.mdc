@@ -5,7 +5,7 @@ alwaysApply: true
 ---
 
 # TypeScript Best Practices
-
+use context7
 ## Type System
 - Prefer interfaces over types for object definitions
 - Use type for unions, intersections, and mapped types

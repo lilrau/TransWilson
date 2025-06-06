@@ -4,7 +4,7 @@ globs:
 alwaysApply: true
 ---
 # Clean Code Guidelines
-
+use context7
 ## Constants Over Magic Numbers
 - Replace hard-coded values with named constants
 - Use descriptive constant names that explain the value's purpose

@@ -4,7 +4,7 @@ globs:
 alwaysApply: true
 ---
 # Database Best Practices
-
+use context7
 ## Prisma Setup
 - Use proper schema design
 - Implement proper migrations

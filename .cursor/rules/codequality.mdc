@@ -4,7 +4,7 @@ globs:
 alwaysApply: true
 ---
 # Code Quality Guidelines
-
+use context7
 ## Verify Information
 Always verify information before presenting it. Do not make assumptions or speculate without clear evidence.
 

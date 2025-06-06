@@ -5,7 +5,7 @@ alwaysApply: true
 ---
 
 # Tailwind CSS Best Practices
-
+use context7
 ## Project Setup
 - Use proper Tailwind configuration
 - Configure theme extension properly

@@ -5,7 +5,7 @@ alwaysApply: true
 ---
 
 # Next.js Best Practices
-
+use context7
 ## Project Structure
 - Use the App Router directory structure
 - Place components in `app` directory for route-specific components
