@@ -11,10 +11,12 @@ export default function AcertoFretePage() {
     <div className="flex flex-col gap-6 p-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Acerto de Frete</h1>
-        <p className="text-muted-foreground">Visualize e gerencie os acertos financeiros dos fretes.</p>
+        <p className="text-muted-foreground">
+          Visualize e gerencie os acertos financeiros dos fretes.
+        </p>
       </div>
 
       <AcertoFreteComponent />
     </div>
   )
-} 
+}

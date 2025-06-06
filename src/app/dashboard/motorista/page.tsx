@@ -3,14 +3,7 @@
 import { useEffect, useState } from "react"
 import { format, startOfMonth, endOfMonth, subMonths, addMonths } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import {
-  ArrowLeft,
-  ArrowRight,
-  Calendar,
-  Loader2,
-  Truck,
-  TrendingUp,
-} from "lucide-react"
+import { ArrowLeft, ArrowRight, Calendar, Loader2, Truck, TrendingUp } from "lucide-react"
 import { getAllFrete } from "@/lib/services/frete-service"
 import { getMotorista } from "@/lib/services/motorista-service"
 import { getSessionData } from "@/lib/auth"
@@ -230,9 +223,7 @@ export default function DashboardMotorista() {
             <CardContent>
               <div className="flex flex-col">
                 <div className="text-3xl font-bold">{formatCurrency(estatisticas.valorTotal)}</div>
-                <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2">
-                  Faturamento do mês
-                </p>
+                <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2">Faturamento do mês</p>
               </div>
             </CardContent>
           </Card>
@@ -264,10 +255,7 @@ export default function DashboardMotorista() {
           <CardContent>
             <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={dadosGrafico}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
+                <LineChart data={dadosGrafico} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="data" />
                   <YAxis />

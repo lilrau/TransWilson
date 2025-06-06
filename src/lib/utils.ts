@@ -8,10 +8,10 @@ export function cn(...inputs: ClassValue[]) {
 export function maskCPF(value: string): string {
   // Remove tudo que não é dígito
   const cleanValue = value.replace(/\D/g, "")
-  
+
   // Limita a 11 dígitos
   const cpf = cleanValue.slice(0, 11)
-  
+
   // Aplica a máscara progressivamente
   if (cpf.length <= 3) {
     return cpf

@@ -203,7 +203,7 @@ export function RelatorioVeiculos({ filtroPeriodo }: RelatorioVeiculosProps) {
     let filtered = [...veiculos]
 
     // Filtrar por tipo de reboque
-    if (filtros.reboque) {
+    if (filtros.reboque && filtros.reboque !== "todos") {
       filtered = filtered.filter((veiculo) => veiculo.reboque === filtros.reboque)
     }
 

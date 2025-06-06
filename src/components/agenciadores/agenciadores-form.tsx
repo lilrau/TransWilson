@@ -28,7 +28,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 const formSchema = z.object({
   agenciador_nome: z.string().min(3, {
-    message: "O nome deve ter pelo menos 3 caracteres.",
+    message: "Informe o nome completo do agenciador",
   }),
   agenciador_cnpj: z.string().optional(),
   agenciador_telefone: z.string().optional(),

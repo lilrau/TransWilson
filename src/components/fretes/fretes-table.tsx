@@ -20,7 +20,13 @@ import {
   FileX,
 } from "lucide-react"
 import { createEntrada, getAllEntradas } from "@/lib/services/entrada-service"
-import { darBaixaFrete, deleteFrete, getAllFrete, getFrete, getFreteBalance } from "@/lib/services/frete-service"
+import {
+  darBaixaFrete,
+  deleteFrete,
+  getAllFrete,
+  getFrete,
+  getFreteBalance,
+} from "@/lib/services/frete-service"
 import { getMotorista } from "@/lib/services/motorista-service"
 import { createDespesa } from "@/lib/services/despesa-service"
 import { Button } from "@/components/ui/button"
@@ -171,7 +177,8 @@ function CommissionCalculator({
                   </strong>
                 </p>
                 <span className="text-sm text-muted-foreground mt-2 block">
-                  Informe o valor da comissão a ser paga para o motorista <strong>{motoristaName}</strong>.
+                  Informe o valor da comissão a ser paga para o motorista{" "}
+                  <strong>{motoristaName}</strong>.
                 </span>
               </>
             ) : null}
@@ -224,7 +231,11 @@ export function FretesTable() {
   const [adiantamentoFrete, setAdiantamentoFrete] = useState<Frete | null>(null)
   const [adiantamentoValor, setAdiantamentoValor] = useState("")
   const [isRegisteringAdiantamento, setIsRegisteringAdiantamento] = useState(false)
-  const [baixaValores, setBaixaValores] = useState<{ total: number, adiantado: number, final: number } | null>(null)
+  const [baixaValores, setBaixaValores] = useState<{
+    total: number
+    adiantado: number
+    final: number
+  } | null>(null)
   const [baixaFreteId, setBaixaFreteId] = useState<number | null>(null)
   const [fretesBalance, setFretesBalance] = useState<Record<number, FreteBalance>>({})
 
@@ -286,8 +297,13 @@ export function FretesTable() {
   async function prepararValoresBaixa(frete: Frete) {
     // Busca e calcula os valores para exibir no dialog
     const entradas = await getAllEntradas()
-    const entradasDoFrete = (entradas || []).filter((entrada) => entrada.entrada_frete_id === frete.id)
-    const totalAdiantado = entradasDoFrete.reduce((acc, entrada) => acc + (entrada.entrada_valor || 0), 0)
+    const entradasDoFrete = (entradas || []).filter(
+      (entrada) => entrada.entrada_frete_id === frete.id
+    )
+    const totalAdiantado = entradasDoFrete.reduce(
+      (acc, entrada) => acc + (entrada.entrada_valor || 0),
+      0
+    )
     const valorTotal = frete.frete_valor_total || 0
     const valorFinal = valorTotal - totalAdiantado
     setBaixaValores({ total: valorTotal, adiantado: totalAdiantado, final: valorFinal })
@@ -299,8 +315,13 @@ export function FretesTable() {
       setDandomBaixa(frete.id)
       // Buscar todas as entradas relacionadas a este frete (adiantamentos, etc)
       const entradas = await getAllEntradas()
-      const entradasDoFrete = (entradas || []).filter((entrada) => entrada.entrada_frete_id === frete.id)
-      const totalAdiantado = entradasDoFrete.reduce((acc, entrada) => acc + (entrada.entrada_valor || 0), 0)
+      const entradasDoFrete = (entradas || []).filter(
+        (entrada) => entrada.entrada_frete_id === frete.id
+      )
+      const totalAdiantado = entradasDoFrete.reduce(
+        (acc, entrada) => acc + (entrada.entrada_valor || 0),
+        0
+      )
       // Calcular valor restante a receber
       const valorFinal = (frete.frete_valor_total || 0) - totalAdiantado
       // Atualizar o status do frete
@@ -320,9 +341,9 @@ export function FretesTable() {
       setFretes(fretes.map((f) => (f.id === frete.id ? { ...f, frete_baixa: true } : f)))
       // Atualizar o saldo
       const newBalance = await getFreteBalance(frete.id)
-      setFretesBalance(prev => ({
+      setFretesBalance((prev) => ({
         ...prev,
-        [frete.id]: newBalance
+        [frete.id]: newBalance,
       }))
       toast({
         title: "Frete baixado com sucesso",
@@ -393,9 +414,9 @@ export function FretesTable() {
 
       // Atualizar o saldo
       const newBalance = await getFreteBalance(freteId)
-      setFretesBalance(prev => ({
+      setFretesBalance((prev) => ({
         ...prev,
-        [freteId]: newBalance
+        [freteId]: newBalance,
       }))
 
       toast({
@@ -433,9 +454,9 @@ export function FretesTable() {
 
       // Atualizar o saldo
       const newBalance = await getFreteBalance(adiantamentoFrete.id)
-      setFretesBalance(prev => ({
+      setFretesBalance((prev) => ({
         ...prev,
-        [adiantamentoFrete.id]: newBalance
+        [adiantamentoFrete.id]: newBalance,
       }))
 
       toast({
@@ -450,7 +471,8 @@ export function FretesTable() {
       toast({
         variant: "destructive",
         title: "Erro ao registrar adiantamento",
-        description: err instanceof Error ? err.message : "Ocorreu um erro ao registrar o adiantamento.",
+        description:
+          err instanceof Error ? err.message : "Ocorreu um erro ao registrar o adiantamento.",
       })
     } finally {
       setIsRegisteringAdiantamento(false)
@@ -547,12 +569,16 @@ export function FretesTable() {
               </TableCell>
               <TableCell>
                 {fretesBalance[frete.id] ? (
-                  <div className={cn(
-                    "font-medium",
-                    fretesBalance[frete.id].saldo > 0 ? "text-green-600 dark:text-green-400" :
-                    fretesBalance[frete.id].saldo < 0 ? "text-red-600 dark:text-red-400" :
-                    "text-muted-foreground"
-                  )}>
+                  <div
+                    className={cn(
+                      "font-medium",
+                      fretesBalance[frete.id].saldo > 0
+                        ? "text-green-600 dark:text-green-400"
+                        : fretesBalance[frete.id].saldo < 0
+                          ? "text-red-600 dark:text-red-400"
+                          : "text-muted-foreground"
+                    )}
+                  >
                     {new Intl.NumberFormat("pt-BR", {
                       style: "currency",
                       currency: "BRL",
@@ -582,12 +608,7 @@ export function FretesTable() {
               </TableCell>
               <TableCell>
                 {frete.comprovante_url ? (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    asChild
-                    className="h-8 w-8"
-                  >
+                  <Button variant="ghost" size="icon" asChild className="h-8 w-8">
                     <a
                       href={frete.comprovante_url}
                       target="_blank"
@@ -619,10 +640,16 @@ export function FretesTable() {
 
                     {/* Opção de dar baixa ou reativar */}
                     {!frete.frete_baixa ? (
-                      <AlertDialog open={baixaFreteId === frete.id} onOpenChange={(open) => {
-                        if (open) prepararValoresBaixa(frete)
-                        else { setBaixaFreteId(null); setBaixaValores(null) }
-                      }}>
+                      <AlertDialog
+                        open={baixaFreteId === frete.id}
+                        onOpenChange={(open) => {
+                          if (open) prepararValoresBaixa(frete)
+                          else {
+                            setBaixaFreteId(null)
+                            setBaixaValores(null)
+                          }
+                        }}
+                      >
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem
                             onSelect={(e) => {
@@ -640,11 +667,28 @@ export function FretesTable() {
                             <AlertDialogDescription>
                               {baixaValores ? (
                                 <>
-                                  Total do frete: <strong>{baixaValores.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
+                                  Total do frete:{" "}
+                                  <strong>
+                                    {baixaValores.total.toLocaleString("pt-BR", {
+                                      style: "currency",
+                                      currency: "BRL",
+                                    })}
+                                  </strong>
                                   <br />
-                                  Já adiantado: <strong className="text-amber-600">{baixaValores.adiantado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
-                                  <br />
-                                  A receber: <strong className="text-green-700">{baixaValores.final.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
+                                  Já adiantado:{" "}
+                                  <strong className="text-amber-600">
+                                    {baixaValores.adiantado.toLocaleString("pt-BR", {
+                                      style: "currency",
+                                      currency: "BRL",
+                                    })}
+                                  </strong>
+                                  <br />A receber:{" "}
+                                  <strong className="text-green-700">
+                                    {baixaValores.final.toLocaleString("pt-BR", {
+                                      style: "currency",
+                                      currency: "BRL",
+                                    })}
+                                  </strong>
                                 </>
                               ) : (
                                 "Carregando valores..."
@@ -829,7 +873,8 @@ export function FretesTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>Registrar Adiantamento</AlertDialogTitle>
             <AlertDialogDescription>
-              Informe o valor do adiantamento recebido do cliente para o frete <strong>{adiantamentoFrete?.frete_nome}</strong>.
+              Informe o valor do adiantamento recebido do cliente para o frete{" "}
+              <strong>{adiantamentoFrete?.frete_nome}</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4">
@@ -844,11 +889,15 @@ export function FretesTable() {
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setAdiantamentoDialogOpen(false)
-              setAdiantamentoFrete(null)
-              setAdiantamentoValor("")
-            }}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel
+              onClick={() => {
+                setAdiantamentoDialogOpen(false)
+                setAdiantamentoFrete(null)
+                setAdiantamentoValor("")
+              }}
+            >
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRegistrarAdiantamento}
               disabled={isRegisteringAdiantamento || !adiantamentoValor}

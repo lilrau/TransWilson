@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   lint:
@@ -11,4 +11,4 @@ services:
     command: pnpm lint
 
 volumes:
-  node_modules: 
+  node_modules:

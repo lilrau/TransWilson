@@ -6,11 +6,7 @@ export const metadata: Metadata = {
   description: "Registro de nova entrada financeira no sistema de fretagem",
 }
 
-export default function NovaEntradaPage({
-  searchParams,
-}: {
-  searchParams: { freteId?: string }
-}) {
+export default function NovaEntradaPage({ searchParams }: { searchParams: { freteId?: string } }) {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>

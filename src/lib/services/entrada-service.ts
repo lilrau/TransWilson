@@ -116,10 +116,7 @@ export const createEntrada = async (data: Omit<EntradaData, "id">) => {
   }
 }
 
-export const updateEntrada = async (
-  id: number,
-  data: Partial<Omit<EntradaData, "id">>
-) => {
+export const updateEntrada = async (id: number, data: Partial<Omit<EntradaData, "id">>) => {
   try {
     Logger.info("entrada-service", "Updating entrada", { id, entradaData: data })
     const result = await supabase().from("entrada").update(data).eq("id", id).select()

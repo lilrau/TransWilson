@@ -31,25 +31,28 @@ import { maskCPF, unmaskCPF } from "@/lib/utils"
 
 const formSchema = z.object({
   motorista_nome: z.string().min(3, {
-    message: "O nome deve ter pelo menos 3 caracteres.",
+    message: "Informe o nome completo do motorista",
   }),
-  motorista_cpf: z.string().length(11, {
-    message: "O CPF deve ter 11 dígitos.",
-  }).transform(value => unmaskCPF(value)),
+  motorista_cpf: z
+    .string()
+    .length(11, {
+      message: "O CPF deve conter 11 dígitos (apenas números)",
+    })
+    .transform((value) => unmaskCPF(value)),
   motorista_salario: z.coerce.number().min(0, {
-    message: "O salário não pode ser negativo.",
+    message: "O salário base não pode ser negativo",
   }),
   motorista_frete: z.coerce.number().min(0).max(100, {
-    message: "A porcentagem deve estar entre 0 e 100.",
+    message: "A porcentagem do frete deve estar entre 0% e 100%",
   }),
   motorista_estadia: z.coerce.number().min(0).max(100, {
-    message: "A porcentagem deve estar entre 0 e 100.",
+    message: "A porcentagem da estadia deve estar entre 0% e 100%",
   }),
   motorista_admissao: z.date({
-    required_error: "A data de admissão é obrigatória.",
+    required_error: "Selecione a data de admissão do motorista",
   }),
   motorista_senha: z.string().min(6, {
-    message: "A senha deve ter pelo menos 6 caracteres.",
+    message: "A senha deve ter no mínimo 6 caracteres",
   }),
 })
 
@@ -83,7 +86,11 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
 
   function formatCurrencyBRL(value: number | string) {
     const number = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value
-    return number.toLocaleString("pt-BR", { style: "decimal", minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    return number.toLocaleString("pt-BR", {
+      style: "decimal",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
   }
 
   const form = useForm<FormValues>({
@@ -233,9 +240,7 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
                       {error ? (
                         <FormMessage />
                       ) : (
-                        <FormDescription>
-                          Digite apenas os números do CPF
-                        </FormDescription>
+                        <FormDescription>Digite apenas os números do CPF</FormDescription>
                       )}
                     </FormItem>
                   )
@@ -253,7 +258,7 @@ export function MotoristasForm({ id }: MotoristasFormProps) {
                         inputMode="decimal"
                         placeholder="0,00"
                         value={formatCurrencyBRL(field.value ?? 0)}
-                        onChange={e => {
+                        onChange={(e) => {
                           const raw = e.target.value.replace(/\D/g, "")
                           const float = Number(raw) / 100
                           field.onChange(float)

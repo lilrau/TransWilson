@@ -32,15 +32,20 @@ import { Loader2 } from "lucide-react"
 
 const formSchema = z.object({
   veiculo_nome: z.string().min(3, {
-    message: "O nome do veículo deve ter pelo menos 3 caracteres.",
+    message: "Informe um nome descritivo para o veículo",
   }),
   veiculo_placa: z.string().length(7, {
-    message: "A placa deve ter exatamente 7 caracteres.",
+    message: "A placa deve conter 7 caracteres (ex: ABC1234)",
   }),
   veiculo_reboque: z.string().nonempty({
-    message: "O tipo de reboque é obrigatório.",
+    message: "Selecione o tipo de reboque do veículo",
   }),
-  veiculo_ano: z.coerce.number().min(1900).max(new Date().getFullYear()).nullable().optional(),
+  veiculo_ano: z.coerce
+    .number()
+    .min(1900, `O ano tem que ser entre 1900 e ${new Date().getFullYear()}`)
+    .max(new Date().getFullYear(), `O ano tem que ser entre 1900 e ${new Date().getFullYear()}`)
+    .nullable()
+    .optional(),
   veiculo_km_inicial: z.coerce.number().min(0).nullable().optional(),
   veiculo_litro_inicial: z.coerce.number().min(0).nullable().optional(),
   veiculo_motorista: z.coerce.number().nullable().optional(),
@@ -54,7 +59,11 @@ interface VeiculosFormProps {
 
 function formatCurrencyBRL(value: number | string) {
   const number = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value
-  return number.toLocaleString("pt-BR", { style: "decimal", minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return number.toLocaleString("pt-BR", {
+    style: "decimal",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
 }
 
 export function VeiculosForm({ id }: VeiculosFormProps) {
@@ -346,7 +355,7 @@ export function VeiculosForm({ id }: VeiculosFormProps) {
                         inputMode="decimal"
                         placeholder="0,00"
                         value={formatCurrencyBRL(field.value ?? 0)}
-                        onChange={e => {
+                        onChange={(e) => {
                           const raw = e.target.value.replace(/\D/g, "")
                           const float = Number(raw) / 100
                           field.onChange(float)

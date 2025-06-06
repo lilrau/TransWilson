@@ -4,7 +4,13 @@ import { useEffect, useState } from "react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { getAllVeiculos } from "@/lib/services/veiculo-service"
 import { getAllDespesa } from "@/lib/services/despesa-service"
@@ -81,11 +87,13 @@ export function CaixaContainer() {
       const session = await getSessionData()
       if (session) {
         setUserType(session.userType)
-        
+
         // Se for motorista, buscar e setar o veículo automaticamente
         if (session.userType === "driver" && session.id) {
           const veiculosData = await getAllVeiculos()
-          const veiculoDoMotorista = veiculosData?.find((v: { motorista?: { id: number } }) => v.motorista?.id === session.id)
+          const veiculoDoMotorista = veiculosData?.find(
+            (v: { motorista?: { id: number } }) => v.motorista?.id === session.id
+          )
           if (veiculoDoMotorista) {
             setSelectedVeiculo(veiculoDoMotorista.id.toString())
           }
@@ -121,54 +129,65 @@ export function CaixaContainer() {
       try {
         // Carregar despesas
         const despesas = await getAllDespesa()
-        const despesasFormatted = despesas?.map((despesa: DespesaData) => ({
-          id: despesa.id,
-          tipo: "saida" as const,
-          valor: despesa.despesa_valor || 0,
-          data: despesa.created_at,
-          descricao: despesa.despesa_nome,
-          baixado: despesa.frete?.frete_baixa || false,
-          veiculo: despesa.veiculo ? {
-            id: despesa.veiculo.id,
-            nome: despesa.veiculo.veiculo_nome,
-          } : undefined
-        })) || []
+        const despesasFormatted =
+          despesas?.map((despesa: DespesaData) => ({
+            id: despesa.id,
+            tipo: "saida" as const,
+            valor: despesa.despesa_valor || 0,
+            data: despesa.created_at,
+            descricao: despesa.despesa_nome,
+            baixado: despesa.frete?.frete_baixa || false,
+            veiculo: despesa.veiculo
+              ? {
+                  id: despesa.veiculo.id,
+                  nome: despesa.veiculo.veiculo_nome,
+                }
+              : undefined,
+          })) || []
 
         // Carregar entradas
         const entradas = await getAllEntradas()
-        const entradasFormatted = entradas?.map((entrada: EntradaData) => ({
-          id: entrada.id,
-          tipo: "entrada" as const,
-          valor: entrada.entrada_valor || 0,
-          data: entrada.created_at,
-          descricao: entrada.entrada_nome,
-          baixado: entrada.entrada_tipo === "Frete" ? entrada.frete?.frete_baixa || false : true,
-          entrada_tipo: entrada.entrada_tipo,
-          veiculo: entrada.frete?.veiculo ? {
-            id: entrada.frete.veiculo.id,
-            nome: entrada.frete.veiculo.veiculo_nome,
-          } : undefined
-        })) || []
+        const entradasFormatted =
+          entradas?.map((entrada: EntradaData) => ({
+            id: entrada.id,
+            tipo: "entrada" as const,
+            valor: entrada.entrada_valor || 0,
+            data: entrada.created_at,
+            descricao: entrada.entrada_nome,
+            baixado: entrada.entrada_tipo === "Frete" ? entrada.frete?.frete_baixa || false : true,
+            entrada_tipo: entrada.entrada_tipo,
+            veiculo: entrada.frete?.veiculo
+              ? {
+                  id: entrada.frete.veiculo.id,
+                  nome: entrada.frete.veiculo.veiculo_nome,
+                }
+              : undefined,
+          })) || []
 
         // Combinar todas as transações
-        const allTransactions = [...despesasFormatted, ...entradasFormatted]
-          .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+        const allTransactions = [...despesasFormatted, ...entradasFormatted].sort(
+          (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()
+        )
 
         // Filtrar por veículo se necessário
-        const filteredTransactions = selectedVeiculo === "geral"
-          ? allTransactions
-          : allTransactions.filter(t => t.veiculo?.id === Number(selectedVeiculo))
+        const filteredTransactions =
+          selectedVeiculo === "geral"
+            ? allTransactions
+            : allTransactions.filter((t) => t.veiculo?.id === Number(selectedVeiculo))
 
         setTransactions(filteredTransactions)
 
         // Calcular saldo
-        const saldoCalculado = filteredTransactions.reduce((acc: number, transaction: Transaction) => {
-          if (transaction.tipo === "entrada") {
-            return acc + transaction.valor
-          } else {
-            return acc - transaction.valor
-          }
-        }, 0)
+        const saldoCalculado = filteredTransactions.reduce(
+          (acc: number, transaction: Transaction) => {
+            if (transaction.tipo === "entrada") {
+              return acc + transaction.valor
+            } else {
+              return acc - transaction.valor
+            }
+          },
+          0
+        )
 
         setSaldo(saldoCalculado)
       } catch (error) {
@@ -229,8 +248,13 @@ export function CaixaContainer() {
                     <CardTitle className="text-lg">Saldo</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className={`text-2xl font-bold ${saldo >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(saldo)}
+                    <p
+                      className={`text-2xl font-bold ${saldo >= 0 ? "text-green-500" : "text-red-500"}`}
+                    >
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }).format(saldo)}
                     </p>
                   </CardContent>
                 </Card>
@@ -240,8 +264,15 @@ export function CaixaContainer() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold text-green-500">
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                        transactions.reduce((acc: number, t: Transaction) => t.tipo === "entrada" ? acc + t.valor : acc, 0)
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }).format(
+                        transactions.reduce(
+                          (acc: number, t: Transaction) =>
+                            t.tipo === "entrada" ? acc + t.valor : acc,
+                          0
+                        )
                       )}
                     </p>
                   </CardContent>
@@ -252,8 +283,15 @@ export function CaixaContainer() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold text-red-500">
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                        transactions.reduce((acc: number, t: Transaction) => t.tipo === "saida" ? acc + t.valor : acc, 0)
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }).format(
+                        transactions.reduce(
+                          (acc: number, t: Transaction) =>
+                            t.tipo === "saida" ? acc + t.valor : acc,
+                          0
+                        )
                       )}
                     </p>
                   </CardContent>
@@ -268,7 +306,9 @@ export function CaixaContainer() {
               <CardContent>
                 <div className="space-y-4">
                   {transactions.length === 0 ? (
-                    <p className="text-center text-muted-foreground">Nenhuma transação encontrada.</p>
+                    <p className="text-center text-muted-foreground">
+                      Nenhuma transação encontrada.
+                    </p>
                   ) : (
                     transactions.map((transaction) => (
                       <div
@@ -278,24 +318,39 @@ export function CaixaContainer() {
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="font-medium">{transaction.descricao}</p>
-                            {transaction.tipo === "entrada" && transaction.entrada_tipo === "Frete" && (
-                              <Badge variant={transaction.baixado ? "default" : "secondary"} className="ml-2">
-                                {transaction.baixado ? (
-                                  <><Check className="w-3 h-3 mr-1" /> Baixado</>
-                                ) : (
-                                  <><Clock className="w-3 h-3 mr-1" /> Em Aberto</>
-                                )}
-                              </Badge>
-                            )}
+                            {transaction.tipo === "entrada" &&
+                              transaction.entrada_tipo === "Frete" && (
+                                <Badge
+                                  variant={transaction.baixado ? "default" : "secondary"}
+                                  className="ml-2"
+                                >
+                                  {transaction.baixado ? (
+                                    <>
+                                      <Check className="w-3 h-3 mr-1" /> Baixado
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Clock className="w-3 h-3 mr-1" /> Em Aberto
+                                    </>
+                                  )}
+                                </Badge>
+                              )}
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {format(new Date(transaction.data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                            {format(new Date(transaction.data), "dd 'de' MMMM 'de' yyyy", {
+                              locale: ptBR,
+                            })}
                             {transaction.veiculo && ` • ${transaction.veiculo.nome}`}
                           </p>
                         </div>
-                        <p className={`font-bold ${transaction.tipo === "entrada" ? "text-green-500" : "text-red-500"}`}>
+                        <p
+                          className={`font-bold ${transaction.tipo === "entrada" ? "text-green-500" : "text-red-500"}`}
+                        >
                           {transaction.tipo === "entrada" ? "+" : "-"}
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(transaction.valor)}
+                          {new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          }).format(transaction.valor)}
                         </p>
                       </div>
                     ))
@@ -308,4 +363,4 @@ export function CaixaContainer() {
       </Card>
     </div>
   )
-} 
+}

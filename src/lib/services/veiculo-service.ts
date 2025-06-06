@@ -54,10 +54,12 @@ export const getVeiculo = unstable_cache(
       Logger.info("veiculo-service", "Fetching veiculo by id", { id })
       const { data, error } = await supabase()
         .from("veiculo")
-        .select(`
+        .select(
+          `
           *,
           motorista:veiculo_motorista(id, motorista_nome)
-        `)
+        `
+        )
         .eq("id", id)
         .single()
 

@@ -11,7 +11,7 @@ const DRIVER_ALLOWED_ROUTES = [
   "/dashboard/motorista",
   "/dashboard/movimentos/criar-frete",
   "/dashboard/movimentos/despesas",
-  "/dashboard/movimentos/caixa"
+  "/dashboard/movimentos/caixa",
 ]
 
 // Middleware para verificar autenticação
@@ -47,8 +47,9 @@ export async function middleware(request: NextRequest) {
 
     // Se for motorista, verifica se a rota é permitida
     if (session.userType === "driver") {
-      const isAllowedRoute = DRIVER_ALLOWED_ROUTES.some(route => 
-        request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(`${route}/`)
+      const isAllowedRoute = DRIVER_ALLOWED_ROUTES.some(
+        (route) =>
+          request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(`${route}/`)
       )
 
       if (!isAllowedRoute) {

@@ -490,8 +490,8 @@ export function EntradasSaidasTable() {
                                       <span>Editar</span>
                                     </Link>
                                   </Button>
-                                  <Button 
-                                    variant="destructive" 
+                                  <Button
+                                    variant="destructive"
                                     size="sm"
                                     onClick={(e) => handleDeleteClick(movimento, e)}
                                     className="flex items-center gap-1"
@@ -554,27 +554,23 @@ export function EntradasSaidasTable() {
               Confirmar Exclusão
             </DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja excluir este {movimentoToDelete?.tipo === "entrada" ? "recebimento" : "pagamento"}?
+              Tem certeza que deseja excluir este{" "}
+              {movimentoToDelete?.tipo === "entrada" ? "recebimento" : "pagamento"}?
               <div className="mt-2 p-3 bg-muted rounded-lg space-y-1">
                 <div className="font-medium">{movimentoToDelete?.nome}</div>
                 <div className="text-sm text-muted-foreground">
-                  {movimentoToDelete && format(new Date(movimentoToDelete.data), "dd/MM/yyyy")} - {movimentoToDelete && formatCurrency(movimentoToDelete.valor)}
+                  {movimentoToDelete && format(new Date(movimentoToDelete.data), "dd/MM/yyyy")} -{" "}
+                  {movimentoToDelete && formatCurrency(movimentoToDelete.valor)}
                 </div>
               </div>
               <div className="mt-2">Esta ação não pode ser desfeita.</div>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="ghost"
-              onClick={() => setDeleteDialogOpen(false)}
-            >
+            <Button variant="ghost" onClick={() => setDeleteDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-            >
+            <Button variant="destructive" onClick={handleDeleteConfirm}>
               Excluir
             </Button>
           </DialogFooter>

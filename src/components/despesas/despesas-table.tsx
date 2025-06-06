@@ -172,7 +172,9 @@ export function DespesasTable() {
         <Button variant="outline" onClick={() => setSelectedMonth(subMonths(selectedMonth, 1))}>
           Mês Anterior
         </Button>
-        <div className="font-medium">{format(selectedMonth, "MMMM 'de' yyyy", { locale: ptBR })}</div>
+        <div className="font-medium">
+          {format(selectedMonth, "MMMM 'de' yyyy", { locale: ptBR })}
+        </div>
         <Button
           variant="outline"
           onClick={() => setSelectedMonth(new Date())}
@@ -242,13 +244,18 @@ export function DespesasTable() {
                           </DialogTrigger>
                           <DialogContent className="max-w-[95vw] sm:max-w-4xl">
                             <DialogHeader>
-                              <DialogTitle className="text-base sm:text-lg">Comprovante - {despesa.despesa_nome}</DialogTitle>
+                              <DialogTitle className="text-base sm:text-lg">
+                                Comprovante - {despesa.despesa_nome}
+                              </DialogTitle>
                               <DialogDescription className="text-xs sm:text-sm">
-                                Comprovante da despesa de {format(new Date(despesa.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                                Comprovante da despesa de{" "}
+                                {format(new Date(despesa.created_at), "dd/MM/yyyy", {
+                                  locale: ptBR,
+                                })}
                               </DialogDescription>
                             </DialogHeader>
                             <div className="mt-4">
-                              {despesa.comprovante_url.endsWith('.pdf') ? (
+                              {despesa.comprovante_url.endsWith(".pdf") ? (
                                 <iframe
                                   src={despesa.comprovante_url}
                                   className="w-full h-[50vh] sm:h-[600px] border-0"
@@ -280,7 +287,12 @@ export function DespesasTable() {
                           </DialogContent>
                         </Dialog>
                       ) : (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" disabled>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive"
+                          disabled
+                        >
                           <FileX className="h-4 w-4" />
                           <span className="sr-only">Sem comprovante</span>
                         </Button>

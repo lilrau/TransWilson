@@ -213,7 +213,7 @@ export const darBaixaFrete = async (id: number, baixado = true) => {
 export const getFreteBalance = async (freteId: number) => {
   try {
     Logger.info("frete-service", "Calculating frete balance", { freteId })
-    
+
     // Get the frete to get its total value
     const frete = await getFrete(freteId)
     if (!frete) {
@@ -227,7 +227,10 @@ export const getFreteBalance = async (freteId: number) => {
       .eq("entrada_frete_id", freteId)
 
     if (entradasError) {
-      Logger.error("frete-service", "Failed to fetch frete entries", { error: entradasError, freteId })
+      Logger.error("frete-service", "Failed to fetch frete entries", {
+        error: entradasError,
+        freteId,
+      })
       throw entradasError
     }
 
@@ -238,34 +241,40 @@ export const getFreteBalance = async (freteId: number) => {
       .eq("despesa_frete_id", freteId)
 
     if (despesasError) {
-      Logger.error("frete-service", "Failed to fetch frete expenses", { error: despesasError, freteId })
+      Logger.error("frete-service", "Failed to fetch frete expenses", {
+        error: despesasError,
+        freteId,
+      })
       throw despesasError
     }
 
     // Calculate total entries
     const totalEntradas = entradas.reduce((acc, entrada) => acc + (entrada.entrada_valor || 0), 0)
-    
+
     // Calculate total expenses
     const totalDespesas = despesas.reduce((acc, despesa) => acc + (despesa.despesa_valor || 0), 0)
 
     // Calculate balance
     const saldo = totalEntradas - totalDespesas
 
-    Logger.info("frete-service", "Successfully calculated frete balance", { 
+    Logger.info("frete-service", "Successfully calculated frete balance", {
       freteId,
       totalEntradas,
       totalDespesas,
-      saldo
+      saldo,
     })
 
     return {
       saldo,
       totalEntradas,
       totalDespesas,
-      valorFrete: frete.frete_valor_total || 0
+      valorFrete: frete.frete_valor_total || 0,
     }
   } catch (error) {
-    Logger.error("frete-service", "Unexpected error while calculating frete balance", { error, freteId })
+    Logger.error("frete-service", "Unexpected error while calculating frete balance", {
+      error,
+      freteId,
+    })
     throw error
   }
 }
@@ -273,25 +282,21 @@ export const getFreteBalance = async (freteId: number) => {
 export const uploadComprovante = async (file: File, freteId: number) => {
   try {
     Logger.info("frete-service", "Uploading comprovante", { freteId })
-    
-    const fileExt = file.name.split('.').pop()
+
+    const fileExt = file.name.split(".").pop()
     const fileName = `${freteId}-${Date.now()}.${fileExt}`
     const filePath = `${fileName}`
 
-    const { error } = await supabase()
-      .storage
-      .from('notasfiscais')
-      .upload(filePath, file)
+    const { error } = await supabase().storage.from("notasfiscais").upload(filePath, file)
 
     if (error) {
       Logger.error("frete-service", "Failed to upload comprovante", { error })
       throw error
     }
 
-    const { data: { publicUrl } } = supabase()
-      .storage
-      .from('notasfiscais')
-      .getPublicUrl(filePath)
+    const {
+      data: { publicUrl },
+    } = supabase().storage.from("notasfiscais").getPublicUrl(filePath)
 
     // Update the frete with the comprovante URL
     await updateFrete(freteId, { comprovante_url: publicUrl })
@@ -307,15 +312,12 @@ export const uploadComprovante = async (file: File, freteId: number) => {
 export const deleteComprovante = async (freteId: number, url: string) => {
   try {
     Logger.info("frete-service", "Deleting comprovante", { freteId })
-    
-    // Extract filename from URL
-    const fileName = url.split('/').pop()
-    if (!fileName) throw new Error('Invalid file URL')
 
-    const { error } = await supabase()
-      .storage
-      .from('notasfiscais')
-      .remove([fileName])
+    // Extract filename from URL
+    const fileName = url.split("/").pop()
+    if (!fileName) throw new Error("Invalid file URL")
+
+    const { error } = await supabase().storage.from("notasfiscais").remove([fileName])
 
     if (error) {
       Logger.error("frete-service", "Failed to delete comprovante", { error })

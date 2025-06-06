@@ -35,17 +35,17 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 const formSchema = z.object({
   entrada_nome: z.string().min(3, {
-    message: "O nome da entrada deve ter pelo menos 3 caracteres.",
+    message: "Informe um nome descritivo para a entrada",
   }),
   entrada_valor: z.coerce.number().min(0, {
-    message: "O valor deve ser maior ou igual a zero.",
+    message: "O valor da entrada não pode ser negativo",
   }),
   entrada_descricao: z.string().optional(),
   entrada_tipo: z.string().min(1, {
-    message: "O tipo de entrada é obrigatório.",
+    message: "Selecione o tipo da entrada",
   }),
   entrada_frete_id: z.number().nullable(),
-  created_at: z.date({ required_error: "A data é obrigatória." }),
+  created_at: z.date({ required_error: "Selecione a data da entrada" }),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -56,7 +56,11 @@ interface EntradaFormProps {
 
 function formatCurrencyBRL(value: number | string) {
   const number = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value
-  return number.toLocaleString("pt-BR", { style: "decimal", minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return number.toLocaleString("pt-BR", {
+    style: "decimal",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
 }
 
 export function EntradaForm({ freteId }: EntradaFormProps) {
@@ -65,7 +69,9 @@ export function EntradaForm({ freteId }: EntradaFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [tipoOptions, setTipoOptions] = useState<string[]>([])
   const [isLoadingTipos, setIsLoadingTipos] = useState(true)
-  const [fretes, setFretes] = useState<{ id: number; frete_nome: string; frete_origem: string; frete_destino: string }[]>([])
+  const [fretes, setFretes] = useState<
+    { id: number; frete_nome: string; frete_origem: string; frete_destino: string }[]
+  >([])
   const [isLoadingFretes, setIsLoadingFretes] = useState(false)
 
   const form = useForm<FormValues>({
@@ -106,20 +112,29 @@ export function EntradaForm({ freteId }: EntradaFormProps) {
     fetchTiposEntrada()
   }, [freteId, form])
 
-  const entradaTipo = form.watch("entrada_tipo");
+  const entradaTipo = form.watch("entrada_tipo")
 
   const fetchFretes = useCallback(async () => {
     if (entradaTipo?.toLowerCase() === "frete") {
       setIsLoadingFretes(true)
       try {
-        const fretesData = await getAllFrete().then(fretes => fretes.filter(f => !f.frete_baixa))
+        const fretesData = await getAllFrete().then((fretes) =>
+          fretes.filter((f) => !f.frete_baixa)
+        )
         setFretes(
-          fretesData?.map((f: { id: number; frete_nome: string; frete_origem: string; frete_destino: string }) => ({
-            id: f.id,
-            frete_nome: f.frete_nome,
-            frete_origem: f.frete_origem,
-            frete_destino: f.frete_destino,
-          })) || []
+          fretesData?.map(
+            (f: {
+              id: number
+              frete_nome: string
+              frete_origem: string
+              frete_destino: string
+            }) => ({
+              id: f.id,
+              frete_nome: f.frete_nome,
+              frete_origem: f.frete_origem,
+              frete_destino: f.frete_destino,
+            })
+          ) || []
         )
       } catch (error) {
         console.error("Erro ao carregar fretes:", error)
@@ -134,11 +149,11 @@ export function EntradaForm({ freteId }: EntradaFormProps) {
     } else {
       setFretes([])
     }
-  }, [entradaTipo]);
+  }, [entradaTipo])
 
   useEffect(() => {
-    fetchFretes();
-  }, [fetchFretes]);
+    fetchFretes()
+  }, [fetchFretes])
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
@@ -249,7 +264,7 @@ export function EntradaForm({ freteId }: EntradaFormProps) {
                         inputMode="decimal"
                         placeholder="0,00"
                         value={formatCurrencyBRL(field.value ?? 0)}
-                        onChange={e => {
+                        onChange={(e) => {
                           const raw = e.target.value.replace(/\D/g, "")
                           const float = Number(raw) / 100
                           field.onChange(float)

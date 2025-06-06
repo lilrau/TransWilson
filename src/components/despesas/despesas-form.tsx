@@ -7,15 +7,34 @@ import { useForm, ControllerRenderProps } from "react-hook-form"
 import { z } from "zod"
 import { cn } from "@/lib/utils"
 
-import { createDespesa, getDespesa, updateDespesa, uploadComprovante, deleteComprovante } from "@/lib/services/despesa-service"
+import {
+  createDespesa,
+  getDespesa,
+  updateDespesa,
+  uploadComprovante,
+  deleteComprovante,
+} from "@/lib/services/despesa-service"
 import { getAllVeiculos } from "@/lib/services/veiculo-service"
 import { getAllMotorista } from "@/lib/services/motorista-service"
 import { getTipoDespesaEnum } from "@/lib/services/enum-service"
 import { getSessionData } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -26,24 +45,24 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 const formSchema = z.object({
   despesa_nome: z.string().min(3, {
-    message: "O nome da despesa deve ter pelo menos 3 caracteres.",
+    message: "Informe um nome descritivo para a despesa",
   }),
   despesa_descricao: z.string().optional(),
   despesa_tipo: z.string().min(1, {
-    message: "O tipo de despesa é obrigatório.",
+    message: "Selecione o tipo da despesa",
   }),
   despesa_valor: z.coerce.number().min(0, {
-    message: "O valor deve ser maior ou igual a zero.",
+    message: "O valor da despesa não pode ser negativo",
   }),
   despesa_veiculo: z.coerce.number().nullable().optional(),
   despesa_motorista: z.coerce.number().nullable().optional(),
   comprovante: z.instanceof(File).optional().nullable(),
   despesa_metodo_pagamento: z.string().optional().nullable(),
   despesa_parcelas: z.number().min(1, {
-    message: "O número de parcelas deve ser pelo menos 1.",
+    message: "A despesa deve ter pelo menos 1 parcela",
   }),
   despesa_frete_id: z.number().nullable().optional(),
-  created_at: z.date({ required_error: "A data é obrigatória." }),
+  created_at: z.date({ required_error: "Selecione a data da despesa" }),
 })
 
 const despesaMetodoPagamentoSchema = ["dinheiro", "pix", "debito", "credito"]
@@ -58,7 +77,11 @@ interface DespesasFormProps {
 
 function formatCurrencyBRL(value: number | string) {
   const number = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value
-  return number.toLocaleString("pt-BR", { style: "decimal", minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return number.toLocaleString("pt-BR", {
+    style: "decimal",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
 }
 
 const ValorField = ({ field }: { field: ControllerRenderProps<FormValues, "despesa_valor"> }) => {
@@ -72,7 +95,7 @@ const ValorField = ({ field }: { field: ControllerRenderProps<FormValues, "despe
           inputMode="decimal"
           placeholder="0,00"
           value={formatCurrencyBRL(field.value ?? 0)}
-          onChange={e => {
+          onChange={(e) => {
             const raw = e.target.value.replace(/\D/g, "")
             const float = Number(raw) / 100
             field.onChange(float)
@@ -91,7 +114,9 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
   const [error, setError] = useState<string | null>(null)
   const [tipoOptions, setTipoOptions] = useState<string[]>([])
   const [isLoadingTipos, setIsLoadingTipos] = useState(true)
-  const [veiculos, setVeiculos] = useState<{ id: number; veiculo_nome: string; motorista?: { id: number } }[]>([])
+  const [veiculos, setVeiculos] = useState<
+    { id: number; veiculo_nome: string; motorista?: { id: number } }[]
+  >([])
   const [isLoadingVeiculos, setIsLoadingVeiculos] = useState(false)
   const [motoristas, setMotoristas] = useState<{ id: number; motorista_nome: string }[]>([])
   const [isLoadingMotoristas, setIsLoadingMotoristas] = useState(false)
@@ -114,7 +139,11 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
       comprovante: null,
       despesa_metodo_pagamento: null,
       despesa_parcelas: 1,
-      despesa_frete_id: freteId ? Number(freteId) : despesa_frete_id ? Number(despesa_frete_id) : null,
+      despesa_frete_id: freteId
+        ? Number(freteId)
+        : despesa_frete_id
+          ? Number(despesa_frete_id)
+          : null,
       created_at: new Date(),
     },
   })
@@ -163,11 +192,13 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
         setIsLoadingVeiculos(true)
         setError(null)
         const data = await getAllVeiculos()
-        setVeiculos((data || []).map((v) => ({
-          id: v.id,
-          veiculo_nome: v.veiculo_nome,
-          motorista: v.motorista,
-        })))
+        setVeiculos(
+          (data || []).map((v) => ({
+            id: v.id,
+            veiculo_nome: v.veiculo_nome,
+            motorista: v.motorista,
+          }))
+        )
       } catch {
         setError("Erro ao buscar veículos.")
       } finally {
@@ -184,7 +215,7 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
           data?.map((motorista) => ({
             id: motorista.id,
             motorista_nome: motorista.motorista_nome,
-          })) || [],
+          })) || []
         )
       } catch (err) {
         console.error("Erro ao buscar motoristas:", err)
@@ -239,7 +270,10 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
             despesa_valor: data.despesa_valor || null,
             despesa_veiculo: data.despesa_veiculo || null,
             despesa_motorista: data.despesa_motorista || null,
-            despesa_metodo_pagamento: typeof data.despesa_metodo_pagamento === "string" ? data.despesa_metodo_pagamento : null,
+            despesa_metodo_pagamento:
+              typeof data.despesa_metodo_pagamento === "string"
+                ? data.despesa_metodo_pagamento
+                : null,
             despesa_parcelas: data.despesa_parcelas || 1,
             despesa_frete_id: data.despesa_frete_id || null,
             created_at: data.created_at ? new Date(data.created_at) : new Date(),
@@ -284,7 +318,7 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
       form.setValue("despesa_motorista", userId)
 
       // Find the vehicle assigned to the driver
-      const driverVehicle = veiculos.find(v => v.motorista?.id === userId)
+      const driverVehicle = veiculos.find((v) => v.motorista?.id === userId)
       if (driverVehicle) {
         form.setValue("despesa_veiculo", driverVehicle.id)
       }
@@ -327,7 +361,8 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
 
     try {
       // Se não for admin, força o motorista atual
-      const motorista = userType !== "admin" && userId !== null ? userId : (values.despesa_motorista ?? null)
+      const motorista =
+        userType !== "admin" && userId !== null ? userId : (values.despesa_motorista ?? null)
 
       const despesaData = {
         despesa_nome: values.despesa_nome,
@@ -337,9 +372,10 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
         despesa_veiculo: values.despesa_veiculo ?? null,
         despesa_motorista: motorista,
         despesa_metodo_pagamento: values.despesa_metodo_pagamento ?? null,
-        despesa_parcelas: values.despesa_metodo_pagamento?.toLowerCase() === "credito"
-          ? (values.despesa_parcelas ?? undefined)
-          : undefined,
+        despesa_parcelas:
+          values.despesa_metodo_pagamento?.toLowerCase() === "credito"
+            ? (values.despesa_parcelas ?? undefined)
+            : undefined,
         ...(values.despesa_frete_id != null ? { despesa_frete_id: values.despesa_frete_id } : {}),
         created_at: values.created_at.toISOString(),
       }
@@ -404,8 +440,12 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
 
   const MotoristaSelect = ({
     field,
-  }: { field: { value: number | null | undefined; onChange: (value: number | null) => void } }) => {
-    const [selectedValue, setSelectedValue] = useState<string | undefined>(field.value?.toString() || "none")
+  }: {
+    field: { value: number | null | undefined; onChange: (value: number | null) => void }
+  }) => {
+    const [selectedValue, setSelectedValue] = useState<string | undefined>(
+      field.value?.toString() || "none"
+    )
 
     // Move userType and userId to dependencies since they are used in the effect
     const currentUserType = userType
@@ -427,7 +467,11 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
     return (
       <FormItem>
         <FormLabel>Motorista</FormLabel>
-        <Select onValueChange={handleChange} value={selectedValue} disabled={userType === "driver" || isLoadingMotoristas}>
+        <Select
+          onValueChange={handleChange}
+          value={selectedValue}
+          disabled={userType === "driver" || isLoadingMotoristas}
+        >
           <FormControl>
             <SelectTrigger>
               <SelectValue placeholder="Selecione um motorista" />
@@ -498,7 +542,11 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Tipo de Despesa</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || "none"} disabled={isLoadingTipos}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || "none"}
+                      disabled={isLoadingTipos}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o tipo de despesa" />
@@ -538,7 +586,11 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
                   <FormItem>
                     <FormLabel>Descrição</FormLabel>
                     <FormControl>
-                      <Input placeholder="Descrição da despesa" {...field} value={field.value || ""} />
+                      <Input
+                        placeholder="Descrição da despesa"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -607,13 +659,11 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="none">Selecione o método de pagamento</SelectItem>
-                        {
-                          despesaMetodoPagamentoSchema.map((tipo) => (
-                            <SelectItem key={tipo} value={tipo}>
-                              {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
-                            </SelectItem>
-                          ))
-                        }
+                        {despesaMetodoPagamentoSchema.map((tipo) => (
+                          <SelectItem key={tipo} value={tipo}>
+                            {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -628,7 +678,9 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
                   <FormItem>
                     <FormLabel>Frete (em andamento)</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(value === "none" ? null : Number(value))}
+                      onValueChange={(value) =>
+                        field.onChange(value === "none" ? null : Number(value))
+                      }
                       value={field.value ? String(field.value) : "none"}
                       disabled={isLoadingFretes}
                     >
@@ -662,7 +714,10 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
 
             {(() => {
               const metodoPagamento = form.watch("despesa_metodo_pagamento")
-              const isCredito = metodoPagamento && typeof metodoPagamento === "string" && metodoPagamento.toLowerCase() === "credito"
+              const isCredito =
+                metodoPagamento &&
+                typeof metodoPagamento === "string" &&
+                metodoPagamento.toLowerCase() === "credito"
               return isCredito ? (
                 <FormField
                   control={form.control}
@@ -677,7 +732,9 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
                           placeholder="1"
                           {...field}
                           value={field.value === null ? "" : field.value}
-                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : null)}
+                          onChange={(e) =>
+                            field.onChange(e.target.value ? parseInt(e.target.value, 10) : null)
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -781,7 +838,10 @@ export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProp
                               <>
                                 <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
                                 <div className="text-sm text-muted-foreground">
-                                  <span className="font-medium text-primary">Clique para selecionar</span> ou arraste e solte
+                                  <span className="font-medium text-primary">
+                                    Clique para selecionar
+                                  </span>{" "}
+                                  ou arraste e solte
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-1">
                                   Suporta imagens e PDFs

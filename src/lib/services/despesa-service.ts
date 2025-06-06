@@ -102,14 +102,16 @@ export const createDespesa = async (data: DespesaData) => {
     let result
     if (data.despesa_metodo_pagamento && data.despesa_metodo_pagamento === "credito") {
       const parcelas = data.despesa_parcelas || 1
-      delete data.despesa_parcelas 
+      delete data.despesa_parcelas
       const valorPorParcela = data.despesa_valor / parcelas
 
       const despesas = Array.from({ length: parcelas }, (_, index) => ({
         ...data,
         despesa_nome: `${data.despesa_nome} - Parcela ${index + 1}`,
         despesa_valor: valorPorParcela,
-        created_at: data.created_at || new Date(new Date().setMonth(new Date().getMonth() + index)).toISOString(),
+        created_at:
+          data.created_at ||
+          new Date(new Date().setMonth(new Date().getMonth() + index)).toISOString(),
       }))
 
       result = await supabase().from("despesa").insert(despesas).select()
@@ -212,25 +214,21 @@ export const getTipoDespesaEnum = unstable_cache(
 export const uploadComprovante = async (file: File, despesaId: number) => {
   try {
     Logger.info("despesa-service", "Uploading comprovante", { despesaId })
-    
-    const fileExt = file.name.split('.').pop()
+
+    const fileExt = file.name.split(".").pop()
     const fileName = `${despesaId}-${Date.now()}.${fileExt}`
     const filePath = `${fileName}`
 
-    const { error } = await supabase()
-      .storage
-      .from('notasfiscais')
-      .upload(filePath, file)
+    const { error } = await supabase().storage.from("notasfiscais").upload(filePath, file)
 
     if (error) {
       Logger.error("despesa-service", "Failed to upload comprovante", { error })
       throw error
     }
 
-    const { data: { publicUrl } } = supabase()
-      .storage
-      .from('notasfiscais')
-      .getPublicUrl(filePath)
+    const {
+      data: { publicUrl },
+    } = supabase().storage.from("notasfiscais").getPublicUrl(filePath)
 
     // Update the despesa with the comprovante URL
     await updateDespesa(despesaId, { comprovante_url: publicUrl })
@@ -246,15 +244,12 @@ export const uploadComprovante = async (file: File, despesaId: number) => {
 export const deleteComprovante = async (despesaId: number, url: string) => {
   try {
     Logger.info("despesa-service", "Deleting comprovante", { despesaId })
-    
-    // Extract filename from URL
-    const fileName = url.split('/').pop()
-    if (!fileName) throw new Error('Invalid file URL')
 
-    const { error } = await supabase()
-      .storage
-      .from('notasfiscais')
-      .remove([fileName])
+    // Extract filename from URL
+    const fileName = url.split("/").pop()
+    if (!fileName) throw new Error("Invalid file URL")
+
+    const { error } = await supabase().storage.from("notasfiscais").remove([fileName])
 
     if (error) {
       Logger.error("despesa-service", "Failed to delete comprovante", { error })

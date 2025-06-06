@@ -11,13 +11,32 @@ import { Calendar } from "@/components/ui/calendar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-import { createFrete, getFrete, updateFrete, uploadComprovante, deleteComprovante } from "@/lib/services/frete-service"
+import {
+  createFrete,
+  getFrete,
+  updateFrete,
+  uploadComprovante,
+  deleteComprovante,
+} from "@/lib/services/frete-service"
 import { getAllVeiculos } from "@/lib/services/veiculo-service"
 import { getAllAgenciador } from "@/lib/services/agenciador-service"
 import { getAllMotorista } from "@/lib/services/motorista-service"
 import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -29,33 +48,33 @@ const formSchema = z.object({
   }),
   frete_veiculo: z.coerce
     .number({
-      required_error: "Por favor, selecione um veículo",
-      invalid_type_error: "Selecione um veículo válido",
+      required_error: "Selecione o veículo que realizará o frete",
+      invalid_type_error: "Selecione um veículo válido da lista",
     })
-    .min(1, "Por favor, selecione um veículo"),
+    .min(1, "É necessário selecionar um veículo para o frete"),
   frete_agenciador: z.coerce
     .number({
-      required_error: "Por favor, selecione um agenciador",
-      invalid_type_error: "Selecione um agenciador válido",
+      required_error: "Selecione o agenciador responsável pelo frete",
+      invalid_type_error: "Selecione um agenciador válido da lista",
     })
-    .min(1, "Por favor, selecione um agenciador"),
+    .min(1, "É necessário selecionar um agenciador para o frete"),
   frete_motorista: z.coerce
     .number({
-      required_error: "Por favor, selecione um motorista",
-      invalid_type_error: "Selecione um motorista válido",
+      required_error: "Selecione o motorista que conduzirá o veículo",
+      invalid_type_error: "Selecione um motorista válido da lista",
     })
-    .min(1, "Por favor, selecione um motorista"),
+    .min(1, "É necessário selecionar um motorista para o frete"),
   frete_origem: z.string().min(3, {
-    message: "A origem deve ter pelo menos 3 caracteres.",
+    message: "Informe a cidade de origem do frete",
   }),
   frete_destino: z.string().min(3, {
-    message: "O destino deve ter pelo menos 3 caracteres.",
+    message: "Informe a cidade de destino do frete",
   }),
   frete_distancia: z.coerce.number().min(0).nullable(),
   frete_peso: z.array(z.coerce.number().min(0)),
   frete_valor_tonelada: z.coerce.number().min(0),
   created_at: z.date({
-    required_error: "Por favor, selecione a data do frete."
+    required_error: "Selecione a data de início do frete",
   }),
   comprovante: z.instanceof(File).optional().nullable(),
 })
@@ -70,7 +89,11 @@ interface FretesFormProps {
 
 function formatCurrencyBRL(value: number | string) {
   const number = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value
-  return number.toLocaleString("pt-BR", { style: "decimal", minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return number.toLocaleString("pt-BR", {
+    style: "decimal",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
 }
 
 export function FretesForm({ id }: FretesFormProps) {
@@ -78,13 +101,17 @@ export function FretesForm({ id }: FretesFormProps) {
   const [isLoading, setIsLoading] = useState(id ? true : false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [veiculos, setVeiculos] = useState<{ id: number; nome: string; motorista?: { id: number } }[]>([])
+  const [veiculos, setVeiculos] = useState<
+    { id: number; nome: string; motorista?: { id: number } }[]
+  >([])
   const [agenciadores, setAgenciadores] = useState<{ id: number; agenciador_nome: string }[]>([])
   const [motoristas, setMotoristas] = useState<{ id: number; motorista_nome: string }[]>([])
   const [weights, setWeights] = useState<string[]>([""])
   const [userType, setUserType] = useState<string>("")
   const [userId, setUserId] = useState<number | null>(null)
-  const [selectedVehicleMotorista, setSelectedVehicleMotorista] = useState<number | undefined>(undefined)
+  const [selectedVehicleMotorista, setSelectedVehicleMotorista] = useState<number | undefined>(
+    undefined
+  )
   const [uploadingFile, setUploadingFile] = useState(false)
   const [comprovanteUrl, setComprovanteUrl] = useState<string | null>(null)
 
@@ -113,14 +140,26 @@ export function FretesForm({ id }: FretesFormProps) {
           getAllMotorista(),
         ])
 
-        setVeiculos(veiculosData?.map((v: { id: number; veiculo_nome: string; motorista?: { id: number } }) => 
-          ({ id: v.id, nome: v.veiculo_nome, motorista: v.motorista })) || []
+        setVeiculos(
+          veiculosData?.map(
+            (v: { id: number; veiculo_nome: string; motorista?: { id: number } }) => ({
+              id: v.id,
+              nome: v.veiculo_nome,
+              motorista: v.motorista,
+            })
+          ) || []
         )
-        setAgenciadores(agenciadoresData?.map((a: { id: number; agenciador_nome: string }) => 
-          ({ id: a.id, agenciador_nome: a.agenciador_nome })) || []
+        setAgenciadores(
+          agenciadoresData?.map((a: { id: number; agenciador_nome: string }) => ({
+            id: a.id,
+            agenciador_nome: a.agenciador_nome,
+          })) || []
         )
-        setMotoristas(motoristasData?.map((m: { id: number; motorista_nome: string }) => 
-          ({ id: m.id, motorista_nome: m.motorista_nome })) || []
+        setMotoristas(
+          motoristasData?.map((m: { id: number; motorista_nome: string }) => ({
+            id: m.id,
+            motorista_nome: m.motorista_nome,
+          })) || []
         )
 
         if (id) {
@@ -165,11 +204,13 @@ export function FretesForm({ id }: FretesFormProps) {
       if (session) {
         setUserType(session.userType)
         setUserId(session.id)
-        
+
         // Se for motorista, buscar e setar o veículo automaticamente
         if (session.userType === "driver" && session.id) {
           const veiculosData = await getAllVeiculos()
-          const veiculoDoMotorista = veiculosData?.find((v: { motorista?: { id: number } }) => v.motorista?.id === session.id)
+          const veiculoDoMotorista = veiculosData?.find(
+            (v: { motorista?: { id: number } }) => v.motorista?.id === session.id
+          )
           if (veiculoDoMotorista) {
             form.setValue("frete_veiculo", veiculoDoMotorista.id)
             form.setValue("frete_motorista", session.id)
@@ -192,7 +233,7 @@ export function FretesForm({ id }: FretesFormProps) {
     setWeights(newWeights)
     form.setValue(
       "frete_peso",
-      form.getValues("frete_peso").filter((_, i) => i !== index),
+      form.getValues("frete_peso").filter((_, i) => i !== index)
     )
   }
 
@@ -227,7 +268,8 @@ export function FretesForm({ id }: FretesFormProps) {
       } else {
         const result = await createFrete({
           ...freteData,
-          frete_valor_total: values.frete_peso.reduce((acc, peso) => acc + peso, 0) * values.frete_valor_tonelada,
+          frete_valor_total:
+            values.frete_peso.reduce((acc, peso) => acc + peso, 0) * values.frete_valor_tonelada,
         })
         freteId = result[0].id
       }
@@ -286,7 +328,7 @@ export function FretesForm({ id }: FretesFormProps) {
         form.setValue("frete_motorista", 0)
       }
     },
-    [form, veiculos, userType],
+    [form, veiculos, userType]
   )
 
   useEffect(() => {
@@ -373,8 +415,8 @@ export function FretesForm({ id }: FretesFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Veículo</FormLabel>
-                    <Select 
-                      onValueChange={handleVehicleChange} 
+                    <Select
+                      onValueChange={handleVehicleChange}
                       value={field.value?.toString()}
                       disabled={userType === "driver"}
                     >
@@ -452,7 +494,10 @@ export function FretesForm({ id }: FretesFormProps) {
                           field.onChange(Number(value))
                         }}
                         value={field.value?.toString()}
-                        disabled={(userType === "driver" && userId !== null) || selectedVehicleMotorista !== undefined}
+                        disabled={
+                          (userType === "driver" && userId !== null) ||
+                          selectedVehicleMotorista !== undefined
+                        }
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -531,7 +576,7 @@ export function FretesForm({ id }: FretesFormProps) {
                         inputMode="decimal"
                         placeholder="0,00"
                         value={formatCurrencyBRL(field.value ?? 0)}
-                        onChange={e => {
+                        onChange={(e) => {
                           const raw = e.target.value.replace(/\D/g, "")
                           const float = Number(raw) / 100
                           field.onChange(float)
@@ -563,7 +608,12 @@ export function FretesForm({ id }: FretesFormProps) {
                     onChange={(e) => handleWeightChange(e.target.value, index)}
                   />
                   {weights.length > 1 && (
-                    <Button type="button" variant="destructive" size="icon" onClick={() => removeWeight(index)}>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => removeWeight(index)}
+                    >
                       <Trash className="h-4 w-4" />
                     </Button>
                   )}
@@ -628,7 +678,10 @@ export function FretesForm({ id }: FretesFormProps) {
                               <>
                                 <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
                                 <div className="text-sm text-muted-foreground">
-                                  <span className="font-medium text-primary">Clique para selecionar</span> ou arraste e solte
+                                  <span className="font-medium text-primary">
+                                    Clique para selecionar
+                                  </span>{" "}
+                                  ou arraste e solte
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-1">
                                   Suporta imagens e PDFs

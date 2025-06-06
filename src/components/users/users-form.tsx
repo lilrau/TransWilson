@@ -24,16 +24,16 @@ import { createUser } from "@/lib/services/users-service"
 
 const formSchema = z.object({
   user_nome: z.string().min(3, {
-    message: "O nome deve ter pelo menos 3 caracteres.",
+    message: "Informe o nome completo do usuário",
   }),
   user_user: z.string().min(3, {
-    message: "O nome de usuário deve ter pelo menos 3 caracteres.",
+    message: "Informe um nome de usuário com pelo menos 3 caracteres",
   }),
   user_email: z.string().email({
-    message: "Insira um email válido.",
+    message: "Informe um endereço de e-mail válido",
   }),
   user_senha: z.string().min(6, {
-    message: "A senha deve ter pelo menos 6 caracteres.",
+    message: "A senha deve ter no mínimo 6 caracteres",
   }),
   user_ativo: z.boolean(),
 })

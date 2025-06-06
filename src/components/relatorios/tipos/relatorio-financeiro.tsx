@@ -117,7 +117,7 @@ export function RelatorioFinanceiro({ filtroPeriodo }: RelatorioFinanceiroProps)
     valorMinimo: "",
     valorMaximo: "",
     busca: "",
-    motorista: null
+    motorista: null,
   })
 
   // Estado para lista de motoristas
@@ -149,14 +149,14 @@ export function RelatorioFinanceiro({ filtroPeriodo }: RelatorioFinanceiroProps)
         // Carregar categorias e motoristas
         const [tiposEntrada, motoristasData] = await Promise.all([
           getTipoEntradaEnum(),
-          getAllMotorista()
+          getAllMotorista(),
         ])
 
         setCategorias(tiposEntrada || [])
         setMotoristas(
           (motoristasData || []).map((m) => ({
             id: m.id,
-            nome: m.motorista_nome
+            nome: m.motorista_nome,
           }))
         )
 
@@ -182,7 +182,11 @@ export function RelatorioFinanceiro({ filtroPeriodo }: RelatorioFinanceiroProps)
             categoria: despesa.despesa_tipo,
             data: despesa.created_at,
             entidade: despesa.motorista
-              ? { tipo: "motorista", nome: despesa.motorista.motorista_nome, id: despesa.motorista.id }
+              ? {
+                  tipo: "motorista",
+                  nome: despesa.motorista.motorista_nome,
+                  id: despesa.motorista.id,
+                }
               : despesa.veiculo
                 ? { tipo: "veículo", nome: despesa.veiculo.veiculo_nome }
                 : null,
@@ -203,7 +207,11 @@ export function RelatorioFinanceiro({ filtroPeriodo }: RelatorioFinanceiroProps)
             categoria: entrada.entrada_tipo,
             data: entrada.created_at,
             entidade: entrada.frete
-              ? { tipo: "frete", nome: entrada.frete.frete_nome, motorista_id: entrada.frete.motorista?.id }
+              ? {
+                  tipo: "frete",
+                  nome: entrada.frete.frete_nome,
+                  motorista_id: entrada.frete.motorista?.id,
+                }
               : null,
           }))
 
@@ -359,10 +367,15 @@ export function RelatorioFinanceiro({ filtroPeriodo }: RelatorioFinanceiroProps)
     if (filtros.motorista) {
       filtered = filtered.filter((movimento) => {
         if (movimento.tipo === "despesa") {
-          return movimento.entidade?.tipo === "motorista" && movimento.entidade.id === filtros.motorista
+          return (
+            movimento.entidade?.tipo === "motorista" && movimento.entidade.id === filtros.motorista
+          )
         } else if (movimento.tipo === "entrada") {
           // Verifica se a entrada está ligada a um frete e se o motorista do frete é o selecionado
-          return movimento.entidade?.tipo === "frete" && movimento.entidade.motorista_id === filtros.motorista
+          return (
+            movimento.entidade?.tipo === "frete" &&
+            movimento.entidade.motorista_id === filtros.motorista
+          )
         }
         return false // Se não for despesa nem entrada de frete, não filtra por motorista
       })
@@ -642,8 +655,6 @@ export function RelatorioFinanceiro({ filtroPeriodo }: RelatorioFinanceiroProps)
         <TabsContent value="tabela" className="space-y-6">
           {/* Filtros específicos - APENAS NA ABA DE TABELA */}
           <div className="flex flex-col md:flex-row gap-4 mb-6">
-            
-
             <div className="flex-1">
               <Select
                 value={filtros.motorista?.toString() || "todos"}

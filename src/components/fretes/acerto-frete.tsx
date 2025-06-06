@@ -3,49 +3,32 @@
 import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { 
-  Check, 
-  Clock, 
-  DollarSign, 
-  Loader2, 
-  TrendingDown, 
-  TrendingUp 
-} from "lucide-react"
-import { 
-  getAllFrete, 
-  getFrete, 
-  getFreteBalance,
-  darBaixaFrete 
-} from "@/lib/services/frete-service"
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
+import { Check, Clock, DollarSign, Loader2, TrendingDown, TrendingUp } from "lucide-react"
+import { getAllFrete, getFrete, getFreteBalance, darBaixaFrete } from "@/lib/services/frete-service"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card"
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table"
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select"
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -53,7 +36,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createEntrada, getAllEntradas } from "@/lib/services/entrada-service"
 import { toast } from "@/hooks/use-toast"
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -66,6 +49,15 @@ import {
 } from "@/components/ui/alert-dialog"
 import { supabase } from "@/lib/supabase"
 
+function formatCurrencyBRL(value: number | string) {
+  const number = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value
+  return number.toLocaleString("pt-BR", {
+    style: "decimal",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}
+
 type Frete = {
   id: number
   frete_nome: string
@@ -73,6 +65,7 @@ type Frete = {
   frete_destino: string | null
   frete_valor_total: number | null
   frete_baixa: boolean | null
+  frete_distancia: number | null
   created_at: string
   veiculo?: { id: number; veiculo_nome: string } | null
   motorista?: { id: number; motorista_nome: string } | null
@@ -114,21 +107,25 @@ export function AcertoFreteComponent() {
   const [loading, setLoading] = useState<boolean>(true)
   const [loadingDetails, setLoadingDetails] = useState<boolean>(false)
   const [mediaKmL, setMediaKmL] = useState<string>("- Km/L")
-  
+
   // Form states for registering new entries
   const [novaEntrada, setNovaEntrada] = useState({
     descricao: "",
-    valor: ""
+    valor: "",
   })
   const [novaDespesa, setNovaDespesa] = useState({
     descricao: "",
     tipo: "Estadia",
-    valor: ""
+    valor: "",
   })
   const [registrando, setRegistrando] = useState(false)
   const [reativandoFrete, setReativandoFrete] = useState(false)
   const [dandomBaixa, setDandomBaixa] = useState(false)
-  const [baixaValores, setBaixaValores] = useState<{ total: number, adiantado: number, final: number } | null>(null)
+  const [baixaValores, setBaixaValores] = useState<{
+    total: number
+    adiantado: number
+    final: number
+  } | null>(null)
 
   useEffect(() => {
     async function loadFretes() {
@@ -171,23 +168,25 @@ export function AcertoFreteComponent() {
       setFreteBalance(balance)
 
       // Get entradas and despesas from supabase
-      const { data: entradasData, error: entradasError } = await fetch(`/api/entradas?freteId=${freteId}`)
-        .then(res => res.json())
-      
+      const { data: entradasData, error: entradasError } = await fetch(
+        `/api/entradas?freteId=${freteId}`
+      ).then((res) => res.json())
+
       if (entradasError) {
         throw new Error("Erro ao carregar entradas")
       }
-      
-      const { data: despesasData, error: despesasError } = await fetch(`/api/despesas?freteId=${freteId}`)
-        .then(res => res.json())
-      
+
+      const { data: despesasData, error: despesasError } = await fetch(
+        `/api/despesas?freteId=${freteId}`
+      ).then((res) => res.json())
+
       if (despesasError) {
         throw new Error("Erro ao carregar despesas")
       }
 
       setEntradas(entradasData || [])
       setDespesas(despesasData || [])
-      
+
       // Calculate Km/L average
       calcularMediaKmL(freteData, despesasData || [])
     } catch (error) {
@@ -195,7 +194,7 @@ export function AcertoFreteComponent() {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível carregar os detalhes do frete."
+        description: "Não foi possível carregar os detalhes do frete.",
       })
     } finally {
       setLoadingDetails(false)
@@ -209,15 +208,15 @@ export function AcertoFreteComponent() {
       setMediaKmL("- Km/L")
       return
     }
-    
+
     // Filter for fuel expenses only
-    const despesasCombustivel = despesas.filter(d => d.despesa_tipo === "Combustível")
-    
+    const despesasCombustivel = despesas.filter((d) => d.despesa_tipo === "Combustível")
+
     if (!despesasCombustivel.length) {
       setMediaKmL("- Km/L")
       return
     }
-    
+
     // Calculate total liters based on expenses
     // We need to estimate liters from the values
     // This is a simplified calculation assuming R$ 6,00 per liter
@@ -225,51 +224,55 @@ export function AcertoFreteComponent() {
     const valorPorLitro = 6.0 // Valor médio estimado por litro
     const totalValorCombustivel = despesasCombustivel.reduce((acc, d) => acc + d.despesa_valor, 0)
     const litrosEstimados = totalValorCombustivel / valorPorLitro
-    
+
     if (litrosEstimados <= 0) {
       setMediaKmL("- Km/L")
       return
     }
-    
+
     // Calculate Km/L
     const kmL = frete.frete_distancia / litrosEstimados
-    
+
     // Format with 1 decimal place
     setMediaKmL(`${kmL.toFixed(1)} Km/L`)
   }
 
   async function handleRegistrarEntrada() {
-    if (!selectedFrete || !novaEntrada.descricao || !novaEntrada.valor) return
-    
-    setRegistrando(true)
+    if (!selectedFrete) return
+
     try {
-      await createEntrada({
-        entrada_nome: `Entrada: ${novaEntrada.descricao}`,
+      setRegistrando(true)
+
+      const entradaData = {
+        entrada_nome: `Recebimento do frete: ${selectedFrete.frete_nome}`,
         entrada_descricao: novaEntrada.descricao,
-        entrada_valor: parseFloat(novaEntrada.valor),
+        entrada_valor: Number(novaEntrada.valor),
         entrada_tipo: "Frete",
         entrada_frete_id: selectedFrete.id,
-      })
+        created_at: new Date().toISOString(),
+      }
+
+      await createEntrada(entradaData)
 
       // Refresh data
       await handleFreteChange(selectedFreteId)
-      
+
       // Reset form
       setNovaEntrada({
         descricao: "",
-        valor: ""
+        valor: "",
       })
 
       toast({
         title: "Entrada registrada",
-        description: "A entrada foi registrada com sucesso."
+        description: "A entrada foi registrada com sucesso.",
       })
     } catch (error) {
       console.error("Erro ao registrar entrada:", error)
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível registrar a entrada."
+        description: "Não foi possível registrar a entrada.",
       })
     } finally {
       setRegistrando(false)
@@ -278,7 +281,7 @@ export function AcertoFreteComponent() {
 
   async function handleRegistrarDespesa() {
     if (!selectedFrete || !novaDespesa.descricao || !novaDespesa.valor) return
-    
+
     setRegistrando(true)
     try {
       const despesaData = {
@@ -288,41 +291,41 @@ export function AcertoFreteComponent() {
         despesa_tipo: novaDespesa.tipo,
         despesa_veiculo: selectedFrete.veiculo?.id || null,
         despesa_motorista: selectedFrete.motorista?.id || null,
-      };
-      
+      }
+
       // Use the Supabase client directly to include the frete_id
       const { error } = await supabase()
         .from("despesa")
         .insert({
           ...despesaData,
-          despesa_frete_id: selectedFrete.id
+          despesa_frete_id: selectedFrete.id,
         })
-        .select();
-        
+        .select()
+
       if (error) {
-        throw error;
+        throw error
       }
-      
+
       // Refresh data
       await handleFreteChange(selectedFreteId)
-      
+
       // Reset form
       setNovaDespesa({
         descricao: "",
         tipo: "Estadia",
-        valor: ""
+        valor: "",
       })
 
       toast({
         title: "Despesa registrada",
-        description: "A despesa foi registrada com sucesso."
+        description: "A despesa foi registrada com sucesso.",
       })
     } catch (error) {
       console.error("Erro ao registrar despesa:", error)
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível registrar a despesa."
+        description: "Não foi possível registrar a despesa.",
       })
     } finally {
       setRegistrando(false)
@@ -331,7 +334,7 @@ export function AcertoFreteComponent() {
 
   async function handleReativarFrete() {
     if (!selectedFrete) return
-    
+
     setReativandoFrete(true)
     try {
       // Buscar a entrada específica de baixa do frete ("Recebimento do frete: [nome]")
@@ -340,44 +343,45 @@ export function AcertoFreteComponent() {
         .select("id, entrada_nome")
         .eq("entrada_frete_id", selectedFrete.id)
         .ilike("entrada_nome", `Recebimento do frete: ${selectedFrete.frete_nome}%`)
-        
+
       if (erroEntradas) {
         throw new Error("Erro ao buscar entradas de baixa")
       }
-      
+
       // Se encontrou entradas de baixa, remover
       if (entradasBaixa && entradasBaixa.length > 0) {
         console.log("Entradas de baixa encontradas:", entradasBaixa)
-        
+
         for (const entrada of entradasBaixa) {
           const { error: erroDelete } = await supabase()
             .from("entrada")
             .delete()
             .eq("id", entrada.id)
-            
+
           if (erroDelete) {
             console.error("Erro ao remover entrada de baixa:", erroDelete)
             throw new Error("Erro ao remover entrada de baixa")
           }
         }
       }
-      
+
       // Alterar o status do frete para não baixado
       await darBaixaFrete(selectedFrete.id, false)
-      
+
       // Refresh data
       await handleFreteChange(selectedFreteId)
-      
+
       toast({
         title: "Frete reativado",
-        description: "O frete foi reativado com sucesso e a entrada de baixa foi removida."
+        description: "O frete foi reativado com sucesso e a entrada de baixa foi removida.",
       })
     } catch (error) {
       console.error("Erro ao reativar frete:", error)
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível reativar o frete. " + (error instanceof Error ? error.message : "")
+        description:
+          "Não foi possível reativar o frete. " + (error instanceof Error ? error.message : ""),
       })
     } finally {
       setReativandoFrete(false)
@@ -387,55 +391,59 @@ export function AcertoFreteComponent() {
   // Função para preparar valores para a baixa
   async function prepararValoresBaixa() {
     if (!selectedFrete) return
-    
+
     try {
       // Buscar todas as entradas relacionadas a este frete (adiantamentos, etc)
       const entradas = await getAllEntradas()
-      const entradasDoFrete = (entradas || []).filter((entrada) => entrada.entrada_frete_id === selectedFrete.id)
-      const totalAdiantado = entradasDoFrete.reduce((acc, entrada) => acc + (entrada.entrada_valor || 0), 0)
-      
+      const entradasDoFrete = (entradas || []).filter(
+        (entrada) => entrada.entrada_frete_id === selectedFrete.id
+      )
+      const totalAdiantado = entradasDoFrete.reduce(
+        (acc, entrada) => acc + (entrada.entrada_valor || 0),
+        0
+      )
+
       // Calcular valor restante a receber
       const valorTotal = selectedFrete.frete_valor_total || 0
       const valorFinal = valorTotal - totalAdiantado
-      
+
       setBaixaValores({ total: valorTotal, adiantado: totalAdiantado, final: valorFinal })
     } catch (error) {
       console.error("Erro ao preparar valores para baixa:", error)
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível calcular os valores para baixa do frete."
+        description: "Não foi possível calcular os valores para baixa do frete.",
       })
     }
   }
-  
+
   async function handleDarBaixa() {
     if (!selectedFrete || !baixaValores) return
-    
+
     setDandomBaixa(true)
     try {
-      // Atualizar o status do frete
-      await darBaixaFrete(selectedFrete.id, true)
-      
-      // Criar uma entrada financeira apenas se houver valor a receber
-      if (baixaValores.final > 0) {
-        await createEntrada({
-          entrada_nome: `Recebimento do frete: ${selectedFrete.frete_nome}`,
-          entrada_descricao: `Origem: ${selectedFrete.frete_origem || "N/A"} - Destino: ${selectedFrete.frete_destino || "N/A"}`,
-          entrada_valor: baixaValores.final,
-          entrada_tipo: "Frete",
-          entrada_frete_id: selectedFrete.id,
-        })
+      setDandomBaixa(true)
+
+      const entradaData = {
+        entrada_nome: `Recebimento do frete: ${selectedFrete.frete_nome}`,
+        entrada_descricao: "Baixa do frete",
+        entrada_valor: baixaValores.final,
+        entrada_tipo: "Frete",
+        entrada_frete_id: selectedFrete.id,
+        created_at: new Date().toISOString(),
       }
-      
+
+      await createEntrada(entradaData)
+
       // Refresh data
       await handleFreteChange(selectedFreteId)
-      
+
       toast({
         title: "Frete baixado com sucesso",
-        description: `O frete foi baixado e uma entrada financeira foi criada com valor de ${baixaValores.final.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}.`
+        description: `O frete foi baixado e uma entrada financeira foi criada com valor de ${baixaValores.final.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
       })
-      
+
       // Reset
       setBaixaValores(null)
     } catch (error) {
@@ -443,7 +451,8 @@ export function AcertoFreteComponent() {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível dar baixa no frete: " + (error instanceof Error ? error.message : "")
+        description:
+          "Não foi possível dar baixa no frete: " + (error instanceof Error ? error.message : ""),
       })
     } finally {
       setDandomBaixa(false)
@@ -494,7 +503,10 @@ export function AcertoFreteComponent() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {freteBalance.valorFrete.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {freteBalance.valorFrete.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -504,7 +516,10 @@ export function AcertoFreteComponent() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  {freteBalance.totalEntradas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {freteBalance.totalEntradas.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -514,7 +529,10 @@ export function AcertoFreteComponent() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">
-                  {freteBalance.totalDespesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {freteBalance.totalDespesas.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -523,9 +541,7 @@ export function AcertoFreteComponent() {
                 <CardTitle className="text-sm font-medium">Média</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {mediaKmL}
-                </div>
+                <div className="text-2xl font-bold">{mediaKmL}</div>
               </CardContent>
             </Card>
             <Card>
@@ -533,28 +549,44 @@ export function AcertoFreteComponent() {
                 <CardTitle className="text-sm font-medium">Saldo</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className={cn(
-                  "text-2xl font-bold",
-                  freteBalance.saldo > 0 ? "text-green-600" : 
-                  freteBalance.saldo < 0 ? "text-red-600" : ""
-                )}>
-                  {freteBalance.saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                <div
+                  className={cn(
+                    "text-2xl font-bold",
+                    freteBalance.saldo > 0
+                      ? "text-green-600"
+                      : freteBalance.saldo < 0
+                        ? "text-red-600"
+                        : ""
+                  )}
+                >
+                  {freteBalance.saldo.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
                 </div>
               </CardContent>
               <CardFooter className="pt-0 flex gap-2 items-center flex-wrap">
-                <Badge variant={selectedFrete.frete_baixa ? "default" : "outline"} className="gap-1">
-                  {selectedFrete.frete_baixa ? 
-                    <><Check className="h-3.5 w-3.5" /> Baixado</> : 
-                    <><Clock className="h-3.5 w-3.5" /> Em andamento</>
-                  }
+                <Badge
+                  variant={selectedFrete.frete_baixa ? "default" : "outline"}
+                  className="gap-1"
+                >
+                  {selectedFrete.frete_baixa ? (
+                    <>
+                      <Check className="h-3.5 w-3.5" /> Baixado
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="h-3.5 w-3.5" /> Em andamento
+                    </>
+                  )}
                 </Badge>
-                
+
                 {selectedFrete.frete_baixa ? (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300"
                       >
                         Reativar Frete
@@ -564,8 +596,9 @@ export function AcertoFreteComponent() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Reativar frete</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Tem certeza que deseja reativar este frete? O status de baixa será removido, porém as entradas e despesas 
-                          registradas serão mantidas. Isso pode afetar relatórios financeiros.
+                          Tem certeza que deseja reativar este frete? O status de baixa será
+                          removido, porém as entradas e despesas registradas serão mantidas. Isso
+                          pode afetar relatórios financeiros.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -590,9 +623,9 @@ export function AcertoFreteComponent() {
                 ) : (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="bg-green-100 hover:bg-green-200 text-green-800 border-green-300"
                         onClick={prepararValoresBaixa}
                       >
@@ -605,9 +638,33 @@ export function AcertoFreteComponent() {
                         <AlertDialogDescription>
                           {baixaValores ? (
                             <span className="space-y-1 block">
-                              <span className="block">Valor total do frete: <strong>{baixaValores.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></span>
-                              <span className="block">Total já adiantado: <strong className="text-amber-600">{baixaValores.adiantado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></span>
-                              <span className="block">Valor a receber nesta baixa: <strong className="text-green-700">{baixaValores.final.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></span>
+                              <span className="block">
+                                Valor total do frete:{" "}
+                                <strong>
+                                  {baixaValores.total.toLocaleString("pt-BR", {
+                                    style: "currency",
+                                    currency: "BRL",
+                                  })}
+                                </strong>
+                              </span>
+                              <span className="block">
+                                Total já adiantado:{" "}
+                                <strong className="text-amber-600">
+                                  {baixaValores.adiantado.toLocaleString("pt-BR", {
+                                    style: "currency",
+                                    currency: "BRL",
+                                  })}
+                                </strong>
+                              </span>
+                              <span className="block">
+                                Valor a receber nesta baixa:{" "}
+                                <strong className="text-green-700">
+                                  {baixaValores.final.toLocaleString("pt-BR", {
+                                    style: "currency",
+                                    currency: "BRL",
+                                  })}
+                                </strong>
+                              </span>
                             </span>
                           ) : (
                             <span>Carregando valores...</span>
@@ -707,25 +764,30 @@ export function AcertoFreteComponent() {
                     <div className="grid gap-4 md:grid-cols-3 items-end">
                       <div className="space-y-2">
                         <Label htmlFor="entrada-descricao">Descrição</Label>
-                        <Input 
-                          id="entrada-descricao" 
+                        <Input
+                          id="entrada-descricao"
                           placeholder="Descrição da entrada"
                           value={novaEntrada.descricao}
-                          onChange={(e) => setNovaEntrada({...novaEntrada, descricao: e.target.value})}
+                          onChange={(e) =>
+                            setNovaEntrada({ ...novaEntrada, descricao: e.target.value })
+                          }
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="entrada-valor">Valor</Label>
-                        <Input 
-                          id="entrada-valor" 
-                          type="number" 
-                          step="0.01"
+                        <Label htmlFor="valor">Valor</Label>
+                        <Input
+                          id="valor"
+                          inputMode="decimal"
                           placeholder="0,00"
-                          value={novaEntrada.valor}
-                          onChange={(e) => setNovaEntrada({...novaEntrada, valor: e.target.value})}
+                          value={formatCurrencyBRL(novaEntrada.valor)}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, "")
+                            const float = Number(raw) / 100
+                            setNovaEntrada({ ...novaEntrada, valor: float.toString() })
+                          }}
                         />
                       </div>
-                      <Button 
+                      <Button
                         onClick={handleRegistrarEntrada}
                         disabled={registrando || !novaEntrada.descricao || !novaEntrada.valor}
                       >
@@ -757,7 +819,10 @@ export function AcertoFreteComponent() {
                         <TableBody>
                           {entradas.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                              <TableCell
+                                colSpan={4}
+                                className="text-center py-4 text-muted-foreground"
+                              >
                                 Nenhuma entrada registrada para este frete.
                               </TableCell>
                             </TableRow>
@@ -765,12 +830,19 @@ export function AcertoFreteComponent() {
                             entradas.map((entrada) => (
                               <TableRow key={entrada.id}>
                                 <TableCell>
-                                  {format(new Date(entrada.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                                  {format(new Date(entrada.created_at), "dd/MM/yyyy", {
+                                    locale: ptBR,
+                                  })}
                                 </TableCell>
-                                <TableCell>{entrada.entrada_descricao || entrada.entrada_nome}</TableCell>
+                                <TableCell>
+                                  {entrada.entrada_descricao || entrada.entrada_nome}
+                                </TableCell>
                                 <TableCell>{entrada.entrada_tipo || "N/A"}</TableCell>
                                 <TableCell className="text-right font-medium text-green-600">
-                                  {entrada.entrada_valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                  {entrada.entrada_valor.toLocaleString("pt-BR", {
+                                    style: "currency",
+                                    currency: "BRL",
+                                  })}
                                 </TableCell>
                               </TableRow>
                             ))
@@ -799,18 +871,20 @@ export function AcertoFreteComponent() {
                     <div className="grid gap-4 md:grid-cols-4 items-end">
                       <div className="space-y-2">
                         <Label htmlFor="despesa-descricao">Descrição</Label>
-                        <Input 
-                          id="despesa-descricao" 
+                        <Input
+                          id="despesa-descricao"
                           placeholder="Descrição da despesa"
                           value={novaDespesa.descricao}
-                          onChange={(e) => setNovaDespesa({...novaDespesa, descricao: e.target.value})}
+                          onChange={(e) =>
+                            setNovaDespesa({ ...novaDespesa, descricao: e.target.value })
+                          }
                         />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="despesa-tipo">Tipo</Label>
-                        <Select 
-                          value={novaDespesa.tipo} 
-                          onValueChange={(value) => setNovaDespesa({...novaDespesa, tipo: value})}
+                        <Select
+                          value={novaDespesa.tipo}
+                          onValueChange={(value) => setNovaDespesa({ ...novaDespesa, tipo: value })}
                         >
                           <SelectTrigger id="despesa-tipo">
                             <SelectValue placeholder="Selecione o tipo" />
@@ -826,17 +900,20 @@ export function AcertoFreteComponent() {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="despesa-valor">Valor</Label>
-                        <Input 
-                          id="despesa-valor" 
-                          type="number" 
-                          step="0.01"
+                        <Label htmlFor="valorDespesa">Valor</Label>
+                        <Input
+                          id="valorDespesa"
+                          inputMode="decimal"
                           placeholder="0,00"
-                          value={novaDespesa.valor}
-                          onChange={(e) => setNovaDespesa({...novaDespesa, valor: e.target.value})}
+                          value={formatCurrencyBRL(novaDespesa.valor)}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, "")
+                            const float = Number(raw) / 100
+                            setNovaDespesa({ ...novaDespesa, valor: float.toString() })
+                          }}
                         />
                       </div>
-                      <Button 
+                      <Button
                         onClick={handleRegistrarDespesa}
                         disabled={registrando || !novaDespesa.descricao || !novaDespesa.valor}
                         variant="outline"
@@ -869,7 +946,10 @@ export function AcertoFreteComponent() {
                         <TableBody>
                           {despesas.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                              <TableCell
+                                colSpan={4}
+                                className="text-center py-4 text-muted-foreground"
+                              >
                                 Nenhuma despesa registrada para este frete.
                               </TableCell>
                             </TableRow>
@@ -877,12 +957,19 @@ export function AcertoFreteComponent() {
                             despesas.map((despesa) => (
                               <TableRow key={despesa.id}>
                                 <TableCell>
-                                  {format(new Date(despesa.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                                  {format(new Date(despesa.created_at), "dd/MM/yyyy", {
+                                    locale: ptBR,
+                                  })}
                                 </TableCell>
-                                <TableCell>{despesa.despesa_descricao || despesa.despesa_nome}</TableCell>
+                                <TableCell>
+                                  {despesa.despesa_descricao || despesa.despesa_nome}
+                                </TableCell>
                                 <TableCell>{despesa.despesa_tipo}</TableCell>
                                 <TableCell className="text-right font-medium text-red-600">
-                                  {despesa.despesa_valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                  {despesa.despesa_valor.toLocaleString("pt-BR", {
+                                    style: "currency",
+                                    currency: "BRL",
+                                  })}
                                 </TableCell>
                               </TableRow>
                             ))
@@ -909,4 +996,4 @@ export function AcertoFreteComponent() {
       )}
     </div>
   )
-} 
+}

@@ -94,7 +94,7 @@ export async function clearSessionCookie() {
 export async function authenticateUser(
   identifier: string,
   password: string,
-  userType: UserType,
+  userType: UserType
 ): Promise<SessionData | null> {
   try {
     // Autenticação de administrador
@@ -102,7 +102,9 @@ export async function authenticateUser(
       const user = await getUserByUsername(identifier)
 
       if (!user || !user.user_senha) {
-        Logger.warn("auth", "Tentativa de login com usuário admin inválido", { username: identifier })
+        Logger.warn("auth", "Tentativa de login com usuário admin inválido", {
+          username: identifier,
+        })
         return null
       }
 
