@@ -52,7 +52,8 @@ type FormValues = z.infer<typeof formSchema>
 
 interface DespesasFormProps {
   id?: string
-  despesa_frete_id?: number
+  despesa_frete_id?: string
+  freteId?: string
 }
 
 function formatCurrencyBRL(value: number | string) {
@@ -83,19 +84,23 @@ const ValorField = ({ field }: { field: ControllerRenderProps<FormValues, "despe
   )
 }
 
-export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
+export function DespesasForm({ id, despesa_frete_id, freteId }: DespesasFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(id ? true : false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [tipoOptions, setTipoOptions] = useState<string[]>([])
-  const [veiculos, setVeiculos] = useState<{ id: number; nome: string; motorista?: { id: number; nome: string } }[]>([])
-  const [motoristas, setMotoristas] = useState<{ id: number; nome: string }[]>([])
+  const [isLoadingTipos, setIsLoadingTipos] = useState(true)
+  const [veiculos, setVeiculos] = useState<{ id: number; veiculo_nome: string; motorista?: { id: number } }[]>([])
+  const [isLoadingVeiculos, setIsLoadingVeiculos] = useState(false)
+  const [motoristas, setMotoristas] = useState<{ id: number; motorista_nome: string }[]>([])
+  const [isLoadingMotoristas, setIsLoadingMotoristas] = useState(false)
+  const [fretes, setFretes] = useState<{ id: number; frete_nome: string }[]>([])
+  const [isLoadingFretes, setIsLoadingFretes] = useState(false)
+  const [comprovanteUrl, setComprovanteUrl] = useState<string | null>(null)
+  const [uploadingFile, setUploadingFile] = useState(false)
   const [userType, setUserType] = useState<string>("")
   const [userId, setUserId] = useState<number | null>(null)
-  const [uploadingFile, setUploadingFile] = useState(false)
-  const [comprovanteUrl, setComprovanteUrl] = useState<string | null>(null)
-  const [fretes, setFretes] = useState<{ id: number; frete_nome: string; frete_origem: string | null; frete_destino: string | null }[]>([])
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -109,7 +114,7 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
       comprovante: null,
       despesa_metodo_pagamento: null,
       despesa_parcelas: 1,
-      despesa_frete_id: despesa_frete_id ?? null,
+      despesa_frete_id: freteId ? Number(freteId) : despesa_frete_id ? Number(despesa_frete_id) : null,
       created_at: new Date(),
     },
   })
@@ -127,31 +132,58 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
   }, [])
 
   useEffect(() => {
+    async function fetchTiposDespesa() {
+      try {
+        setIsLoadingTipos(true)
+        const data = await getTipoDespesaEnum()
+        if (data && Array.isArray(data)) {
+          setTipoOptions(data)
+          if (freteId) {
+            form.setValue("despesa_tipo", "Frete")
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao buscar tipos de despesa:", err)
+        toast({
+          variant: "destructive",
+          title: "Erro ao carregar tipos de despesa",
+          description: "Não foi possível carregar os tipos de despesa.",
+        })
+      } finally {
+        setIsLoadingTipos(false)
+      }
+    }
+
+    fetchTiposDespesa()
+  }, [freteId, form])
+
+  useEffect(() => {
     async function fetchVeiculos() {
       try {
-        setIsLoading(true)
+        setIsLoadingVeiculos(true)
         setError(null)
         const data = await getAllVeiculos()
         setVeiculos((data || []).map((v) => ({
           id: v.id,
-          nome: v.veiculo_nome,
-          motorista: v.motorista ? { id: v.motorista.id, nome: v.motorista.motorista_nome } : undefined,
+          veiculo_nome: v.veiculo_nome,
+          motorista: v.motorista,
         })))
       } catch {
         setError("Erro ao buscar veículos.")
       } finally {
-        setIsLoading(false)
+        setIsLoadingVeiculos(false)
       }
     }
 
     async function fetchMotoristas() {
       try {
+        setIsLoadingMotoristas(true)
         const data = await getAllMotorista()
 
         setMotoristas(
           data?.map((motorista) => ({
             id: motorista.id,
-            nome: motorista.motorista_nome,
+            motorista_nome: motorista.motorista_nome,
           })) || [],
         )
       } catch (err) {
@@ -161,46 +193,32 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
           title: "Erro ao carregar motoristas",
           description: "Não foi possível carregar a lista de motoristas.",
         })
-      }
-    }
-
-    async function fetchTiposDespesa() {
-      try {
-        const data = await getTipoDespesaEnum()
-        if (data && Array.isArray(data)) {
-          setTipoOptions(data)
-        }
-      } catch (err) {
-        console.error("Erro ao buscar tipos de despesa:", err)
-        toast({
-          variant: "destructive",
-          title: "Erro ao carregar tipos de despesa",
-          description: "Não foi possível carregar os tipos de despesa.",
-        })
+      } finally {
+        setIsLoadingMotoristas(false)
       }
     }
 
     async function fetchFretes() {
       try {
+        setIsLoadingFretes(true)
         const data = await getAllFrete()
         setFretes(
           (data || [])
             .filter((f: { frete_baixa?: boolean }) => !f.frete_baixa)
-            .map((f: { id: number; frete_nome: string; frete_origem: string; frete_destino: string }) => ({
+            .map((f: { id: number; frete_nome: string }) => ({
               id: f.id,
               frete_nome: f.frete_nome,
-              frete_origem: f.frete_origem,
-              frete_destino: f.frete_destino,
             }))
         )
       } catch {
         // Silencioso
+      } finally {
+        setIsLoadingFretes(false)
       }
     }
 
     fetchVeiculos()
     fetchMotoristas()
-    fetchTiposDespesa()
     fetchFretes()
   }, [])
 
@@ -253,15 +271,11 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
       const newValue = value === "none" ? null : Number(value)
       form.setValue("despesa_veiculo", newValue)
 
-      const selectedVehicle = veiculos.find((v) => v.id === newValue)
-
-      if (selectedVehicle?.motorista?.id) {
-        form.setValue("despesa_motorista", selectedVehicle.motorista.id)
-      } else if (userType !== "driver") {
+      if (userType !== "driver") {
         form.setValue("despesa_motorista", null)
       }
     },
-    [form, veiculos, userType]
+    [form, userType]
   )
 
   // Set driver ID if user is a driver
@@ -413,19 +427,27 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
     return (
       <FormItem>
         <FormLabel>Motorista</FormLabel>
-        <Select onValueChange={handleChange} value={selectedValue} disabled={userType === "driver"}>
+        <Select onValueChange={handleChange} value={selectedValue} disabled={userType === "driver" || isLoadingMotoristas}>
           <FormControl>
             <SelectTrigger>
               <SelectValue placeholder="Selecione um motorista" />
             </SelectTrigger>
           </FormControl>
           <SelectContent>
-            <SelectItem value="none">Nenhum</SelectItem>
-            {motoristas.map((motorista) => (
-              <SelectItem key={motorista.id} value={motorista.id.toString()}>
-                {motorista.nome}
+            {isLoadingMotoristas ? (
+              <SelectItem value="carregando" disabled>
+                Carregando motoristas...
               </SelectItem>
-            ))}
+            ) : (
+              <>
+                <SelectItem value="none">Nenhum</SelectItem>
+                {motoristas.map((motorista) => (
+                  <SelectItem key={motorista.id} value={motorista.id.toString()}>
+                    {motorista.motorista_nome}
+                  </SelectItem>
+                ))}
+              </>
+            )}
           </SelectContent>
         </Select>
         <FormMessage />
@@ -476,23 +498,23 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Tipo de Despesa</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || "none"}>
+                    <Select onValueChange={field.onChange} value={field.value || "none"} disabled={isLoadingTipos}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o tipo de despesa" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {tipoOptions.length > 0 ? (
+                        {isLoadingTipos ? (
+                          <SelectItem value="carregando" disabled>
+                            Carregando tipos...
+                          </SelectItem>
+                        ) : (
                           tipoOptions.map((tipo) => (
                             <SelectItem key={tipo} value={tipo}>
                               {tipo}
                             </SelectItem>
                           ))
-                        ) : (
-                          <SelectItem value="carregando" disabled>
-                            Carregando tipos...
-                          </SelectItem>
                         )}
                       </SelectContent>
                     </Select>
@@ -534,7 +556,7 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
                     <Select
                       onValueChange={handleVehicleChange}
                       value={field.value?.toString() || "none"}
-                      disabled={userType === "driver"}
+                      disabled={userType === "driver" || isLoadingVeiculos}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -542,12 +564,20 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">Nenhum</SelectItem>
-                        {veiculos.map((veiculo) => (
-                          <SelectItem key={veiculo.id} value={veiculo.id.toString()}>
-                            {veiculo.nome}
+                        {isLoadingVeiculos ? (
+                          <SelectItem value="carregando" disabled>
+                            Carregando veículos...
                           </SelectItem>
-                        ))}
+                        ) : (
+                          <>
+                            <SelectItem value="none">Nenhum</SelectItem>
+                            {veiculos.map((veiculo) => (
+                              <SelectItem key={veiculo.id} value={veiculo.id.toString()}>
+                                {veiculo.veiculo_nome}
+                              </SelectItem>
+                            ))}
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -600,6 +630,7 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
                     <Select
                       onValueChange={(value) => field.onChange(value === "none" ? null : Number(value))}
                       value={field.value ? String(field.value) : "none"}
+                      disabled={isLoadingFretes}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -607,12 +638,20 @@ export function DespesasForm({ id, despesa_frete_id }: DespesasFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">Nenhum</SelectItem>
-                        {fretes.map((frete) => (
-                          <SelectItem key={frete.id} value={frete.id.toString()}>
-                            {frete.frete_nome} ({frete.frete_origem || "-"} → {frete.frete_destino || "-"})
+                        {isLoadingFretes ? (
+                          <SelectItem value="carregando" disabled>
+                            Carregando fretes...
                           </SelectItem>
-                        ))}
+                        ) : (
+                          <>
+                            <SelectItem value="none">Nenhum</SelectItem>
+                            {fretes.map((frete) => (
+                              <SelectItem key={frete.id} value={frete.id.toString()}>
+                                {frete.frete_nome}
+                              </SelectItem>
+                            ))}
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />

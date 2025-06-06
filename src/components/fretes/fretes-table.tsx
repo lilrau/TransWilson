@@ -17,6 +17,7 @@ import {
   Percent,
   Wallet,
   FileText,
+  FileX,
 } from "lucide-react"
 import { createEntrada, getAllEntradas } from "@/lib/services/entrada-service"
 import { darBaixaFrete, deleteFrete, getAllFrete, getFrete, getFreteBalance } from "@/lib/services/frete-service"
@@ -596,7 +597,12 @@ export function FretesTable() {
                       <FileText className="h-4 w-4" />
                     </a>
                   </Button>
-                ) : null}
+                ) : (
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" disabled>
+                    <FileX className="h-4 w-4" />
+                    <span className="sr-only">Sem comprovante</span>
+                  </Button>
+                )}
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
@@ -749,6 +755,13 @@ export function FretesTable() {
                     >
                       <DollarSign className="mr-2 h-4 w-4" />
                       Registrar Adiantamento
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/movimentos/entradas/novo?freteId=${frete.id}`}>
+                        <DollarSign className="mr-2 h-4 w-4" />
+                        Nova Entrada
+                      </Link>
                     </DropdownMenuItem>
 
                     <DropdownMenuItem asChild>

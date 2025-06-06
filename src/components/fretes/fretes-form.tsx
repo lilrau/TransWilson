@@ -233,10 +233,10 @@ export function FretesForm({ id }: FretesFormProps) {
       }
 
       // Upload do comprovante se houver
-      if (values.comprovante) {
+      if (comprovante) {
         setUploadingFile(true)
         try {
-          const url = await uploadComprovante(values.comprovante, freteId)
+          const url = await uploadComprovante(comprovante, freteId)
           setComprovanteUrl(url)
           toast({
             title: "Comprovante enviado",

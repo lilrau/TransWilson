@@ -50,18 +50,22 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>
 
+interface EntradaFormProps {
+  freteId?: string
+}
+
 function formatCurrencyBRL(value: number | string) {
   const number = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value
   return number.toLocaleString("pt-BR", { style: "decimal", minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-export function EntradaForm() {
+export function EntradaForm({ freteId }: EntradaFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [tipoOptions, setTipoOptions] = useState<string[]>([])
   const [isLoadingTipos, setIsLoadingTipos] = useState(true)
-  const [fretes, setFretes] = useState<{ id: number; frete_nome: string }[]>([])
+  const [fretes, setFretes] = useState<{ id: number; frete_nome: string; frete_origem: string; frete_destino: string }[]>([])
   const [isLoadingFretes, setIsLoadingFretes] = useState(false)
 
   const form = useForm<FormValues>({
@@ -71,7 +75,7 @@ export function EntradaForm() {
       entrada_valor: 0,
       entrada_descricao: "",
       entrada_tipo: "",
-      entrada_frete_id: null,
+      entrada_frete_id: freteId ? Number(freteId) : null,
       created_at: new Date(),
     },
   })
@@ -83,6 +87,9 @@ export function EntradaForm() {
         const data = await getTipoEntradaEnum()
         if (data && Array.isArray(data)) {
           setTipoOptions(data)
+          if (freteId) {
+            form.setValue("entrada_tipo", "Frete")
+          }
         }
       } catch (err) {
         console.error("Erro ao buscar tipos de entrada:", err)
@@ -97,7 +104,7 @@ export function EntradaForm() {
     }
 
     fetchTiposEntrada()
-  }, [])
+  }, [freteId, form])
 
   const entradaTipo = form.watch("entrada_tipo");
 
@@ -107,9 +114,11 @@ export function EntradaForm() {
       try {
         const fretesData = await getAllFrete().then(fretes => fretes.filter(f => !f.frete_baixa))
         setFretes(
-          fretesData?.map((f: { id: number; frete_nome: string }) => ({
+          fretesData?.map((f: { id: number; frete_nome: string; frete_origem: string; frete_destino: string }) => ({
             id: f.id,
             frete_nome: f.frete_nome,
+            frete_origem: f.frete_origem,
+            frete_destino: f.frete_destino,
           })) || []
         )
       } catch (error) {
@@ -281,7 +290,7 @@ export function EntradaForm() {
                           ) : fretes.length > 0 ? (
                             fretes.map((frete) => (
                               <SelectItem key={frete.id} value={frete.id.toString()}>
-                                {frete.frete_nome}
+                                {frete.frete_nome} - {frete.frete_origem} → {frete.frete_destino}
                               </SelectItem>
                             ))
                           ) : (
