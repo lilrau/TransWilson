@@ -109,7 +109,7 @@ export function LoginForm() {
             <Truck className="h-6 w-6 text-primary" />
           </div>
         </div>
-        <CardTitle className="text-2xl text-center dark:text-white">TransWilson</CardTitle>
+        <CardTitle className="text-2xl text-center dark:text-white">App Transportes</CardTitle>
         <CardDescription className="text-center dark:text-zinc-400">
           Entre com suas credenciais para acessar o sistema
         </CardDescription>
